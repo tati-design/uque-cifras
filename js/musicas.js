@@ -181,15 +181,24 @@ function removerMusica(id) {
 // palavras de letra de música (ex: "Can", "Do") com acordes de verdade.
 const CHORD_TOKEN_RE = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus[24]?|m|M)\d{0,2}|\d{1,2}(?:maj|M)?)?(?:\+)?(?:\([^)]{1,8}\))?(?:\/(?:[A-G](?:#|b)?|\d+))?(?:\+)?$/;
 
+// Tokens que aparecem em linhas de acordes mas não são acordes (parênteses, repetições, rótulos)
+function isSectionToken(t) {
+  return /^[()[\]]$/.test(t) ||       // parênteses/colchetes avulsos
+         /^\(\d+x\)$/i.test(t) ||     // (2x), (3x) etc.
+         /^[\w.]+:$/.test(t);          // Final:, Introd.: etc.
+}
+
 function extrairAcordes(cifraTexto) {
   const vistos = new Set();
   const ordem = [];
   cifraTexto.split('\n').forEach(linhaRaw => {
-    const linha = linhaRaw.replace(/^\s*\[[^\]]*\]\s*/, '').replace(/\([^)]*\)\s*/g, '');
+    const linha = linhaRaw.replace(/^\s*\[[^\]]*\]\s*/, '');
     const tokens = linha.trim().split(/\s+/).filter(Boolean);
     if (!tokens.length) return;
-    if (!tokens.every(t => CHORD_TOKEN_RE.test(t))) return;
-    tokens.forEach(t => {
+    const chordTokens = tokens.filter(t => !isSectionToken(t));
+    if (!chordTokens.length) return;
+    if (!chordTokens.every(t => CHORD_TOKEN_RE.test(t))) return;
+    chordTokens.forEach(t => {
       if (!vistos.has(t)) { vistos.add(t); ordem.push(t); }
     });
   });

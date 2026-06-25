@@ -15,10 +15,13 @@ function atualizarMenuModoNovato() {
   btn.style.color = modoNovato ? '#5b7cf6' : '';
 }
 
-// Remove /baixo e (adição) mas mantém números (D9, Am7 etc.)
+// Remove /baixo, /número, (adição) e + para simplificar para modo novato
 function simplificarAcorde(nome) {
   if (!modoNovato) return nome;
-  return nome.replace(/\/[A-G][b#]?/g, '').replace(/\([^)]*\)/g, '');
+  return nome
+    .replace(/\/(?:[A-G][b#]?|\d+)/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\+/g, '');
 }
 
 // ─── Lista de músicas (aba "Minhas Músicas") ────────────────────────────────────
@@ -562,12 +565,14 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
     const prefixo = bracketMatch ? bracketMatch[1] : '';
     const resto = linhaRaw.slice(prefixo.length);
     const tokens = resto.trim().split(/\s+/).filter(Boolean);
-    const isChordLine = tokens.length > 0 && tokens.every(t => CHORD_TOKEN_RE.test(t));
+    const chordTokens = tokens.filter(t => !isSectionToken(t));
+    const isChordLine = chordTokens.length > 0 && chordTokens.every(t => CHORD_TOKEN_RE.test(t));
     if (!isChordLine) return escapeHtml(linhaRaw);
 
     const partes = resto.split(/(\s+)/);
     const restoHtml = partes.map(p => {
       if (p === '' || /^\s+$/.test(p)) return p;
+      if (isSectionToken(p)) return escapeHtml(p);
       const transposto = simplificarAcorde(transporAcorde(p, semitons));
       return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}">${escapeHtml(transposto)}</span>`;
     }).join('');
