@@ -1,23 +1,61 @@
-// ─── Modo Novato ────────────────────────────────────────────────────────────────
-let modoNovato = localStorage.getItem('modoNovato') === 'true';
+// ─── Modo Aprendiz ───────────────────────────────────────────────────────────────
+let modoSimplificar = localStorage.getItem('modoSimplificar') === 'true';
+let modoNomes       = localStorage.getItem('modoNomes')       === 'true';
+const modoNovato = () => modoSimplificar && modoNomes; // legado: ambos ativos
+
+function _salvarModos() {
+  localStorage.setItem('modoSimplificar', modoSimplificar);
+  localStorage.setItem('modoNomes', modoNomes);
+}
 
 function toggleModoNovato() {
-  modoNovato = !modoNovato;
-  localStorage.setItem('modoNovato', modoNovato);
+  // Botão principal: se ambos ativos → desliga tudo; caso contrário → liga tudo
+  const ligar = !(modoSimplificar && modoNomes);
+  modoSimplificar = ligar;
+  modoNomes = ligar;
+  _salvarModos();
   renderMusicaView();
   atualizarMenuModoNovato();
 }
 
+function toggleModoSimplificar() {
+  modoSimplificar = !modoSimplificar;
+  _salvarModos();
+  renderMusicaView();
+  atualizarMenuModoNovato();
+}
+
+function toggleModoNomes() {
+  modoNomes = !modoNomes;
+  _salvarModos();
+  renderMusicaView();
+  atualizarMenuModoNovato();
+}
+
+let aprendizMenuAberto = false;
+function toggleAprendizMenu(e) {
+  if (e) e.stopPropagation();
+  aprendizMenuAberto = !aprendizMenuAberto;
+  document.getElementById('aprendiz-dropdown')?.classList.toggle('hidden', !aprendizMenuAberto);
+}
+document.addEventListener('click', e => {
+  if (aprendizMenuAberto && !e.target.closest('.aprendiz-split-btn')) {
+    aprendizMenuAberto = false;
+    document.getElementById('aprendiz-dropdown')?.classList.add('hidden');
+  }
+});
+
 function atualizarMenuModoNovato() {
   const btn = document.getElementById('btn-modo-novato');
   if (!btn) return;
-  btn.innerHTML = `<span class="material-symbols-outlined">${modoNovato ? 'toggle_on' : 'toggle_off'}</span> Modo Novato`;
-  btn.style.color = modoNovato ? '#5b7cf6' : '';
+  const ativo = modoSimplificar || modoNomes;
+  btn.innerHTML = `<span class="material-symbols-outlined">${ativo ? 'toggle_on' : 'toggle_off'}</span> Modo Aprendiz`;
+  btn.style.color = ativo ? '#5b7cf6' : '';
 }
 
-// Remove /baixo, /número, (adição) e + para simplificar para modo novato
+// Remove /baixo, /número, (adição) e + para simplificar para modo aprendiz
 function simplificarAcorde(nome) {
-  if (!modoNovato) return nome;
+  if (!modoSimplificar) return nome;
   return nome
     .replace(/\/(?:[A-G][b#]?|\d+)/g, '')
     .replace(/\([^)]*\)/g, '')
@@ -27,7 +65,8 @@ function simplificarAcorde(nome) {
 // ─── Lista de músicas (aba "Minhas Músicas") ────────────────────────────────────
 let musicaFiltroGenero = 'todos';
 let musicaFiltroArtista = 'todos';
-let musicaOrdem = 'titulo'; // 'titulo' | 'artista'
+let musicaOrdem = 'titulo'; // 'titulo' | 'artista' | 'tom'
+let musicaBusca = '';
 let musicasSelecionadas = new Set();
 let filtroDropdownAberto = null; // 'genero' | 'artista' | null
 
@@ -49,6 +88,11 @@ const MAX_ARTISTAS_VISIVEIS = 20;
 
 function setMusicaOrdem(ordem) {
   musicaOrdem = ordem;
+  renderMusicasLista();
+}
+
+function setMusicaBusca(v) {
+  musicaBusca = v;
   renderMusicasLista();
 }
 
@@ -144,10 +188,13 @@ function criarESalvarCategoria() {
 
 function renderMusicasLista() {
   const wrap = document.getElementById('musicas-lista');
+  const buscaTinhaFoco = document.activeElement?.id === 'musica-busca-input';
   const lista = listarMusicas().sort((a, b) =>
     musicaOrdem === 'artista'
       ? a.artista.localeCompare(b.artista) || a.titulo.localeCompare(b.titulo)
-      : a.titulo.localeCompare(b.titulo)
+      : musicaOrdem === 'tom'
+        ? (a.tom || '').localeCompare(b.tom || '') || a.titulo.localeCompare(b.titulo)
+        : a.titulo.localeCompare(b.titulo)
   );
 
   if (!lista.length) {
@@ -212,14 +259,22 @@ function renderMusicasLista() {
 
   html += renderSelecaoBar();
 
-  const listaFiltrada = musicaFiltroArtista === 'todos' ? listaPorGenero : listaPorGenero.filter(m => m.artista === musicaFiltroArtista);
+  const listaFiltradaBase = musicaFiltroArtista === 'todos' ? listaPorGenero : listaPorGenero.filter(m => m.artista === musicaFiltroArtista);
+  const buscaTermo = musicaBusca.trim().toLowerCase();
+  const listaFiltrada = buscaTermo
+    ? listaFiltradaBase.filter(m =>
+        m.titulo.toLowerCase().includes(buscaTermo) ||
+        m.artista.toLowerCase().includes(buscaTermo))
+    : listaFiltradaBase;
   _idsFiltradosAtual = listaFiltrada.map(m => m.id);
   const todosSelecionados = listaFiltrada.length > 0 && listaFiltrada.every(m => musicasSelecionadas.has(m.id));
 
   html += `<div class="musicas-ordem-bar">
+    <input id="musica-busca-input" class="musica-busca-input" type="text" placeholder="Buscar música…" value="${musicaBusca.replace(/"/g, '&quot;')}" oninput="setMusicaBusca(this.value)">
     <span class="musicas-ordem-label">Ordenar por</span>
     <button class="musicas-ordem-btn${musicaOrdem === 'titulo' ? ' active' : ''}" onclick="setMusicaOrdem('titulo')">Título</button>
     <button class="musicas-ordem-btn${musicaOrdem === 'artista' ? ' active' : ''}" onclick="setMusicaOrdem('artista')">Artista</button>
+    <button class="musicas-ordem-btn musicas-ordem-btn-tom${musicaOrdem === 'tom' ? ' active' : ''}" onclick="setMusicaOrdem('tom')">Tom</button>
   </div>`;
 
   html += `<div class="musicas-tabela-wrap"><table class="musicas-tabela">
@@ -237,6 +292,10 @@ function renderMusicasLista() {
   </table></div>`;
 
   wrap.innerHTML = html;
+  if (buscaTinhaFoco) {
+    const input = document.getElementById('musica-busca-input');
+    if (input) { input.focus(); input.setSelectionRange(musicaBusca.length, musicaBusca.length); }
+  }
 }
 
 function renderMusicaRow(m) {
@@ -478,9 +537,24 @@ function renderMusicaView() {
         <button class="nav-btn musica-acordes-toggle${acordesMobileAbertos ? ' active' : ''}" onclick="toggleAcordesMobile()">
           <span class="material-symbols-outlined">library_music</span> Acordes
         </button>
-        <button class="icon-btn${modoNovato ? ' active' : ''}" onclick="toggleModoNovato()" title="${modoNovato ? 'Modo Novato ativo' : 'Modo Novato desativado'}">
-          <span class="material-symbols-outlined">${modoNovato ? 'school' : 'school'}</span>
-        </button>
+        <div class="aprendiz-split-btn${(modoSimplificar || modoNomes) ? ' active' : ''}">
+          <button class="aprendiz-main" onclick="toggleModoNovato()" title="Modo Aprendiz">
+            <span class="material-symbols-outlined">school</span>
+          </button>
+          <button class="aprendiz-arrow" onclick="toggleAprendizMenu(event)" title="Opções do modo aprendiz">
+            <span class="material-symbols-outlined">expand_more</span>
+          </button>
+          <div id="aprendiz-dropdown" class="aprendiz-dropdown ${aprendizMenuAberto ? '' : 'hidden'}">
+            <button class="aprendiz-opt" onclick="toggleModoSimplificar()">
+              <span class="material-symbols-outlined">${modoSimplificar ? 'check_box' : 'check_box_outline_blank'}</span>
+              Simplificar acordes
+            </button>
+            <button class="aprendiz-opt" onclick="toggleModoNomes()">
+              <span class="material-symbols-outlined">${modoNomes ? 'check_box' : 'check_box_outline_blank'}</span>
+              Mostrar nomes
+            </button>
+          </div>
+        </div>
         ${!s.ativo ? `<button class="nav-btn autoscroll-start-btn" onclick="iniciarAutoScroll()" title="Autorrolagem">
           <span class="material-symbols-outlined">arrow_cool_down</span><span class="autoscroll-start-label"> Autorrolagem</span>
         </button>` : ''}
@@ -530,9 +604,11 @@ function renderChordChip(nomeAcorde) {
   } catch {
     diagramaHtml = `<div class="chord-chip-erro">?</div>`;
   }
+  const descChip = modoNomes ? `<div class="chord-chip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
   return `<div class="chord-chip" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g, "\\'")}')">
     <span class="material-symbols-outlined chord-chip-fav-badge" style="${ehFavoritado ? "font-variation-settings:'FILL' 1;" : ''}">kid_star</span>
     <div class="chord-chip-nome">${nomeAcorde}</div>
+    ${descChip}
     ${diagramaHtml}
   </div>`;
 }
@@ -549,8 +625,10 @@ function renderChordChipMobile(nomeAcorde) {
     }
     if (candidato) diagramaHtml = renderDiagram(candidato);
   } catch { diagramaHtml = `<div class="chord-chip-erro">?</div>`; }
+  const descMobile = modoNovato ? `<div class="chord-chip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
   return `<div class="chord-chip chord-chip-mobile" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g,"\\'")}')">
     <div class="chord-chip-nome">${nomeAcorde}</div>
+    ${descMobile}
     ${diagramaHtml}
   </div>`;
 }
@@ -997,6 +1075,89 @@ function iniciarResizeAcordes(e) {
   document.addEventListener('mouseup', onUp);
 }
 
+// ─── Descrição legível do acorde em português ─────────────────────────────────
+function descreverAcorde(nome) {
+  const NOTAS = { C:'Dó', D:'Ré', E:'Mi', F:'Fá', G:'Sol', A:'Lá', B:'Si' };
+  const EXTS  = { '2':'dois', '4':'quatro', '5':'quinta', '6':'sexta',
+                  '7':'sétima', '9':'nona', '11':'décima primeira', '13':'décima terceira' };
+
+  let s = nome;
+
+  // Raiz
+  const rm = s.match(/^([A-G])([#b]?)/);
+  if (!rm) return nome;
+  s = s.slice(rm[0].length);
+  const nota = NOTAS[rm[1]] + (rm[2] === '#' ? ' sustenido' : rm[2] === 'b' ? ' bemol' : '');
+
+  // Qualidade + número
+  let qualidade = '', numero = '';
+  let m;
+  if      (m = s.match(/^maj(\d{0,2})/))          { qualidade = 'maior';     numero = m[1]; s = s.slice(m[0].length); }
+  else if (m = s.match(/^M(\d{0,2})/))           { qualidade = 'maior';     numero = m[1]; s = s.slice(m[0].length); }
+  else if (m = s.match(/^min(\d{0,2})/))         { qualidade = 'menor';     numero = m[1]; s = s.slice(m[0].length); }
+  else if (m = s.match(/^m(\d{0,2})/))           { qualidade = 'menor';     numero = m[1]; s = s.slice(m[0].length); }
+  else if (m = s.match(/^dim(\d?)/))             { qualidade = 'diminuto';  numero = m[1]; s = s.slice(m[0].length); }
+  else if (m = s.match(/^aug(\d?)/))             { qualidade = 'aumentado'; numero = m[1]; s = s.slice(m[0].length); }
+  else if (m = s.match(/^sus([24]?)/))           { qualidade = 'suspenso' + (m[1] === '2' ? ' dois' : ''); s = s.slice(m[0].length); }
+  else if (m = s.match(/^(\d{1,2})(maj|M)?/))   { numero = m[1]; if (m[2]) qualidade = 'maior'; s = s.slice(m[0].length); }
+
+  // + após número
+  let plusApos = false;
+  if (s[0] === '+') { plusApos = true; s = s.slice(1); }
+
+  // Adições entre parênteses
+  const adics = [];
+  if (m = s.match(/^\(([^)]{1,8})\)/)) {
+    const inn = m[1]; s = s.slice(m[0].length);
+    if      (/^-5|b5$/.test(inn))          adics.push('quinta bemol');
+    else if (/^\+5|#5$/.test(inn))         adics.push('quinta aumentada');
+    else if (/^7\+|M7|maj7$/i.test(inn))   adics.push('sétima maior');
+    else if (m = inn.match(/^add(\d+)$/))  adics.push((EXTS[m[1]] || m[1] + 'ª') + ' adicionada');
+    else if (m = inn.match(/^(\d+)$/))     adics.push(EXTS[m[1]] || m[1] + 'ª');
+    else adics.push(inn);
+  }
+
+  // Baixo: /Letra ou /número
+  let baixo = '';
+  if (m = s.match(/^\/([A-G][#b]?)/)) {
+    const bn = m[1][0], ba = m[1][1] || '';
+    baixo = 'baixo em ' + NOTAS[bn] + (ba === '#' ? ' sustenido' : ba === 'b' ? ' bemol' : '');
+    s = s.slice(m[0].length);
+  } else if (m = s.match(/^\/(\d+)/)) {
+    adics.unshift(EXTS[m[1]] || m[1] + 'ª');
+    s = s.slice(m[0].length);
+  }
+
+  // + no final
+  if (s[0] === '+') { plusApos = true; }
+
+  // Montar descrição
+  let desc = nota;
+
+  if      (qualidade === 'menor')    desc += ' menor';
+  else if (qualidade === 'diminuto') desc += ' diminuto';
+  else if (qualidade === 'aumentado')desc += ' aumentado';
+  else if (qualidade.startsWith('suspenso')) desc += ' ' + qualidade;
+  // 'maior' explícito (Cmaj / CM) sem número
+  else if (qualidade === 'maior' && !numero) desc += ' maior';
+
+  if (numero) {
+    const extNome = EXTS[numero] || numero + 'ª';
+    // Se qualidade é maior COM número → "sétima maior" (CM7)
+    if (qualidade === 'maior') desc += ' com ' + extNome + ' maior';
+    else                        desc += ' com ' + extNome;
+
+    // 7+ → "sétima e quinta aumentada"
+    if (plusApos && numero === '7') { adics.unshift('quinta aumentada'); plusApos = false; }
+  }
+
+  if (plusApos) desc += ' aumentado';
+  if (adics.length) desc += ' e ' + adics.join(' e ');
+  if (baixo) desc += ' com ' + baixo;
+
+  return desc;
+}
+
 // ─── Tooltip flutuante com diagrama (hover nos acordes da cifra) ───────────────
 let chordTooltipEl = null;
 
@@ -1020,7 +1181,8 @@ function mostrarChordTooltip(nomeAcorde, x, y) {
     chordTooltipEl.className = 'chord-tooltip';
     document.body.appendChild(chordTooltipEl);
   }
-  chordTooltipEl.innerHTML = `<div class="chord-tooltip-nome">${escapeHtml(nomeAcorde)}</div>${diagramaHtml}`;
+  const descHtml = modoNomes ? `<div class="chord-tooltip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
+  chordTooltipEl.innerHTML = `<div class="chord-tooltip-nome">${escapeHtml(nomeAcorde)}</div>${descHtml}${diagramaHtml}`;
   chordTooltipEl.style.display = 'block';
   posicionarChordTooltip(x, y);
 }
