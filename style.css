@@ -1,0 +1,1117 @@
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f8f7f4;
+  color: #1a1a1a;
+  min-height: 100vh;
+  /* sem padding — cada view gerencia o próprio espaçamento */
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  font-size: 20px;
+  vertical-align: middle;
+  user-select: none;
+}
+
+/* ── VIEW: Lista ─────────────────────────────────────────────────────────── */
+#view-lista {
+  padding: 0 16px 16px;
+}
+#view-lista.hidden { display: none; }
+
+/* ── VIEW: Música (page-level — não é overlay) ───────────────────────────── */
+#view-musica {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #f8f7f4;
+}
+#view-musica.hidden { display: none; }
+
+/* ── Header da view de música ─────────────────────────────────────────────── */
+.musica-page-header {
+  flex: 0 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+.musica-view-nav {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: calc(100% - 260px);
+}
+.musica-view-titulo-wrap {
+  min-width: 0;
+  text-align: center;
+  overflow: hidden;
+}
+.musica-titulo {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #111;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.musica-artista {
+  font-size: 0.82rem;
+  color: #888;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.musica-page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Botões que só aparecem no desktop */
+.musica-desktop-btn { display: none; }
+@media (min-width: 861px) {
+  .musica-desktop-btn { display: inline-flex; }
+}
+/* Chevrons de navegação: só no desktop */
+.musica-nav-chevron { display: none; }
+@media (min-width: 861px) {
+  .musica-nav-chevron { display: flex; }
+  .musica-mobile-menu-wrap { display: none !important; }
+}
+/* Mobile: menu ⋮ */
+.musica-mobile-menu-wrap { display: block; }
+.musica-mobile-menu-btn { display: flex; }
+
+/* ── Body da view de música ───────────────────────────────────────────────── */
+.musica-page-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Toolbar (tom + controles) ───────────────────────────────────────────── */
+.musica-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px 8px;
+}
+.musica-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+/* Botão "Acordes" (toggle do painel mobile): escondido no desktop */
+.musica-acordes-toggle { display: inline-flex; }
+@media (min-width: 861px) {
+  .musica-acordes-toggle { display: none; }
+}
+
+/* ── Área de conteúdo: cifra + coluna de acordes ────────────────────────── */
+.musica-conteudo {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  gap: 24px;
+  overflow: hidden;
+  padding: 0 16px;
+}
+
+/* ── Cifra (pre) ─────────────────────────────────────────────────────────── */
+.musica-cifra {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #333;
+  /* estilo de caixa no desktop */
+  background: #fafaf8;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+/* ── Coluna de acordes (desktop) ─────────────────────────────────────────── */
+.musica-acordes {
+  position: relative;
+  flex: 0 1 420px;   /* pode encolher — resolve o overflow em telas médias */
+  min-width: 200px;
+  height: 100%;
+  overflow-y: auto;
+  padding-bottom: 4px;
+  padding-left: 16px;
+}
+.resize-handle {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 16px;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+.resize-handle::after {
+  content: '';
+  width: 4px;
+  height: 40px;
+  border-radius: 2px;
+  background: #ddd;
+  transition: background 0.15s;
+}
+.resize-handle:hover::after { background: #5b7cf6; }
+.musica-acordes-titulo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+.musica-acordes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+/* ── Barra de autorrolagem (fica no fundo do musica-page-body) ────────────── */
+.autoscroll-bar-bottom {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f2ee;
+  padding: 8px 16px;
+  border-top: 1px solid #e5e5e5;
+}
+.autoscroll-bar-bottom .autoscroll-speed { flex: 1; max-width: 160px; accent-color: #5b7cf6; }
+.autoscroll-speed-icon { font-size: 18px !important; color: #888; }
+
+/* Botão de iniciar autorrolagem (no toolbar) */
+.autoscroll-start-btn { white-space: nowrap; }
+@media (max-width: 860px) {
+  /* Mobile: só ícone no botão de autorrolagem */
+  .autoscroll-start-label { display: none; }
+}
+
+/* ── Painel de acordes mobile (fundo do body, scroll horizontal) ─────────── */
+.musica-acordes-mobile {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid #e5e5e5;
+  background: #fafaf8;
+  max-height: 200px;
+}
+.musica-acordes-mobile-scroll {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 14px;
+  flex: 1;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.musica-acordes-mobile-scroll::-webkit-scrollbar { display: none; }
+.musica-acordes-mobile-vazio {
+  font-size: 0.82rem;
+  color: #999;
+  align-self: center;
+  padding: 0 8px;
+}
+.musica-acordes-mobile-close {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin: 8px 10px 0 0;
+  background: none;
+  color: #aaa;
+  padding: 2px;
+  border: none;
+}
+.musica-acordes-mobile-close:hover { background: none; color: #555; }
+.musica-acordes-mobile-close .material-symbols-outlined { font-size: 20px; }
+.chord-chip-mobile {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: 110px;
+  padding: 8px 8px 4px;
+}
+.chord-chip-mobile svg { width: 100%; height: auto; }
+
+/* ── Responsividade mobile (≤ 860px) ─────────────────────────────────────── */
+@media (max-width: 860px) {
+  /* Desktop: coluna de acordes e nav ocultos */
+  .musica-acordes { display: none; }
+  /* Conteúdo sem padding lateral — a cifra gerencia o próprio */
+  .musica-conteudo { padding: 0; gap: 0; }
+  /* Cifra sem caixa no mobile */
+  .musica-cifra {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 10px 16px 16px;
+  }
+}
+
+/* ── Formulário de edição ─────────────────────────────────────────────────── */
+.musica-edit-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+.musica-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.musica-edit-form label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 10px;
+}
+.musica-edit-form input,
+.musica-edit-form textarea {
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  font-family: inherit;
+}
+.musica-edit-form textarea {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+.musica-edit-form input:focus,
+.musica-edit-form textarea:focus { outline: none; border-color: #5b7cf6; }
+.musica-edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.musica-edit-genero-wrap { display: flex; flex-direction: column; gap: 6px; }
+.musica-edit-select {
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  font-family: inherit;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+}
+.musica-edit-select:focus { outline: none; border-color: #5b7cf6; }
+.musica-edit-genero-novo {
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border: 1.5px solid #5b7cf6;
+  border-radius: 10px;
+  font-family: inherit;
+}
+.musica-edit-genero-novo:focus { outline: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  Estilos da VIEW LISTA (header, tabs, filtros, tabela, etc.)               */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 -16px 20px;
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e8e6e0;
+}
+.brand-logo { display: block; flex-shrink: 0; }
+.brand-logo-desktop { display: block; }
+.brand-logo-mobile { display: none; }
+
+.header-tabs {
+  flex: none;       /* não expande */
+  margin: 0 auto;   /* centraliza entre logo e ⋮ */
+}
+
+/* ── Botões ─────────────────────────────────────────────────────────────────── */
+.nav-btn-primary {
+  background: #5b7cf6 !important;
+  color: #fff !important;
+}
+.nav-btn-primary:hover { background: #4a6be8 !important; }
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f2ee;
+  color: #444;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.nav-btn .material-symbols-outlined { font-size: 18px; }
+.nav-btn:hover { background: #e8e6e0; }
+.nav-btn.active { background: #5b7cf6; color: #fff; }
+
+/* ── Tabs (dentro do header) ─────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: #f0efea;
+  border-radius: 12px;
+  padding: 4px;
+}
+.tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: #777;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 9px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.tab-btn:hover { background: #e8e6e0; }
+.tab-btn.active {
+  background: #fff;
+  color: #5b7cf6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.tab-panel.hidden { display: none; }
+
+/* ── Cabeçalho da aba de músicas (desktop) ─────────────────────────────────── */
+.musicas-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  margin-top: 4px;
+}
+.musicas-tab-titulo {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #111;
+  letter-spacing: -0.5px;
+}
+
+/* FAB: só no mobile */
+.musicas-add-fab { display: none; }
+
+.menu-wrap { position: relative; }
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f2ee;
+  color: #555;
+  border: none;
+  border-radius: 9px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.icon-btn:hover { background: #e8e6e0; }
+.icon-btn.active { background: #5b7cf6; color: #fff; }
+.icon-btn.active:hover { background: #4a6be8; }
+.icon-btn-danger { color: #c00; }
+.icon-btn-danger:hover { background: #fff0f0; }
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  min-width: 220px;
+  padding: 6px;
+  z-index: 50;
+}
+.dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  color: #333;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 9px 10px;
+  border-radius: 7px;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.dropdown-menu button:hover { background: #f3f2ee; }
+.dropdown-menu .material-symbols-outlined { font-size: 18px; color: #777; }
+.dropdown-menu-btn-danger { color: #c00; }
+.dropdown-menu-btn-danger:hover { background: #fff0f0 !important; }
+.dropdown-menu-btn-danger .material-symbols-outlined { color: #c00; }
+
+/* ── Filtros: linha única com scroll e dropdown "Ver todos" ─────────────────── */
+.filtro-secao { margin-bottom: 14px; }
+.filtro-secao-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+
+.filtro-row-outer { position: relative; }
+
+/* Wrapper: chips scrolláveis + botão "Ver todos" sempre visível */
+.filtro-row-with-btn {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-bottom: 1.5px solid #e8e6e0;
+}
+
+/* Linha de chips: rolagem horizontal, sem quebra */
+.filtro-chips-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.filtro-chips-row::-webkit-scrollbar { display: none; }
+
+.filtro-chips-row-artista {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+.filtro-chips-row-artista::-webkit-scrollbar { display: none; }
+
+/* Artista row wrapper também precisa do border-bottom */
+.filtro-row-with-btn:has(.filtro-chips-row-artista) {
+  border-bottom: none;
+}
+
+/* Chip de gênero: estilo de tab com sublinhado */
+.genero-chip {
+  flex-shrink: 0;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: #888;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 7px 14px 9px;
+  border-bottom: 2.5px solid transparent !important;
+  margin-bottom: -1.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.genero-chip:hover { color: #333; }
+.genero-chip.active { color: #1a1a1a !important; border-bottom-color: #1a1a1a !important; }
+.genero-chip .filtro-count { background: #eee; color: #666; }
+.genero-chip.active .filtro-count { background: #e8e6e0; color: #333; }
+
+/* Chip de artista: estilo pílula */
+.artista-chip {
+  flex-shrink: 0;
+  background: #f3f2ee;
+  color: #555;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.artista-chip:hover { background: #e8e6e0; }
+.artista-chip.active { background: #2d2d2d !important; color: #fff !important; }
+.artista-chip.active .filtro-count { background: rgba(255,255,255,0.18); }
+
+/* Botão "Ver todos" */
+.ver-todos-btn {
+  flex-shrink: 0;
+  background: none;
+  color: #5b7cf6;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 7px 10px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  margin-bottom: -1.5px;
+}
+.ver-todos-btn-artista {
+  flex-shrink: 0;
+  background: none;
+  color: #5b7cf6;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.ver-todos-btn:hover, .ver-todos-btn-artista:hover { background: #eef0fc; border-radius: 6px; }
+
+/* Dropdown "Ver todos" */
+.filtro-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  padding: 12px;
+  z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filtro-count {
+  display: inline-block;
+  background: rgba(0,0,0,0.08);
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0 5px;
+  margin-left: 3px;
+  line-height: 1.6;
+  vertical-align: middle;
+}
+
+/* Barra de seleção em lote */
+.selecao-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #eef0fc;
+  border: 1.5px solid #c6cffa;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+.selecao-bar-label { font-size: 0.82rem; font-weight: 600; color: #3a5ae8; flex: 1 1 auto; }
+.selecao-bar-action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #5b7cf6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.selecao-bar-action:hover { background: #4a6be0; }
+.selecao-bar-action .material-symbols-outlined { font-size: 16px; }
+.selecao-bar-cancel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  color: #666;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.selecao-bar-cancel:hover { background: #f0f0f0; }
+.selecao-bar-cancel .material-symbols-outlined { font-size: 16px; }
+.selecao-bar-generos { display: flex; flex-wrap: wrap; gap: 6px; }
+.selecao-genero-btn {
+  background: #fff;
+  color: #333;
+  border: 1.5px solid #c6cffa;
+  border-radius: 7px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.selecao-genero-btn:hover { background: #5b7cf6; color: #fff; border-color: #5b7cf6; }
+.selecao-genero-novo { display: inline-flex; align-items: center; gap: 4px; }
+.selecao-novo-genero-input {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  border: 1.5px solid #c6cffa;
+  border-radius: 7px;
+  font-family: inherit;
+  width: 140px;
+  background: #fff;
+}
+.selecao-novo-genero-input:focus { outline: none; border-color: #5b7cf6; }
+.selecao-genero-criar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px !important;
+}
+.selecao-genero-criar .material-symbols-outlined { font-size: 16px; }
+
+/* Ordenação */
+.musicas-ordem-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.musicas-ordem-label {
+  font-size: 0.72rem; color: #aaa; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em; margin-right: 2px;
+}
+.musicas-ordem-btn {
+  background: none; border: 1.5px solid #e5e5e5; border-radius: 7px;
+  color: #777; font-size: 0.78rem; font-weight: 600; padding: 3px 10px;
+  cursor: pointer; font-family: inherit;
+}
+.musicas-ordem-btn:hover { background: #f3f2ee; border-color: #ccc; }
+.musicas-ordem-btn.active { background: #2d2d2d; color: #fff; border-color: #2d2d2d; }
+
+/* Tabela de músicas */
+.musicas-tabela-wrap { overflow-x: auto; }
+.musicas-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.musicas-tabela thead th {
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #888;
+  background: #fafaf8;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+}
+.musica-row { cursor: pointer; }
+.musica-row:not(:last-child) td { border-bottom: 1px solid #f0f0ee; }
+.musica-row:hover { background: #fafaf8; }
+.musica-row-selecionada { background: #eef0fc !important; }
+.musica-row td { padding: 7px 12px; vertical-align: middle; }
+.musica-row-check-th { width: 32px; padding: 10px 8px 10px 12px !important; }
+.musica-row-check { width: 32px; padding: 7px 4px 7px 12px !important; text-align: center; cursor: default; }
+.musica-check { width: 15px; height: 15px; cursor: pointer; accent-color: #5b7cf6; vertical-align: middle; }
+.musica-row-titulo { font-size: 0.92rem; font-weight: 700; color: #111; }
+.musica-row-artista { font-size: 0.84rem; color: #888; }
+.musica-row-genero { font-size: 0.78rem; color: #888; white-space: nowrap; }
+.musica-row-tom { white-space: nowrap; }
+.tom-cell { display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem; font-weight: 600; color: #555; }
+.tom-cell-icon { font-size: 16px !important; color: #aaa; }
+.musica-row-opcoes { width: 1%; text-align: right; }
+.musica-row-opcoes .icon-btn { width: 32px; height: 32px; background: none; }
+.musica-row-opcoes .icon-btn:hover { background: #e8e6e0; }
+.musica-row-opcoes .dropdown-menu { min-width: 160px; }
+
+/* Adicionar música */
+.musica-add-hint { font-size: 0.82rem; color: #888; margin-bottom: 10px; line-height: 1.5; }
+.musica-add-textarea {
+  width: 100%;
+  min-height: 320px;
+  padding: 12px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  resize: vertical;
+}
+.musica-add-textarea:focus { outline: none; border-color: #5b7cf6; }
+
+/* Pesquisar acorde */
+.input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+input[type="text"] {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 1rem;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+input[type="text"]:focus { border-color: #5b7cf6; }
+button {
+  padding: 10px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: #5b7cf6;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+button:hover { background: #4a6be0; }
+
+.examples { font-size: 0.75rem; color: #888; margin-bottom: 20px; line-height: 1.6; }
+.examples span {
+  display: inline-block;
+  background: #eee;
+  border-radius: 5px;
+  padding: 1px 7px;
+  margin: 2px 2px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #444;
+}
+.examples span:hover { background: #ddd; }
+
+.chord-block { margin-bottom: 24px; }
+.chord-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; color: #333; }
+.chord-warning { font-size: 0.78rem; color: #c97a00; margin-bottom: 8px; }
+.options-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.chord-option {
+  background: #fff;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-width: 140px;
+  position: relative;
+}
+.fav-btn {
+  position: absolute;
+  top: 6px; right: 8px;
+  background: none;
+  border: none;
+  color: #d8a800;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+}
+.fav-btn:hover { background: none; transform: scale(1.15); }
+.fav-btn .material-symbols-outlined { font-size: 16px; }
+.option-label { font-size: 0.7rem; font-weight: 600; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+.option-tags { font-size: 0.72rem; color: #5b7cf6; margin-bottom: 8px; min-height: 16px; }
+.diagram { position: relative; }
+.diagram svg { display: block; }
+.notes-row { display: flex; justify-content: space-around; margin-top: 6px; }
+.note-label { font-size: 0.65rem; text-align: center; color: #555; width: 28px; }
+.note-label.open { color: #5b7cf6; font-weight: 600; }
+.error-msg { background: #fff3f3; border: 1px solid #fcc; border-radius: 8px; padding: 12px; color: #c00; font-size: 0.88rem; margin-bottom: 12px; }
+.identified { font-size: 0.85rem; color: #444; margin-bottom: 10px; font-style: italic; }
+hr.sep { border: none; border-top: 1px solid #e5e5e5; margin: 16px 0; }
+
+.chord-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 12px;
+}
+.chord-card {
+  background: #fff;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 14px;
+  padding: 12px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.card-name { font-size: 1rem; font-weight: 700; color: #111; margin-bottom: 2px; text-align: center; }
+.card-notes { font-size: 0.68rem; color: #aaa; margin-bottom: 8px; text-align: center; }
+.card-tags { font-size: 0.68rem; color: #5b7cf6; min-height: 14px; margin-bottom: 6px; text-align: center; }
+.card-nav { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.card-nav button {
+  display: flex;
+  align-items: center;
+  background: #f0f0f0;
+  color: #444;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 6px;
+  cursor: pointer;
+  line-height: 1.4;
+  font-family: inherit;
+}
+.card-nav button .material-symbols-outlined { font-size: 18px; }
+.card-nav button:hover { background: #ddd; }
+.card-nav .nav-counter { font-size: 0.72rem; color: #888; min-width: 28px; text-align: center; }
+.fav-btn-left { right: auto; left: 8px; }
+.fav-remove {
+  position: absolute; top: 6px; right: 8px;
+  background: none; border: none; color: #aaa; cursor: pointer; padding: 0; line-height: 1;
+}
+.fav-remove .material-symbols-outlined { font-size: 17px; }
+.fav-remove:hover { background: none; color: #c00; }
+
+/* Chord chips na coluna de acordes (desktop) */
+.chord-chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 12px 10px;
+  cursor: pointer;
+  text-align: center;
+}
+.chord-chip:hover { border-color: #5b7cf6; }
+.chord-chip-nome { font-size: 0.95rem; font-weight: 700; color: #333; }
+span.chord-chip-fav-badge.material-symbols-outlined {
+  position: absolute; top: 8px; right: 10px;
+  font-size: 17px !important; color: #d8a800;
+}
+.chord-chip svg { width: 100%; max-width: 120px; height: auto; }
+.chord-chip-erro { font-size: 0.75rem; color: #c00; }
+
+/* Destaque de acorde na cifra */
+.chord-token { color: #5b7cf6; font-weight: 700; cursor: pointer; }
+.chord-tooltip {
+  display: none;
+  position: fixed;
+  z-index: 300;
+  background: #fff;
+  border: 1.5px solid #5b7cf6;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  pointer-events: none;
+  text-align: center;
+}
+.chord-tooltip-nome { font-size: 0.85rem; font-weight: 700; color: #333; margin-bottom: 2px; }
+.chord-tooltip svg { width: 100px; height: auto; display: block; }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  Controle de tom                                                           */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.tom-wrap { position: relative; }
+.musica-tom-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eef0fc;
+  color: #5b7cf6;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 10px 6px 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.musica-tom-badge:hover { background: #e2e6fb; }
+.tom-badge-offset { font-weight: 600; opacity: 0.75; }
+.tom-badge-caret { font-size: 16px !important; }
+.tom-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  background: #fff;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 12px;
+  width: 220px;
+}
+.tom-menu-secao { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.tom-step-btn {
+  background: #f3f2ee; border: none; border-radius: 8px; padding: 6px 10px;
+  font-weight: 700; font-size: 0.85rem; cursor: pointer; color: #333; font-family: inherit;
+}
+.tom-step-btn:hover { background: #e8e6e0; }
+.tom-menu-atual { font-weight: 800; font-size: 1rem; color: #111; }
+.tom-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+.tom-opt {
+  background: #f3f2ee; border: none; border-radius: 6px; padding: 6px 0;
+  font-size: 0.78rem; font-weight: 700; color: #555; cursor: pointer; font-family: inherit;
+}
+.tom-opt:hover { background: #e8e6e0; }
+.tom-opt.active { background: #5b7cf6; color: #fff; }
+.tom-menu-reset {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  width: 100%; background: none; border: 1px solid #e5e5e5; border-radius: 8px;
+  padding: 7px 8px; font-size: 0.78rem; font-weight: 600; color: #555; cursor: pointer; font-family: inherit;
+}
+.tom-menu-reset:hover:not(:disabled) { background: #f3f2ee; }
+.tom-menu-reset:disabled { opacity: 0.4; cursor: default; }
+.tom-menu-reset .material-symbols-outlined { font-size: 16px !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  Modais (favoritos, adicionar música, acorde)                             */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.hidden { display: none; }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: #f8f7f4;
+  z-index: 100;
+}
+.modal-overlay.hidden { display: none; }
+.modal-content {
+  background: #fff;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid #eee;
+  flex: 0 0 auto;
+}
+.modal-header h2 { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; color: #b8860b; }
+.modal-header-actions { display: flex; align-items: center; gap: 8px; }
+.modal-close { background: none; color: #888; border: none; padding: 4px; cursor: pointer; }
+.modal-close:hover { background: #f3f2ee; border-radius: 8px; }
+.fav-modal-body { padding: 16px 18px 32px; overflow-y: auto; flex: 1 1 0; min-height: 0; }
+.fav-empty { font-size: 0.88rem; color: #999; text-align: center; padding: 60px 16px; line-height: 1.6; }
+.fav-filtros { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.fav-filtro-chip {
+  background: #f3f2ee; color: #555; border: none; border-radius: 8px;
+  padding: 6px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.fav-filtro-chip:hover { background: #e8e6e0; }
+.fav-filtro-chip.active { background: #5b7cf6; color: #fff; }
+
+/* Modal de acorde (pequeno, centrado) */
+.modal-overlay-top { z-index: 110; }
+.modal-overlay-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 18, 12, 0.45);
+}
+.modal-content-small {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 440px;
+  max-height: 85vh;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  overflow-y: auto;
+}
+.modal-content-small .fav-modal-body {
+  flex: none;
+  overflow: visible;
+  padding: 12px 16px 20px;
+}
+
+/* ── Responsive: Mobile (≤700px) ─────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  /* Logo: esconde desktop, mostra ícone */
+  .brand-logo-desktop { display: none; }
+  .brand-logo-mobile { display: block; }
+
+  /* Header mais compacto */
+  .site-header { padding: 8px 12px; gap: 8px; margin: 0 -16px 16px; }
+
+  /* Tabs preenchem espaço restante no mobile */
+  .header-tabs { flex: 1; margin: 0; }
+  .tab-btn { flex: 1; padding: 8px 6px; font-size: 0.78rem; }
+
+  /* Esconde header da aba (h2 + botão desktop) */
+  .musicas-tab-header { display: none; }
+
+  /* FAB flutuante na parte inferior */
+  .musicas-add-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+    background: #5b7cf6;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 16px 24px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 20px rgba(91, 124, 246, 0.4);
+    z-index: 100;
+  }
+  .musicas-add-fab .material-symbols-outlined { font-size: 20px; }
+
+  /* Espaço no final da lista para não cobrir com o FAB */
+  #musicas-lista { padding-bottom: 80px; }
+
+  /* Tabela: esconde colunas menos importantes no mobile */
+  .col-genero, .col-tom, .col-opcoes { display: none; }
+}

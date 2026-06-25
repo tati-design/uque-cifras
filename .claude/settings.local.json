@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"http://localhost:8743/style.css?v=12\")",
+      "Bash(curl -s \"http://localhost:8743/style.css\")",
+      "Bash(lsof -nP -iTCP:8743 -sTCP:LISTEN)",
+      "Bash(curl -sI \"http://localhost:8743/style.css\")",
+      "Bash(curl -s \"http://localhost:8743/\")",
+      "Bash(curl -s \"http://localhost:8743/style.css\" -o /tmp/s.css)",
+      "Read(//tmp/**)",
+      "Bash(curl -s \"http://localhost:8743/style.css?v=12\" -o /tmp/s2.css)",
+      "Bash(rm -f /tmp/s.css /tmp/s2.css)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(ls \"/Users/tatianelima/Downloads/favicon_io/\")",
+      "Bash(cp \"/Users/tatianelima/Downloads/favicon_io/favicon.ico\" \"/Users/tatianelima/Claude projects/cifras-ukulele/favicon.ico\")",
+      "Bash(cp \"/Users/tatianelima/Downloads/favicon_io/favicon-16x16.png\" \"/Users/tatianelima/Claude projects/cifras-ukulele/favicon-16x16.png\")",
+      "Bash(cp \"/Users/tatianelima/Downloads/favicon_io/favicon-32x32.png\" \"/Users/tatianelima/Claude projects/cifras-ukulele/favicon-32x32.png\")",
+      "Bash(cp \"/Users/tatianelima/Downloads/favicon_io/apple-touch-icon.png\" \"/Users/tatianelima/Claude projects/cifras-ukulele/apple-touch-icon.png\")",
+      "Bash(cp \"/Users/tatianelima/Downloads/favicon_io/android-chrome-192x192.png\" \"/Users/tatianelima/Claude projects/cifras-ukulele/android-chrome-192x192.png\")"
+    ]
+  }
+}

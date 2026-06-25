@@ -1,0 +1,1052 @@
+// ─── Modo Novato ────────────────────────────────────────────────────────────────
+let modoNovato = localStorage.getItem('modoNovato') === 'true';
+
+function toggleModoNovato() {
+  modoNovato = !modoNovato;
+  localStorage.setItem('modoNovato', modoNovato);
+  renderMusicaView();
+  atualizarMenuModoNovato();
+}
+
+function atualizarMenuModoNovato() {
+  const btn = document.getElementById('btn-modo-novato');
+  if (!btn) return;
+  btn.innerHTML = `<span class="material-symbols-outlined">${modoNovato ? 'toggle_on' : 'toggle_off'}</span> Modo Novato`;
+  btn.style.color = modoNovato ? '#5b7cf6' : '';
+}
+
+// Remove /baixo e (adição) mas mantém números (D9, Am7 etc.)
+function simplificarAcorde(nome) {
+  if (!modoNovato) return nome;
+  return nome.replace(/\/[A-G][b#]?/g, '').replace(/\([^)]*\)/g, '');
+}
+
+// ─── Lista de músicas (aba "Minhas Músicas") ────────────────────────────────────
+let musicaFiltroGenero = 'todos';
+let musicaFiltroArtista = 'todos';
+let musicaOrdem = 'titulo'; // 'titulo' | 'artista'
+let musicasSelecionadas = new Set();
+let filtroDropdownAberto = null; // 'genero' | 'artista' | null
+
+function toggleFiltroDropdown(tipo, e) {
+  if (e) e.stopPropagation();
+  filtroDropdownAberto = filtroDropdownAberto === tipo ? null : tipo;
+  renderMusicasLista();
+}
+
+document.addEventListener('click', e => {
+  if (filtroDropdownAberto && !e.target.closest('.filtro-row-outer')) {
+    filtroDropdownAberto = null;
+    renderMusicasLista();
+  }
+});
+let editandoCategoria = false;
+let _idsFiltradosAtual = [];
+const MAX_ARTISTAS_VISIVEIS = 20;
+
+function setMusicaOrdem(ordem) {
+  musicaOrdem = ordem;
+  renderMusicasLista();
+}
+
+function setMusicaFiltroGenero(g) {
+  musicaFiltroGenero = g;
+  musicaFiltroArtista = 'todos';
+  artistasFiltroExpandido = false;
+  musicasSelecionadas.clear();
+  editandoCategoria = false;
+  filtroDropdownAberto = null;
+  renderMusicasLista();
+}
+
+function setMusicaFiltroArtista(artista) {
+  musicaFiltroArtista = artista;
+  musicasSelecionadas.clear();
+  editandoCategoria = false;
+  filtroDropdownAberto = null;
+  renderMusicasLista();
+}
+
+function toggleArtistasFiltroExpandido() {
+  artistasFiltroExpandido = !artistasFiltroExpandido;
+  renderMusicasLista();
+}
+
+function toggleSelecaoMusica(id) {
+  if (musicasSelecionadas.has(id)) musicasSelecionadas.delete(id);
+  else musicasSelecionadas.add(id);
+  editandoCategoria = false;
+  renderMusicasLista();
+}
+
+function toggleSelecionarTodos(ids, marcar) {
+  ids.forEach(id => marcar ? musicasSelecionadas.add(id) : musicasSelecionadas.delete(id));
+  editandoCategoria = false;
+  renderMusicasLista();
+}
+
+function limparSelecao() {
+  musicasSelecionadas.clear();
+  editandoCategoria = false;
+  renderMusicasLista();
+}
+
+function iniciarEditarCategoria() {
+  editandoCategoria = true;
+  renderMusicasLista();
+}
+
+function cancelarEditarCategoria() {
+  editandoCategoria = false;
+  renderMusicasLista();
+}
+
+function salvarCategoriaSelecionadas(genero) {
+  musicasSelecionadas.forEach(id => atualizarMusica(id, { genero }));
+  musicasSelecionadas.clear();
+  editandoCategoria = false;
+  renderMusicasLista();
+}
+
+function renderSelecaoBar() {
+  const n = musicasSelecionadas.size;
+  if (!n) return '';
+  if (editandoCategoria) {
+    const generosExistentes = [...new Set(listarMusicas().map(m => m.genero || 'Outros'))].sort();
+    return `<div class="selecao-bar">
+      <span class="selecao-bar-label">Escolha o gênero para ${n} selecionada(s):</span>
+      <div class="selecao-bar-generos">
+        ${generosExistentes.map(g => `<button class="selecao-genero-btn" onclick="salvarCategoriaSelecionadas('${g.replace(/'/g,"\\'")}')">${g}</button>`).join('')}
+        <span class="selecao-genero-novo">
+          <input type="text" id="selecao-novo-genero" class="selecao-novo-genero-input" placeholder="Novo gênero…" onkeydown="if(event.key==='Enter') criarESalvarCategoria()">
+          <button class="selecao-genero-btn selecao-genero-criar" onclick="criarESalvarCategoria()"><span class="material-symbols-outlined">add</span></button>
+        </span>
+      </div>
+      <button class="selecao-bar-cancel" onclick="cancelarEditarCategoria()"><span class="material-symbols-outlined">close</span></button>
+    </div>`;
+  }
+  return `<div class="selecao-bar">
+    <span class="selecao-bar-label">${n} selecionada(s)</span>
+    <button class="selecao-bar-action" onclick="iniciarEditarCategoria()"><span class="material-symbols-outlined">label</span> Editar gênero</button>
+    <button class="selecao-bar-cancel" onclick="limparSelecao()"><span class="material-symbols-outlined">close</span> Desmarcar</button>
+  </div>`;
+}
+
+function criarESalvarCategoria() {
+  const input = document.getElementById('selecao-novo-genero');
+  const nome = input?.value.trim();
+  if (!nome) { input?.focus(); return; }
+  salvarCategoriaSelecionadas(nome);
+}
+
+function renderMusicasLista() {
+  const wrap = document.getElementById('musicas-lista');
+  const lista = listarMusicas().sort((a, b) =>
+    musicaOrdem === 'artista'
+      ? a.artista.localeCompare(b.artista) || a.titulo.localeCompare(b.titulo)
+      : a.titulo.localeCompare(b.titulo)
+  );
+
+  if (!lista.length) {
+    musicaFiltroGenero = 'todos';
+    musicaFiltroArtista = 'todos';
+    wrap.innerHTML = `<div class="fav-empty">Nenhuma música salva ainda.<br>Clique em "Adicionar" para colar a cifra de uma música.</div>`;
+    return;
+  }
+
+  // Filtro por gênero
+  const contPorGenero = {};
+  lista.forEach(m => { const g = m.genero || 'Outros'; contPorGenero[g] = (contPorGenero[g] || 0) + 1; });
+  const generosExistentes = [...new Set(lista.map(m => m.genero || 'Outros'))].sort((a, b) => (contPorGenero[b] || 0) - (contPorGenero[a] || 0));
+  if (musicaFiltroGenero !== 'todos' && !generosExistentes.includes(musicaFiltroGenero)) musicaFiltroGenero = 'todos';
+
+  // ── Filtro Gênero: linha única com scroll + dropdown ──
+  const generoChips = (lista_, ativo, fn) =>
+    `<button class="genero-chip${ativo === 'todos' ? ' active' : ''}" onclick="${fn}('todos')">Todos <span class="filtro-count">${lista_.length}</span></button>` +
+    generosExistentes.map(g =>
+      `<button class="genero-chip${ativo === g ? ' active' : ''}" onclick="${fn}('${g.replace(/'/g, "\\'")}')">${g} <span class="filtro-count">${contPorGenero[g] || 0}</span></button>`
+    ).join('');
+
+  let html = `<div class="filtro-secao">
+    <div class="filtro-secao-label">Gênero</div>
+    <div class="filtro-row-outer">
+      <div class="filtro-row-with-btn">
+        <div class="filtro-chips-row">
+          ${generoChips(lista, musicaFiltroGenero, 'setMusicaFiltroGenero')}
+        </div>
+        <button class="ver-todos-btn" onclick="toggleFiltroDropdown('genero', event)">Ver todos</button>
+      </div>
+      ${filtroDropdownAberto === 'genero' ? `<div class="filtro-dropdown">${generoChips(lista, musicaFiltroGenero, 'setMusicaFiltroGenero')}</div>` : ''}
+    </div>
+  </div>`;
+
+  const listaPorGenero = musicaFiltroGenero === 'todos' ? lista : lista.filter(m => (m.genero || 'Outros') === musicaFiltroGenero);
+
+  // ── Filtro Artista: linha única com scroll + dropdown ──
+  const contPorArtista = {};
+  listaPorGenero.forEach(m => { contPorArtista[m.artista] = (contPorArtista[m.artista] || 0) + 1; });
+  const artistas = [...new Set(listaPorGenero.map(m => m.artista))].sort((a, b) => (contPorArtista[b] || 0) - (contPorArtista[a] || 0));
+  if (musicaFiltroArtista !== 'todos' && !artistas.includes(musicaFiltroArtista)) musicaFiltroArtista = 'todos';
+
+  const artistaChips = (ativo) =>
+    `<button class="artista-chip${ativo === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroArtista('todos')">Todos <span class="filtro-count">${listaPorGenero.length}</span></button>` +
+    artistas.map(a =>
+      `<button class="artista-chip${ativo === a ? ' active' : ''}" onclick="setMusicaFiltroArtista('${a.replace(/'/g, "\\'")}')">${a} <span class="filtro-count">${contPorArtista[a] || 0}</span></button>`
+    ).join('');
+
+  html += `<div class="filtro-secao">
+    <div class="filtro-secao-label">Artista</div>
+    <div class="filtro-row-outer">
+      <div class="filtro-row-with-btn">
+        <div class="filtro-chips-row-artista">
+          ${artistaChips(musicaFiltroArtista)}
+        </div>
+        <button class="ver-todos-btn-artista" onclick="toggleFiltroDropdown('artista', event)">Ver todos</button>
+      </div>
+      ${filtroDropdownAberto === 'artista' ? `<div class="filtro-dropdown">${artistaChips(musicaFiltroArtista)}</div>` : ''}
+    </div>
+  </div>`;
+
+  html += renderSelecaoBar();
+
+  const listaFiltrada = musicaFiltroArtista === 'todos' ? listaPorGenero : listaPorGenero.filter(m => m.artista === musicaFiltroArtista);
+  _idsFiltradosAtual = listaFiltrada.map(m => m.id);
+  const todosSelecionados = listaFiltrada.length > 0 && listaFiltrada.every(m => musicasSelecionadas.has(m.id));
+
+  html += `<div class="musicas-ordem-bar">
+    <span class="musicas-ordem-label">Ordenar por</span>
+    <button class="musicas-ordem-btn${musicaOrdem === 'titulo' ? ' active' : ''}" onclick="setMusicaOrdem('titulo')">Título</button>
+    <button class="musicas-ordem-btn${musicaOrdem === 'artista' ? ' active' : ''}" onclick="setMusicaOrdem('artista')">Artista</button>
+  </div>`;
+
+  html += `<div class="musicas-tabela-wrap"><table class="musicas-tabela">
+    <thead>
+      <tr>
+        <th class="musica-row-check-th">
+          <input type="checkbox" class="musica-check" title="Selecionar todos" ${todosSelecionados ? 'checked' : ''} onclick="toggleSelecionarTodos(_idsFiltradosAtual, this.checked)">
+        </th>
+        <th>Música</th><th>Artista</th><th class="col-genero">Gênero</th><th class="col-tom">Tom</th><th class="col-opcoes"></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${listaFiltrada.map(renderMusicaRow).join('')}
+    </tbody>
+  </table></div>`;
+
+  wrap.innerHTML = html;
+}
+
+function renderMusicaRow(m) {
+  const selecionado = musicasSelecionadas.has(m.id);
+  const semitons = m.transposicao || 0;
+  const tomAtual = m.tom ? transporAcorde(m.tom, semitons) : '';
+  const transposto = semitons !== 0;
+  return `
+    <tr class="musica-row${selecionado ? ' musica-row-selecionada' : ''}" onclick="abrirMusicaView('${m.id}')">
+      <td class="musica-row-check" onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
+        <input type="checkbox" class="musica-check" ${selecionado ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
+      </td>
+      <td class="musica-row-titulo">${m.titulo}</td>
+      <td class="musica-row-artista">${m.artista}</td>
+      <td class="musica-row-genero col-genero">${m.genero || 'Outros'}</td>
+      <td class="musica-row-tom col-tom">
+        ${m.tom ? `<span class="tom-cell" title="${transposto ? 'Tom alterado' : 'Tom original'}">
+          <span class="material-symbols-outlined tom-cell-icon">${transposto ? 'sync_alt' : 'music_note'}</span>${tomAtual}
+        </span>` : ''}
+      </td>
+      <td class="musica-row-opcoes col-opcoes" onclick="event.stopPropagation()">
+        <div class="menu-wrap">
+          <button class="icon-btn" onclick="toggleMusicaRowMenu(event, '${m.id}')" title="Mais opções"><span class="material-symbols-outlined">more_vert</span></button>
+          <div id="musica-row-menu-${m.id}" class="dropdown-menu hidden">
+            <button onclick="editarMusicaDaLista('${m.id}')"><span class="material-symbols-outlined">edit</span> Editar</button>
+            <button onclick="excluirMusicaDaLista('${m.id}')"><span class="material-symbols-outlined">delete</span> Excluir</button>
+          </div>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+let musicaRowMenuAberto = null;
+
+function toggleMusicaRowMenu(e, id) {
+  e.stopPropagation();
+  const abrir = musicaRowMenuAberto !== id;
+  fecharMusicaRowMenu();
+  if (abrir) {
+    musicaRowMenuAberto = id;
+    document.getElementById(`musica-row-menu-${id}`)?.classList.remove('hidden');
+  }
+}
+
+function fecharMusicaRowMenu() {
+  if (musicaRowMenuAberto) {
+    document.getElementById(`musica-row-menu-${musicaRowMenuAberto}`)?.classList.add('hidden');
+  }
+  musicaRowMenuAberto = null;
+}
+
+document.addEventListener('click', e => {
+  if (musicaRowMenuAberto && !e.target.closest('.menu-wrap')) fecharMusicaRowMenu();
+});
+
+function editarMusicaDaLista(id) {
+  fecharMusicaRowMenu();
+  abrirMusicaView(id);
+  abrirEdicaoMusica();
+}
+
+function excluirMusicaDaLista(id) {
+  fecharMusicaRowMenu();
+  const m = buscarMusica(id);
+  if (!m) return;
+  if (!confirm(`Excluir "${m.titulo}"?`)) return;
+  removerMusica(id);
+  renderMusicasLista();
+}
+
+// ─── Modal: adicionar música ────────────────────────────────────────────────────
+function abrirAdicionarMusicaModal() {
+  document.getElementById('musica-add-texto').value = '';
+  document.getElementById('musica-add-modal').classList.remove('hidden');
+}
+
+function fecharAdicionarMusicaModal() {
+  document.getElementById('musica-add-modal').classList.add('hidden');
+}
+
+function salvarNovaMusica() {
+  const texto = document.getElementById('musica-add-texto').value.trim();
+  if (!texto) return;
+
+  const segmentos = dividirMusicasTexto(texto);
+  const salvas = [];
+  segmentos.forEach(seg => {
+    const dados = parseMusicaTexto(seg);
+    if (dados.titulo) salvas.push(salvarMusica(dados));
+  });
+
+  if (!salvas.length) {
+    alert('Não consegui identificar nenhuma música nesse texto. Confira o formato colado.');
+    return;
+  }
+
+  fecharAdicionarMusicaModal();
+  renderMusicasLista();
+  if (salvas.length === 1) {
+    abrirMusicaView(salvas[0].id);
+  } else {
+    alert(`${salvas.length} músicas salvas com sucesso!`);
+  }
+}
+
+// ─── VIEW: Música ──────────────────────────────────────────────────────────────
+// Gerenciamento de views: a tela de música SUBSTITUI a lista (não é overlay).
+// Isso elimina o problema de scroll do body "vazando" por baixo de uma overlay.
+
+let musicaAtualId = null;
+let _musicaViewEmpurrouHistorico = false;
+let acordesMobileAbertos = false;
+
+function abrirMusicaView(id, semHistorico) {
+  musicaAtualId = id;
+  tomMenuAberto = false;
+  acordesMobileAbertos = false;
+
+  document.getElementById('view-lista').classList.add('hidden');
+  document.getElementById('view-musica').classList.remove('hidden');
+
+  if (!semHistorico) {
+    history.pushState({ musicaId: id }, '', '#m/' + id);
+    _musicaViewEmpurrouHistorico = true;
+  }
+
+  renderMusicaView();
+}
+
+function fecharMusicaView() {
+  pararLoopAutoScroll();
+  autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
+  acordesMobileAbertos = false;
+
+  document.getElementById('view-musica').classList.add('hidden');
+  document.getElementById('view-lista').classList.remove('hidden');
+
+  if (_musicaViewEmpurrouHistorico) {
+    _musicaViewEmpurrouHistorico = false;
+    history.back();
+  } else {
+    history.replaceState({}, '', location.pathname);
+  }
+
+  musicaAtualId = null;
+  renderMusicasLista();
+}
+
+window.addEventListener('popstate', (e) => {
+  const hash = location.hash;
+  const match = hash.match(/^#m\/(.+)$/);
+  if (match && buscarMusica(match[1])) {
+    _musicaViewEmpurrouHistorico = false;
+    abrirMusicaView(match[1], true);
+    return;
+  }
+  // Sem hash = fechando a música
+  if (musicaAtualId) {
+    _musicaViewEmpurrouHistorico = false;
+    pararLoopAutoScroll();
+    autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
+    acordesMobileAbertos = false;
+    document.getElementById('view-musica').classList.add('hidden');
+    document.getElementById('view-lista').classList.remove('hidden');
+    musicaAtualId = null;
+    renderMusicasLista();
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  const match = location.hash.match(/^#m\/(.+)$/);
+  if (match && buscarMusica(match[1])) {
+    abrirMusicaView(match[1], true);
+  }
+});
+
+function navegarMusica(direcao) {
+  const ids = _idsFiltradosAtual.length > 0 ? _idsFiltradosAtual : listarMusicas().sort((a, b) => a.titulo.localeCompare(b.titulo)).map(m => m.id);
+  if (ids.length < 2) return;
+  const idx = ids.indexOf(musicaAtualId);
+  if (idx === -1) return;
+  const novoIdx = (idx + direcao + ids.length) % ids.length;
+  musicaAtualId = ids[novoIdx];
+  tomMenuAberto = false;
+  acordesMobileAbertos = false;
+  pararLoopAutoScroll();
+  autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
+  history.replaceState({ musicaId: musicaAtualId }, '', '#m/' + musicaAtualId);
+  renderMusicaView();
+}
+
+// ─── Renderização da view de música (única função, CSS lida com mobile/desktop) ─
+
+function renderMusicaView() {
+  const musica = buscarMusica(musicaAtualId);
+  if (!musica) return;
+
+  const semitons = musica.transposicao || 0;
+  const tomAtual = musica.tom ? transporAcorde(musica.tom, semitons) : '';
+  const acordesAtuais = [...new Set(musica.acordes.map(a => simplificarAcorde(transporAcorde(a, semitons))))];
+  const s = autoScrollState;
+
+  // Header: voltar | [‹] título [›] | editar/excluir/menu
+  document.getElementById('musica-page-header').innerHTML = `
+    <button class="nav-btn" onclick="fecharMusicaView()">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    <div class="musica-view-nav">
+      <button class="icon-btn musica-nav-chevron" onclick="navegarMusica(-1)" title="Música anterior">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+      <div class="musica-view-titulo-wrap">
+        <h1 class="musica-titulo">${musica.titulo}</h1>
+        <div class="musica-artista">${musica.artista}</div>
+      </div>
+      <button class="icon-btn musica-nav-chevron" onclick="navegarMusica(1)" title="Próxima música">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+    <div class="musica-page-header-actions">
+      <div class="menu-wrap">
+        <button class="icon-btn" onclick="toggleMusicaMenuMobile(event)">
+          <span class="material-symbols-outlined">more_vert</span>
+        </button>
+        <div id="musica-mobile-menu" class="dropdown-menu hidden">
+          <button onclick="abrirEdicaoMusica()"><span class="material-symbols-outlined">edit</span> Editar</button>
+          <button class="dropdown-menu-btn-danger" onclick="removerMusicaAtualEVoltar()"><span class="material-symbols-outlined">delete</span> Excluir</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Body: toolbar + conteúdo + barra de autorrolagem (se ativa) + painel de acordes mobile (se aberto)
+  document.getElementById('musica-page-body').innerHTML = `
+    <div class="musica-toolbar">
+      ${musica.tom ? renderTomControl(tomAtual, musica.tom, semitons) : '<span></span>'}
+      <div class="musica-toolbar-right">
+        <button class="nav-btn musica-acordes-toggle${acordesMobileAbertos ? ' active' : ''}" onclick="toggleAcordesMobile()">
+          <span class="material-symbols-outlined">library_music</span> Acordes
+        </button>
+        <button class="icon-btn${modoNovato ? ' active' : ''}" onclick="toggleModoNovato()" title="${modoNovato ? 'Modo Novato ativo' : 'Modo Novato desativado'}">
+          <span class="material-symbols-outlined">${modoNovato ? 'school' : 'school'}</span>
+        </button>
+        ${!s.ativo ? `<button class="nav-btn autoscroll-start-btn" onclick="iniciarAutoScroll()" title="Autorrolagem">
+          <span class="material-symbols-outlined">arrow_cool_down</span><span class="autoscroll-start-label"> Autorrolagem</span>
+        </button>` : ''}
+      </div>
+    </div>
+    <div class="musica-conteudo">
+      <pre class="musica-cifra" id="musica-cifra-scroll">${renderCifraHtml(musica.cifraTexto, semitons)}</pre>
+      <div class="musica-acordes">
+        <div class="resize-handle" onmousedown="iniciarResizeAcordes(event)"></div>
+        <div class="musica-acordes-titulo">Acordes</div>
+        <div class="musica-acordes-grid">
+          ${acordesAtuais.length ? acordesAtuais.map(renderChordChip).join('') : '<div class="fav-empty">Nenhum acorde identificado.</div>'}
+        </div>
+      </div>
+    </div>
+    ${s.ativo ? `<div class="autoscroll-bar-bottom">
+      <button class="icon-btn" onclick="alternarAutoScrollPlay()"><span class="material-symbols-outlined">${s.rodando ? 'pause' : 'play_arrow'}</span></button>
+      <button class="icon-btn" onclick="reiniciarAutoScroll()"><span class="material-symbols-outlined">replay</span></button>
+      <span class="material-symbols-outlined autoscroll-speed-icon">speed</span>
+      <input type="range" class="autoscroll-speed" min="1" max="10" value="${s.velocidade}" oninput="ajustarVelocidadeAutoScroll(this.value)">
+      <button class="icon-btn" onclick="fecharAutoScroll()"><span class="material-symbols-outlined">close</span></button>
+    </div>` : ''}
+    ${acordesMobileAbertos ? `<div class="musica-acordes-mobile">
+      <div class="musica-acordes-mobile-scroll">
+        ${acordesAtuais.length ? acordesAtuais.map(renderChordChipMobile).join('') : '<span class="musica-acordes-mobile-vazio">Nenhum acorde identificado</span>'}
+      </div>
+      <button class="musica-acordes-mobile-close" onclick="toggleAcordesMobile()"><span class="material-symbols-outlined">close</span></button>
+    </div>` : ''}
+  `;
+
+  const cifraEl = document.getElementById('musica-cifra-scroll');
+  if (cifraEl) iniciarSwipeCifra(cifraEl);
+}
+
+function renderChordChip(nomeAcorde) {
+  let diagramaHtml = '';
+  let ehFavoritado = false;
+  try {
+    const r = obterAcordeInfo(nomeAcorde);
+    let candidato = r.cands[0];
+    const favorito = buscarFavorito(nomeAcorde);
+    if (favorito) {
+      const idx = r.cands.findIndex(c => posicoesIguais(c.posicoes, favorito.posicoes));
+      if (idx !== -1) { candidato = r.cands[idx]; ehFavoritado = true; }
+    }
+    if (candidato) diagramaHtml = renderDiagram(candidato);
+  } catch {
+    diagramaHtml = `<div class="chord-chip-erro">?</div>`;
+  }
+  return `<div class="chord-chip" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g, "\\'")}')">
+    <span class="material-symbols-outlined chord-chip-fav-badge" style="${ehFavoritado ? "font-variation-settings:'FILL' 1;" : ''}">kid_star</span>
+    <div class="chord-chip-nome">${nomeAcorde}</div>
+    ${diagramaHtml}
+  </div>`;
+}
+
+function renderChordChipMobile(nomeAcorde) {
+  let diagramaHtml = '';
+  try {
+    const r = obterAcordeInfo(nomeAcorde);
+    let candidato = r.cands[0];
+    const favorito = buscarFavorito(nomeAcorde);
+    if (favorito) {
+      const idx = r.cands.findIndex(c => posicoesIguais(c.posicoes, favorito.posicoes));
+      if (idx !== -1) candidato = r.cands[idx];
+    }
+    if (candidato) diagramaHtml = renderDiagram(candidato);
+  } catch { diagramaHtml = `<div class="chord-chip-erro">?</div>`; }
+  return `<div class="chord-chip chord-chip-mobile" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g,"\\'")}')">
+    <div class="chord-chip-nome">${nomeAcorde}</div>
+    ${diagramaHtml}
+  </div>`;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+}
+
+function renderCifraHtml(cifraTexto, semitons = 0) {
+  return cifraTexto.split('\n').map(linhaRaw => {
+    const bracketMatch = linhaRaw.match(/^(\s*\[[^\]]*\]\s*)/);
+    const prefixo = bracketMatch ? bracketMatch[1] : '';
+    const resto = linhaRaw.slice(prefixo.length);
+    const tokens = resto.trim().split(/\s+/).filter(Boolean);
+    const isChordLine = tokens.length > 0 && tokens.every(t => CHORD_TOKEN_RE.test(t));
+    if (!isChordLine) return escapeHtml(linhaRaw);
+
+    const partes = resto.split(/(\s+)/);
+    const restoHtml = partes.map(p => {
+      if (p === '' || /^\s+$/.test(p)) return p;
+      const transposto = simplificarAcorde(transporAcorde(p, semitons));
+      return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}">${escapeHtml(transposto)}</span>`;
+    }).join('');
+    return escapeHtml(prefixo) + restoHtml;
+  }).join('\n');
+}
+
+function toggleAcordesMobile() {
+  acordesMobileAbertos = !acordesMobileAbertos;
+  const scrollTop = document.getElementById('musica-cifra-scroll')?.scrollTop || 0;
+  renderMusicaView();
+  const cifra = document.getElementById('musica-cifra-scroll');
+  if (cifra) cifra.scrollTop = scrollTop;
+}
+
+function toggleMusicaMenuMobile(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('musica-mobile-menu')?.classList.toggle('hidden');
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('musica-mobile-menu');
+  if (menu && !menu.classList.contains('hidden') && !e.target.closest('.musica-mobile-menu-wrap')) {
+    menu.classList.add('hidden');
+  }
+});
+
+// ─── Swipe para navegar entre músicas ──────────────────────────────────────────
+let _swipeTX = 0, _swipeTY = 0;
+function iniciarSwipeCifra(el) {
+  el.addEventListener('touchstart', e => {
+    _swipeTX = e.touches[0].clientX;
+    _swipeTY = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - _swipeTX;
+    const dy = e.changedTouches[0].clientY - _swipeTY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2) navegarMusica(dx < 0 ? 1 : -1);
+  }, { passive: true });
+}
+
+// ─── Controle de tom ───────────────────────────────────────────────────────────
+let tomMenuAberto = false;
+
+function renderTomControl(tomAtual, tomOriginal, semitons) {
+  const raizAtual = obterRaizNota(tomAtual);
+  const semitonsSinal = semitons > 6 ? semitons - 12 : semitons;
+  return `
+    <div class="tom-wrap">
+      <button class="musica-tom-badge" onclick="toggleTomMenu(event)">
+        Tom: ${tomAtual}${semitons ? ` <span class="tom-badge-offset">(${semitonsSinal > 0 ? '+' : ''}${semitonsSinal}st)</span>` : ''}
+        <span class="material-symbols-outlined tom-badge-caret">expand_more</span>
+      </button>
+      <div id="tom-menu" class="tom-menu ${tomMenuAberto ? '' : 'hidden'}">
+        <div class="tom-menu-secao">
+          <button class="tom-step-btn" onclick="transporMusica(-1)" title="Meio tom abaixo">−½</button>
+          <div class="tom-menu-atual">${tomAtual}</div>
+          <button class="tom-step-btn" onclick="transporMusica(1)" title="Meio tom acima">+½</button>
+        </div>
+        <div class="tom-menu-grid">
+          ${NOTAS.map(n => `<button class="tom-opt${n === raizAtual ? ' active' : ''}" onclick="selecionarTom('${n}')">${n}</button>`).join('')}
+        </div>
+        <button class="tom-menu-reset" onclick="resetarTom()" ${semitons ? '' : 'disabled'}>
+          <span class="material-symbols-outlined">restart_alt</span> Voltar ao tom original (${tomOriginal})
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function toggleTomMenu(e) {
+  if (e) e.stopPropagation();
+  tomMenuAberto = !tomMenuAberto;
+  document.getElementById('tom-menu')?.classList.toggle('hidden', !tomMenuAberto);
+}
+
+function fecharTomMenu() {
+  if (!tomMenuAberto) return;
+  tomMenuAberto = false;
+  document.getElementById('tom-menu')?.classList.add('hidden');
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('tom-menu');
+  if (menu && !menu.classList.contains('hidden') && !e.target.closest('.tom-wrap')) {
+    fecharTomMenu();
+  }
+});
+
+function salvarTransposicao(novoValor) {
+  if (!musicaAtualId) return;
+  const normalizado = ((novoValor % 12) + 12) % 12;
+  atualizarMusica(musicaAtualId, { transposicao: normalizado });
+  tomMenuAberto = true;
+  renderMusicaView();
+}
+
+function transporMusica(delta) {
+  const musica = buscarMusica(musicaAtualId);
+  if (!musica) return;
+  salvarTransposicao((musica.transposicao || 0) + delta);
+}
+
+function selecionarTom(notaAlvo) {
+  const musica = buscarMusica(musicaAtualId);
+  if (!musica || !musica.tom) return;
+  const raizOriginal = obterRaizNota(musica.tom);
+  if (!raizOriginal) return;
+  const diff = (NOTAS.indexOf(notaAlvo) - NOTAS.indexOf(raizOriginal) + 12) % 12;
+  salvarTransposicao(diff);
+}
+
+function resetarTom() { salvarTransposicao(0); }
+
+// ─── Autorrolagem ──────────────────────────────────────────────────────────────
+let autoScrollState = { ativo: false, rodando: false, velocidade: 3, rafId: null, ultimoTs: null, acumulado: 0 };
+
+function obterCifraScrollEl() {
+  return document.getElementById('musica-cifra-scroll');
+}
+
+function iniciarAutoScroll() {
+  autoScrollState.ativo = true;
+  autoScrollState.rodando = true;
+  renderToolbarAutoScroll();
+  iniciarLoopAutoScroll();
+}
+
+function fecharAutoScroll() {
+  pararLoopAutoScroll();
+  autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
+  renderToolbarAutoScroll();
+}
+
+function alternarAutoScrollPlay() {
+  autoScrollState.rodando = !autoScrollState.rodando;
+  if (autoScrollState.rodando) iniciarLoopAutoScroll();
+  else pararLoopAutoScroll();
+  renderToolbarAutoScroll();
+}
+
+function reiniciarAutoScroll() {
+  const el = obterCifraScrollEl();
+  if (el) el.scrollTop = 0;
+  autoScrollState.acumulado = 0;
+}
+
+function ajustarVelocidadeAutoScroll(v) {
+  autoScrollState.velocidade = parseInt(v, 10);
+}
+
+function renderToolbarAutoScroll() {
+  const scrollTop = obterCifraScrollEl()?.scrollTop || 0;
+  renderMusicaView();
+  const cifra = obterCifraScrollEl();
+  if (cifra) cifra.scrollTop = scrollTop;
+}
+
+function iniciarLoopAutoScroll() {
+  pararLoopAutoScroll();
+  autoScrollState.ultimoTs = null;
+  const passo = ts => {
+    const el = obterCifraScrollEl();
+    if (!el || !autoScrollState.ativo || !autoScrollState.rodando) { autoScrollState.rafId = null; return; }
+    if (autoScrollState.ultimoTs !== null) {
+      const dt = ts - autoScrollState.ultimoTs;
+      const pxPorMs = (autoScrollState.velocidade * 2) / 1000;
+      autoScrollState.acumulado += dt * pxPorMs;
+      const inteiro = Math.floor(autoScrollState.acumulado);
+      if (inteiro > 0) {
+        el.scrollTop += inteiro;
+        autoScrollState.acumulado -= inteiro;
+      }
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) {
+        autoScrollState.rodando = false;
+        autoScrollState.rafId = null;
+        renderToolbarAutoScroll();
+        return;
+      }
+    }
+    autoScrollState.ultimoTs = ts;
+    autoScrollState.rafId = requestAnimationFrame(passo);
+  };
+  autoScrollState.rafId = requestAnimationFrame(passo);
+}
+
+function pararLoopAutoScroll() {
+  if (autoScrollState.rafId) cancelAnimationFrame(autoScrollState.rafId);
+  autoScrollState.rafId = null;
+}
+
+// ─── Edição de música ──────────────────────────────────────────────────────────
+function abrirEdicaoMusica() {
+  const musica = buscarMusica(musicaAtualId);
+  if (!musica) return;
+
+  // Header: cancelar
+  document.getElementById('musica-page-header').innerHTML = `
+    <button class="nav-btn" onclick="renderMusicaView()">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    <div class="musica-view-nav">
+      <div class="musica-view-titulo-wrap">
+        <h1 class="musica-titulo">Editar música</h1>
+      </div>
+    </div>
+    <span></span>
+  `;
+
+  // Body: formulário
+  document.getElementById('musica-page-body').innerHTML = `
+    <div class="musica-edit-scroll">
+      <div class="musica-edit-form">
+        <label>Título</label>
+        <input type="text" id="edit-titulo" value="${musica.titulo.replace(/"/g,'&quot;')}">
+        <label>Artista</label>
+        <input type="text" id="edit-artista" value="${musica.artista.replace(/"/g,'&quot;')}">
+        <label>Tom</label>
+        <input type="text" id="edit-tom" value="${(musica.tom || '').replace(/"/g,'&quot;')}">
+        <label>Gênero</label>
+        <div class="musica-edit-genero-wrap">
+          <select id="edit-genero" class="musica-edit-select" onchange="toggleNovoGeneroInput(this.value)">
+            ${[...new Set([...(listarMusicas().map(m => m.genero || 'Outros')), ...GENEROS])].sort().map(g => `<option value="${g}"${(musica.genero || 'Outros') === g ? ' selected' : ''}>${g}</option>`).join('')}
+            <option value="__novo__">+ Criar novo gênero…</option>
+          </select>
+          <input type="text" id="edit-genero-novo" class="musica-edit-genero-novo hidden" placeholder="Nome do novo gênero">
+        </div>
+        <label>Cifra</label>
+        <textarea id="edit-cifra" rows="20">${musica.cifraTexto.replace(/</g,'&lt;')}</textarea>
+        <div class="musica-edit-actions">
+          <button class="nav-btn" onclick="renderMusicaView()">Cancelar</button>
+          <button onclick="salvarEdicaoMusica()">Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleNovoGeneroInput(valor) {
+  const input = document.getElementById('edit-genero-novo');
+  if (!input) return;
+  if (valor === '__novo__') { input.classList.remove('hidden'); input.focus(); }
+  else { input.classList.add('hidden'); input.value = ''; }
+}
+
+function salvarEdicaoMusica() {
+  const titulo = document.getElementById('edit-titulo').value.trim();
+  const artista = document.getElementById('edit-artista').value.trim();
+  const tom = document.getElementById('edit-tom').value.trim();
+  const cifraTexto = document.getElementById('edit-cifra').value;
+  const acordes = extrairAcordes(cifraTexto);
+  const selectGenero = document.getElementById('edit-genero');
+  const genero = selectGenero?.value === '__novo__'
+    ? (document.getElementById('edit-genero-novo')?.value.trim() || 'Outros')
+    : (selectGenero?.value || 'Outros');
+  atualizarMusica(musicaAtualId, { titulo, artista, tom, cifraTexto, acordes, genero });
+  renderMusicaView();
+}
+
+function removerMusicaAtualEVoltar() {
+  if (!musicaAtualId) return;
+  removerMusica(musicaAtualId);
+  fecharMusicaView();
+}
+
+// ─── Modal de acorde ───────────────────────────────────────────────────────────
+let acordeModalState = null;
+
+function abrirAcordeModal(nomeAcorde) {
+  try {
+    const r = obterAcordeInfo(nomeAcorde);
+    acordeModalState = { identificador: nomeAcorde, notas: [...r.notasNorm], cands: r.cands };
+  } catch (e) {
+    acordeModalState = { identificador: nomeAcorde, notas: [], cands: [], erro: e.message };
+  }
+  document.getElementById('acorde-modal-titulo').textContent = nomeAcorde;
+  document.getElementById('acorde-modal').classList.remove('hidden');
+  renderAcordeModalBody();
+}
+
+function fecharAcordeModal() {
+  document.getElementById('acorde-modal').classList.add('hidden');
+  acordeModalState = null;
+}
+
+function toggleAcordeModalFavorito(idx) {
+  if (!acordeModalState) return;
+  const c = acordeModalState.cands[idx];
+  toggleFavorito(acordeModalState.identificador, acordeModalState.notas, c.posicoes);
+  renderAcordeModalBody();
+  if (musicaAtualId) renderMusicaView();
+}
+
+function renderAcordeModalOption(c, idx, identificador) {
+  const pestana = detectarPestana(c.posicoes);
+  const apoio = detectarPestanaApoio(c.posicoes);
+  const soltas = CORDAS.filter(co => c.posicoes[co] === 0);
+  const tags = [];
+  if (pestana) tags.push(`👇 Pestana ${pestana}`);
+  else if (apoio) tags.push(`💡 Apoio ${apoio}`);
+  if (soltas.length) tags.push(`🫳 Solta${soltas.length>1?'s':''}: ${soltas.map(co=>c.notasTocadas[co]).join(',')}`);
+
+  return `<div class="chord-option">
+    <button class="fav-btn" onclick="toggleAcordeModalFavorito(${idx})">${iconeFavorito(ehFavorito(identificador, c.posicoes))}</button>
+    <div class="option-label">Opção ${idx+1}</div>
+    <div class="option-tags">${tags.join(' · ')}</div>
+    ${renderDiagram(c)}
+  </div>`;
+}
+
+function renderAcordeModalBody() {
+  const wrap = document.getElementById('acorde-modal-body');
+  const s = acordeModalState;
+  if (!s || s.erro) { wrap.innerHTML = `<div class="error-msg">${s?.erro || 'Acorde inválido'}</div>`; return; }
+  if (!s.cands.length) { wrap.innerHTML = `<div class="error-msg">Nenhuma posição encontrada para esse acorde.</div>`; return; }
+  wrap.innerHTML = `<div class="options-row">` +
+    s.cands.map((c, idx) => renderAcordeModalOption(c, idx, s.identificador)).join('') +
+    `</div>`;
+}
+
+// ─── Menu da lista de músicas (exportar / importar) ────────────────────────────
+function toggleMusicasMenu(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('musicas-menu').classList.toggle('hidden');
+  atualizarMenuModoNovato();
+}
+
+function fecharMusicasMenu() {
+  document.getElementById('musicas-menu').classList.add('hidden');
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('musicas-menu');
+  if (menu && !menu.classList.contains('hidden') && !e.target.closest('.menu-wrap')) {
+    fecharMusicasMenu();
+  }
+});
+
+function exportarBackup() {
+  fecharMusicasMenu();
+  const dados = { musicas: listarMusicas(), favoritos: listarFavoritos(), exportadoEm: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cifras-ukulele-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function abrirSeletorImportacao() {
+  fecharMusicasMenu();
+  document.getElementById('backup-file-input').click();
+}
+
+function importarBackupArquivo(input) {
+  const arquivo = input.files[0];
+  if (!arquivo) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const dados = JSON.parse(e.target.result);
+      let musicasAdicionadas = 0;
+      let favoritosAdicionados = 0;
+
+      if (Array.isArray(dados.musicas)) {
+        const lista = listarMusicas();
+        const existentes = new Set(lista.map(m => m.id));
+        dados.musicas.forEach(m => { if (!existentes.has(m.id)) { lista.push(m); musicasAdicionadas++; } });
+        salvarListaMusicas(lista);
+      }
+      if (Array.isArray(dados.favoritos)) {
+        const lista = listarFavoritos();
+        const existentes = new Set(lista.map(f => f.id));
+        dados.favoritos.forEach(f => { if (!existentes.has(f.id)) { lista.push(f); favoritosAdicionados++; } });
+        salvarListaFavoritos(lista);
+      }
+
+      renderMusicasLista();
+      if (musicaAtualId) renderMusicaView();
+      renderFavoritos();
+      alert(`Backup importado: ${musicasAdicionadas} música(s) e ${favoritosAdicionados} formato(s) de acorde adicionados.`);
+    } catch {
+      alert('Não consegui ler esse arquivo. Confira se é um backup válido (.json exportado por aqui).');
+    }
+    input.value = '';
+  };
+  reader.readAsText(arquivo);
+}
+
+function limparTudo() {
+  fecharMusicasMenu();
+  const total = listarMusicas().length + listarFavoritos().length;
+  if (!total) { alert('Não há nada salvo para limpar.'); return; }
+  if (!confirm(`Isso vai apagar TODAS as ${listarMusicas().length} música(s) e ${listarFavoritos().length} formato(s) de acorde favoritado(s) salvos neste navegador. Essa ação não pode ser desfeita.\n\nRecomendamos exportar um backup antes. Quer continuar mesmo assim?`)) return;
+  salvarListaMusicas([]);
+  salvarListaFavoritos([]);
+  fecharMusicaView();
+  renderFavoritos();
+  alert('Tudo foi apagado.');
+}
+
+// ─── Redimensionar coluna de acordes (desktop) ─────────────────────────────────
+function iniciarResizeAcordes(e) {
+  e.preventDefault();
+  const coluna = document.querySelector('.musica-acordes');
+  if (!coluna) return;
+  const xInicial = e.clientX;
+  const larguraInicial = coluna.getBoundingClientRect().width;
+  function onMove(ev) {
+    const delta = xInicial - ev.clientX;
+    const novaLargura = Math.max(180, Math.min(larguraInicial + delta, window.innerWidth * 0.7));
+    coluna.style.flex = `0 0 ${novaLargura}px`;
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ─── Tooltip flutuante com diagrama (hover nos acordes da cifra) ───────────────
+let chordTooltipEl = null;
+
+function obterDiagramaAcorde(nomeAcorde) {
+  const r = obterAcordeInfo(nomeAcorde);
+  let candidato = r.cands[0];
+  const favorito = buscarFavorito(nomeAcorde);
+  if (favorito) {
+    const idx = r.cands.findIndex(c => posicoesIguais(c.posicoes, favorito.posicoes));
+    if (idx !== -1) candidato = r.cands[idx];
+  }
+  return candidato ? renderDiagram(candidato) : null;
+}
+
+function mostrarChordTooltip(nomeAcorde, x, y) {
+  let diagramaHtml;
+  try { diagramaHtml = obterDiagramaAcorde(nomeAcorde); } catch { diagramaHtml = null; }
+  if (!diagramaHtml) return;
+  if (!chordTooltipEl) {
+    chordTooltipEl = document.createElement('div');
+    chordTooltipEl.className = 'chord-tooltip';
+    document.body.appendChild(chordTooltipEl);
+  }
+  chordTooltipEl.innerHTML = `<div class="chord-tooltip-nome">${escapeHtml(nomeAcorde)}</div>${diagramaHtml}`;
+  chordTooltipEl.style.display = 'block';
+  posicionarChordTooltip(x, y);
+}
+
+function posicionarChordTooltip(x, y) {
+  if (!chordTooltipEl) return;
+  const margem = 14;
+  const rect = chordTooltipEl.getBoundingClientRect();
+  let left = x + margem;
+  let top = y + margem;
+  if (left + rect.width > window.innerWidth) left = x - rect.width - margem;
+  if (top + rect.height > window.innerHeight) top = y - rect.height - margem;
+  chordTooltipEl.style.left = `${Math.max(4, left)}px`;
+  chordTooltipEl.style.top = `${Math.max(4, top)}px`;
+}
+
+function esconderChordTooltip() {
+  if (chordTooltipEl) chordTooltipEl.style.display = 'none';
+}
+
+document.addEventListener('mouseover', e => {
+  const token = e.target.closest('.chord-token');
+  if (token) mostrarChordTooltip(token.dataset.acorde, e.clientX, e.clientY);
+});
+document.addEventListener('mousemove', e => {
+  if (chordTooltipEl && chordTooltipEl.style.display === 'block' && e.target.closest('.chord-token')) {
+    posicionarChordTooltip(e.clientX, e.clientY);
+  }
+});
+document.addEventListener('mouseout', e => {
+  if (e.target.closest('.chord-token') && !e.relatedTarget?.closest('.chord-token')) {
+    esconderChordTooltip();
+  }
+});
