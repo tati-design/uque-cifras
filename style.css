@@ -55,6 +55,9 @@ body {
   min-width: 0;
   max-width: calc(100% - 260px);
 }
+@media (max-width: 860px) {
+  .musica-view-nav { max-width: calc(100% - 120px); }
+}
 .musica-view-titulo-wrap {
   min-width: 0;
   text-align: center;
@@ -207,6 +210,7 @@ body {
   gap: 6px;
   background: #f3f2ee;
   padding: 8px 16px;
+  padding-bottom: max(28px, calc(8px + env(safe-area-inset-bottom, 20px)));
   border-top: 1px solid #e5e5e5;
 }
 .autoscroll-bar-bottom .autoscroll-speed { flex: 1; max-width: 160px; accent-color: #5b7cf6; }
@@ -234,6 +238,7 @@ body {
   gap: 8px;
   overflow-x: auto;
   padding: 12px 14px;
+  padding-bottom: max(20px, calc(12px + env(safe-area-inset-bottom, 8px)));
   flex: 1;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;

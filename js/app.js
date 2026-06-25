@@ -9,7 +9,7 @@ document.addEventListener('keydown', e => {
   }
 
   const digitandoEmCampo = ['INPUT', 'TEXTAREA'].includes(e.target.tagName);
-  const musicaViewAberta = !document.getElementById('musica-view-modal').classList.contains('hidden');
+  const musicaViewAberta = !document.getElementById('view-musica').classList.contains('hidden');
   if (!digitandoEmCampo && musicaViewAberta) {
     if (e.key === 'ArrowLeft') { navegarMusica(-1); }
     else if (e.key === 'ArrowRight') { navegarMusica(1); }

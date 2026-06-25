@@ -179,13 +179,13 @@ function removerMusica(id) {
 // ─── Parser do texto colado ─────────────────────────────────────────────────────
 // Token de acorde válido: precisa "casar" inteiro (^...$) para não confundir
 // palavras de letra de música (ex: "Can", "Do") com acordes de verdade.
-const CHORD_TOKEN_RE = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus[24]?|m|M)\d{0,2}|\d{1,2}(?:maj|M)?)?(?:\([^)]{1,8}\))?(?:\/[A-G](?:#|b)?)?$/;
+const CHORD_TOKEN_RE = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus[24]?|m|M)\d{0,2}|\d{1,2}(?:maj|M)?)?(?:\+)?(?:\([^)]{1,8}\))?(?:\/(?:[A-G](?:#|b)?|\d+))?(?:\+)?$/;
 
 function extrairAcordes(cifraTexto) {
   const vistos = new Set();
   const ordem = [];
   cifraTexto.split('\n').forEach(linhaRaw => {
-    const linha = linhaRaw.replace(/^\s*\[[^\]]*\]\s*/, '');
+    const linha = linhaRaw.replace(/^\s*\[[^\]]*\]\s*/, '').replace(/\([^)]*\)\s*/g, '');
     const tokens = linha.trim().split(/\s+/).filter(Boolean);
     if (!tokens.length) return;
     if (!tokens.every(t => CHORD_TOKEN_RE.test(t))) return;
