@@ -139,11 +139,50 @@ function limparSelecao() {
 }
 
 function iniciarEditarCategoria() {
+  if (window.innerWidth <= 860) { abrirModalGenero(); return; }
   editandoCategoria = true;
   renderMusicasLista();
 }
 
 function cancelarEditarCategoria() {
+  editandoCategoria = false;
+  renderMusicasLista();
+}
+
+function abrirModalGenero() {
+  const n = musicasSelecionadas.size;
+  const generosExistentes = [...new Set(listarMusicas().map(m => m.genero || 'Outros'))].sort();
+  document.getElementById('genero-modal-body').innerHTML = `
+    <p class="genero-modal-subtitulo">${n} música(s) selecionada(s)</p>
+    <div class="genero-modal-lista">
+      ${generosExistentes.map(g => `<button class="genero-modal-opt" onclick="salvarCategoriaSelecionadas('${g.replace(/'/g,"\\'")}'); fecharModalGenero()">${g}</button>`).join('')}
+    </div>
+    <div class="genero-modal-novo">
+      <input type="text" id="genero-modal-input" class="genero-modal-input" placeholder="Novo gênero…" onkeydown="if(event.key==='Enter') criarESalvarCategoriaModal()">
+      <button class="genero-modal-criar" onclick="criarESalvarCategoriaModal()"><span class="material-symbols-outlined">add</span></button>
+    </div>
+  `;
+  document.getElementById('genero-modal').classList.remove('hidden');
+}
+
+function fecharModalGenero() {
+  document.getElementById('genero-modal').classList.add('hidden');
+}
+
+function criarESalvarCategoriaModal() {
+  const input = document.getElementById('genero-modal-input');
+  const nome = input?.value.trim();
+  if (!nome) { input?.focus(); return; }
+  salvarCategoriaSelecionadas(nome);
+  fecharModalGenero();
+}
+
+function excluirSelecionadas() {
+  const n = musicasSelecionadas.size;
+  if (!n) return;
+  if (!confirm(`Excluir ${n} música(s) selecionada(s)? Essa ação não pode ser desfeita.`)) return;
+  musicasSelecionadas.forEach(id => removerMusica(id));
+  musicasSelecionadas.clear();
   editandoCategoria = false;
   renderMusicasLista();
 }
@@ -175,7 +214,8 @@ function renderSelecaoBar() {
   return `<div class="selecao-bar">
     <span class="selecao-bar-label">${n} selecionada(s)</span>
     <button class="selecao-bar-action" onclick="iniciarEditarCategoria()"><span class="material-symbols-outlined">label</span> Editar gênero</button>
-    <button class="selecao-bar-cancel" onclick="limparSelecao()"><span class="material-symbols-outlined">close</span> Desmarcar</button>
+    <button class="selecao-bar-action selecao-bar-danger" onclick="excluirSelecionadas()"><span class="material-symbols-outlined">delete</span> Apagar</button>
+    <button class="selecao-bar-cancel" onclick="limparSelecao()"><span class="material-symbols-outlined">close</span></button>
   </div>`;
 }
 
@@ -291,6 +331,7 @@ function renderMusicasLista() {
     </tbody>
   </table></div>`;
 
+  if (musicasSelecionadas.size > 0) html += `<div class="selecao-bar-spacer"></div>`;
   wrap.innerHTML = html;
   if (buscaTinhaFoco) {
     const input = document.getElementById('musica-busca-input');

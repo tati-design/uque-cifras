@@ -791,6 +791,86 @@ body {
   padding: 4px 6px !important;
 }
 .selecao-genero-criar .material-symbols-outlined { font-size: 16px; }
+.selecao-bar-danger { background: #e84040 !important; }
+.selecao-bar-danger:hover { background: #c43030 !important; }
+
+/* ── Barra de seleção flutuante (mobile) ─────────────────────────────────── */
+@media (max-width: 860px) {
+  .selecao-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    border-radius: 0;
+    border: none;
+    border-top: 1.5px solid #c6cffa;
+    margin-bottom: 0;
+    padding: 10px 16px;
+    padding-bottom: max(10px, calc(10px + env(safe-area-inset-bottom, 0px)));
+    flex-wrap: nowrap;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.10);
+  }
+  .selecao-bar-label { font-size: 0.78rem; }
+  .selecao-bar-action { font-size: 0.78rem; padding: 5px 10px; }
+  .selecao-bar-spacer { height: 70px; }
+}
+
+/* ── Modal de gênero ─────────────────────────────────────────────────────── */
+.genero-modal-content { max-width: 380px; width: 100%; }
+.genero-modal-body { padding: 4px 0 8px; }
+.genero-modal-subtitulo { font-size: 0.82rem; color: #666; margin-bottom: 14px; padding: 0 4px; }
+.genero-modal-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-bottom: 14px;
+}
+.genero-modal-opt {
+  background: none;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 9px;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: #222;
+  transition: background 0.12s, border-color 0.12s;
+}
+.genero-modal-opt:hover, .genero-modal-opt:active { background: #eef0fc; border-color: #5b7cf6; color: #3a5ae8; }
+.genero-modal-novo {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+}
+.genero-modal-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border: 1.5px solid #c6cffa;
+  border-radius: 8px;
+  font-family: inherit;
+  background: #fff;
+}
+.genero-modal-input:focus { outline: none; border-color: #5b7cf6; }
+.genero-modal-criar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #5b7cf6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.genero-modal-criar:hover { background: #4a6be0; }
 
 /* Ordenação */
 .musicas-ordem-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -1143,6 +1223,7 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   justify-content: center;
   padding: 20px;
   background: rgba(20, 18, 12, 0.45);
+  z-index: 300;
 }
 .modal-content-small {
   display: block;
