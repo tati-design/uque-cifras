@@ -670,13 +670,21 @@ function escapeHtml(s) {
 
 function renderCifraHtml(cifraTexto, semitons = 0) {
   return cifraTexto.split('\n').map(linhaRaw => {
+    // Esconder linhas de tablatura no modo simplificar
+    if (modoSimplificar && /^\s*[EBGDAe]\|/.test(linhaRaw)) return '';
+
+    // Prefixo [seção] → negrito
     const bracketMatch = linhaRaw.match(/^(\s*\[[^\]]*\]\s*)/);
     const prefixo = bracketMatch ? bracketMatch[1] : '';
+    const prefixoHtml = prefixo
+      ? prefixo.replace(/\[([^\]]*)\]/g, (_, t) => `<strong class="cifra-secao">[${escapeHtml(t)}]</strong>`)
+      : '';
+
     const resto = linhaRaw.slice(prefixo.length);
     const tokens = resto.trim().split(/\s+/).filter(Boolean);
     const chordTokens = tokens.filter(t => !isSectionToken(t));
     const isChordLine = chordTokens.length > 0 && chordTokens.every(t => CHORD_TOKEN_RE.test(t));
-    if (!isChordLine) return escapeHtml(linhaRaw);
+    if (!isChordLine) return prefixoHtml + escapeHtml(resto);
 
     const partes = resto.split(/(\s+)/);
     const restoHtml = partes.map(p => {
@@ -685,7 +693,7 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
       const transposto = simplificarAcorde(transporAcorde(p, semitons));
       return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}">${escapeHtml(transposto)}</span>`;
     }).join('');
-    return escapeHtml(prefixo) + restoHtml;
+    return prefixoHtml + restoHtml;
   }).join('\n');
 }
 

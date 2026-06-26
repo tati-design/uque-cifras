@@ -1117,6 +1117,7 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 
 /* Destaque de acorde na cifra */
 .chord-token { color: #5b7cf6; font-weight: 700; cursor: pointer; }
+.cifra-secao { font-weight: 700; color: #1a1a1a; }
 .chord-tooltip {
   display: none;
   position: fixed;

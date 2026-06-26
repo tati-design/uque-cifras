@@ -198,13 +198,15 @@ function removerMusica(id) {
 // ─── Parser do texto colado ─────────────────────────────────────────────────────
 // Token de acorde válido: precisa "casar" inteiro (^...$) para não confundir
 // palavras de letra de música (ex: "Can", "Do") com acordes de verdade.
-const CHORD_TOKEN_RE = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus[24]?|m|M)\d{0,2}|\d{1,2}(?:maj|M)?)?(?:\+)?(?:\([^)]{1,8}\))?(?:\/(?:[A-G](?:#|b)?|\d+))?(?:\+)?$/;
+// ° = diminuto, /5- = quinta bemol, paren pode vir antes OU depois do slash
+const CHORD_TOKEN_RE = /^[A-G](?:#|b)?(?:°|(?:(?:maj|min|dim|aug|sus[24]?|m|M)\d{0,2}|\d{1,2}(?:maj|M)?))?(?:\+)?(?:\([^)]{1,12}\))?(?:\/(?:[A-G](?:#|b)?|\d+[-+]?))?(?:\([^)]{1,12}\))?(?:\+)?$/;
 
 // Tokens que aparecem em linhas de acordes mas não são acordes (parênteses, repetições, rótulos)
 function isSectionToken(t) {
   return /^[()[\]]$/.test(t) ||       // parênteses/colchetes avulsos
          /^\(\d+x\)$/i.test(t) ||     // (2x), (3x) etc.
-         /^[\w.]+:$/.test(t);          // Final:, Introd.: etc.
+         /^[\w.]+:$/.test(t) ||       // Final:, Introd.: etc.
+         /^\/+$/.test(t);             // / ou // marcador de compasso
 }
 
 function extrairAcordes(cifraTexto) {
