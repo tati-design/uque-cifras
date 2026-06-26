@@ -163,6 +163,13 @@ body {
 @media (min-width: 861px) {
   .musica-acordes-toggle { display: none; }
 }
+/* Toolbar compacta no mobile: esconde rótulos de texto */
+@media (max-width: 600px) {
+  .toolbar-btn-label { display: none; }
+  .tom-badge-prefix { display: none; }
+  .tom-badge-offset { display: none; }
+  .autoscroll-start-label { display: none; }
+}
 
 /* ── Área de conteúdo: cifra + coluna de acordes ────────────────────────── */
 .musica-conteudo {

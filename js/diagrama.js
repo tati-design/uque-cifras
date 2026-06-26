@@ -9,10 +9,9 @@ function renderDiagram(candidato) {
   const casaMinPressionada = fretsPressionados.length ? Math.min(...fretsPressionados) : 0;
   const casaMaxPressionada = fretsPressionados.length ? Math.max(...fretsPressionados) : 0;
 
-  // Offset: quando o acorde começa acima do fret 1, deslocamos o diagrama
-  // para que o primeiro fret pressionado apareça na primeira linha visível.
-  const offset = casaMinPressionada > 1 ? casaMinPressionada - 1 : 0;
-  const NUM_ROWS = Math.max(4, casaMaxPressionada - offset);
+  // Sempre 5 casas. Offset só quando o acorde não cabe na janela 1-5.
+  const NUM_ROWS = 5;
+  const offset = casaMaxPressionada > 5 ? casaMinPressionada - 1 : 0;
 
   const W = 120, padL = 18, padT = 28, padB = 30;
   const colW = (W - padL - 10) / 3;

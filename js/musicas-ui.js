@@ -86,8 +86,8 @@ function renderFonteControl() {
     <div class="fonte-wrap">
       <button class="musica-fonte-badge" onclick="toggleFonteMenu(event)">
         <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">text_fields</span>
-        <span class="fonte-badge-val">${cifraFontSize}px</span>
-        <span class="material-symbols-outlined tom-badge-caret">expand_more</span>
+        <span class="fonte-badge-val toolbar-btn-label">${cifraFontSize}px</span>
+        <span class="material-symbols-outlined tom-badge-caret toolbar-btn-label">expand_more</span>
       </button>
       <div id="fonte-menu" class="tom-menu ${fonteMenuAberto ? '' : 'hidden'}">
         <div class="tom-menu-secao">
@@ -684,7 +684,7 @@ function renderMusicaView() {
       </div>
       <div class="musica-toolbar-right">
         <button class="nav-btn musica-acordes-toggle${acordesMobileAbertos ? ' active' : ''}" onclick="toggleAcordesMobile()">
-          <span class="material-symbols-outlined">library_music</span> Acordes
+          <span class="material-symbols-outlined">library_music</span><span class="toolbar-btn-label"> Acordes</span>
         </button>
         <div class="aprendiz-split-btn${(modoSimplificar || modoNomes || modoEsconderTab) ? ' active' : ''}">
           <button class="aprendiz-main" onclick="toggleModoNovato()" title="Modo Aprendiz">
@@ -1120,7 +1120,7 @@ function renderTomControl(tomAtual, tomOriginal, semitons) {
   return `
     <div class="tom-wrap">
       <button class="musica-tom-badge" onclick="toggleTomMenu(event)">
-        Tom: ${tomAtual}${semitons ? ` <span class="tom-badge-offset">(${semitonsSinal > 0 ? '+' : ''}${semitonsSinal}st)</span>` : ''}
+        <span class="tom-badge-prefix">Tom: </span>${tomAtual}${semitons ? ` <span class="tom-badge-offset">(${semitonsSinal > 0 ? '+' : ''}${semitonsSinal}st)</span>` : ''}
         <span class="material-symbols-outlined tom-badge-caret">expand_more</span>
       </button>
       <div id="tom-menu" class="tom-menu ${tomMenuAberto ? '' : 'hidden'}">
