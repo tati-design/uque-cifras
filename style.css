@@ -1118,6 +1118,73 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 /* Destaque de acorde na cifra */
 .chord-token { color: #5b7cf6; font-weight: 700; cursor: pointer; }
 .cifra-secao { font-weight: 700; color: #1a1a1a; }
+
+/* ── Editor de correção de acordes ─────────────────────────────────────────── */
+.correcao-legenda-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 16px; background: #fff; border-bottom: 1px solid #e8e7e3;
+  font-size: 0.82rem; color: #555;
+}
+.correcao-count { margin-left: auto; font-weight: 600; color: #c0392b; }
+.correcao-count.ok { color: #27ae60; }
+.correcao-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 6px;
+  font-family: 'Courier New', monospace; font-size: 0.82rem; font-weight: 700;
+}
+.correcao-badge.ok  { background: #e8f5e9; color: #2e7d32; border: 1.5px solid #a5d6a7; }
+.correcao-badge.bad { background: #fdecea; color: #c0392b; border: 1.5px solid #ef9a9a; }
+
+.correcao-cifra {
+  padding: 12px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  overflow-x: auto;
+}
+.correcao-linha {
+  min-height: 1.6em;
+  white-space: pre;
+  display: block;
+  line-height: 1.8;
+}
+.correcao-linha.texto { color: #999; }
+
+.correcao-token {
+  display: inline-block;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s;
+  vertical-align: baseline;
+  line-height: 1.4;
+}
+.correcao-token.ok  { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+.correcao-token.bad { background: #fdecea; color: #c0392b; border-color: #ef9a9a; }
+.correcao-token.section { background: #f3f2ee; color: #888; border-color: #ddd; cursor: default; }
+.correcao-token.ok:hover  { background: #c8e6c9; }
+.correcao-token.bad:hover { background: #ffcdd2; }
+.correcao-token.sel { outline: 2px solid #5b7cf6; outline-offset: 1px; }
+.correcao-prefix { color: #5b7cf6; font-weight: 700; }
+
+.correcao-painel {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: #f8f7f4; border: 1.5px solid #e0dfd9; border-radius: 10px;
+  padding: 10px 12px; margin: 4px 0 8px;
+  white-space: normal;
+}
+.correcao-input {
+  flex: 1; min-width: 120px; max-width: 220px;
+  font-family: 'Courier New', monospace; font-size: 1rem; font-weight: 700;
+  border: 1.5px solid #ccc; border-radius: 8px; padding: 6px 10px;
+  outline: none;
+}
+.correcao-input:focus { border-color: #5b7cf6; }
+.correcao-sub-btn { font-weight: 600; }
+.correcao-sub-btn:disabled { opacity: 0.4; pointer-events: none; }
+.correcao-del-btn { color: #c0392b; }
 .chord-tooltip {
   display: none;
   position: fixed;

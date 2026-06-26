@@ -554,6 +554,7 @@ function renderMusicaView() {
         </button>
         <div id="musica-mobile-menu" class="dropdown-menu hidden">
           <button onclick="abrirEdicaoMusica()"><span class="material-symbols-outlined">edit</span> Editar</button>
+          <button onclick="abrirCorrecaoAcordes()"><span class="material-symbols-outlined">tune</span> Corrigir acordes</button>
           <button class="dropdown-menu-btn-danger" onclick="removerMusicaAtualEVoltar()"><span class="material-symbols-outlined">delete</span> Excluir</button>
         </div>
       </div>
@@ -695,6 +696,173 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
     }).join('');
     return prefixoHtml + restoHtml;
   }).join('\n');
+}
+
+// ─── Editor de Correção de Acordes ────────────────────────────────────────────
+let _correcaoLinhas = [];   // [{type:'chord'|'text', tokens:[...], raw}]
+let _correcaoSel = null;    // {lIdx, tIdx}
+
+function _looksLikeChordAttempt(t) {
+  return /^[A-G][#b]?/.test(t) && t.length <= 14;
+}
+
+function _tokenizarLinhaCorrecao(linhaRaw) {
+  const tabMatch = /^\s*[EBGDAe]\|/.test(linhaRaw);
+  if (tabMatch) return { type: 'text', raw: linhaRaw };
+
+  const bracketMatch = linhaRaw.match(/^(\s*\[[^\]]*\]\s*)/);
+  const prefixo = bracketMatch ? bracketMatch[1] : '';
+  const resto = linhaRaw.slice(prefixo.length);
+  const rawTokens = resto.trim().split(/\s+/).filter(Boolean);
+  const chordTokens = rawTokens.filter(t => !isSectionToken(t));
+
+  // "linha de acordes" (estrita) ou "linha candidata" (todos tokens parecem acordes)
+  const isChordLine = chordTokens.length > 0 && chordTokens.every(t => CHORD_TOKEN_RE.test(t));
+  const isCandidate  = chordTokens.length > 0 && chordTokens.every(t => _looksLikeChordAttempt(t));
+
+  if (!isChordLine && !isCandidate) return { type: 'text', raw: linhaRaw };
+
+  // Tokeniza com espaços preservados
+  const tokens = [];
+  if (prefixo) tokens.push({ text: prefixo, kind: 'prefix' });
+  resto.split(/(\s+)/).forEach(s => {
+    if (/^\s+$/.test(s) || s === '') { if (s) tokens.push({ text: s, kind: 'space' }); return; }
+    if (isSectionToken(s)) { tokens.push({ text: s, kind: 'section' }); return; }
+    tokens.push({ text: s, kind: CHORD_TOKEN_RE.test(s) ? 'ok' : 'bad' });
+  });
+  return { type: 'chord', tokens, raw: linhaRaw };
+}
+
+function abrirCorrecaoAcordes() {
+  document.getElementById('musica-mobile-menu')?.classList.add('hidden');
+  const musica = buscarMusica(musicaAtualId);
+  if (!musica) return;
+  _correcaoLinhas = musica.cifraTexto.split('\n').map(_tokenizarLinhaCorrecao);
+  _correcaoSel = null;
+  _renderCorrecao();
+}
+
+function _renderCorrecao() {
+  const musica = buscarMusica(musicaAtualId);
+
+  document.getElementById('musica-page-header').innerHTML = `
+    <button class="nav-btn" onclick="cancelarCorrecao()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div class="musica-view-titulo-wrap" style="flex:1;padding:0 12px">
+      <h1 class="musica-titulo" style="font-size:1rem">Corrigir acordes</h1>
+      <div class="musica-artista">${musica.titulo}</div>
+    </div>
+    <button class="nav-btn" style="font-weight:600;color:var(--accent)" onclick="salvarCorrecao()">Salvar</button>
+  `;
+
+  const badCount = _correcaoLinhas.reduce((n, l) =>
+    n + (l.type === 'chord' ? l.tokens.filter(t => t.kind === 'bad').length : 0), 0);
+
+  document.getElementById('musica-page-body').innerHTML = `
+    <div class="correcao-legenda-bar">
+      <span class="correcao-badge ok">Am</span><span> reconhecido</span>
+      <span class="correcao-badge bad">G#º</span><span> não reconhecido</span>
+      ${badCount ? `<span class="correcao-count">${badCount} token${badCount>1?'s':''} a corrigir</span>` : `<span class="correcao-count ok">Tudo ok!</span>`}
+    </div>
+    <div class="correcao-cifra">
+      ${_correcaoLinhas.map((l, lIdx) => _renderCorrecaoLinha(l, lIdx)).join('')}
+    </div>
+  `;
+}
+
+function _renderCorrecaoLinha(linha, lIdx) {
+  if (linha.type === 'text') {
+    return `<div class="correcao-linha texto">${escapeHtml(linha.raw) || ' '}</div>`;
+  }
+  const tokensHtml = linha.tokens.map((t, tIdx) => {
+    if (t.kind === 'space')   return t.text.replace(/ /g, ' ');
+    if (t.kind === 'prefix')  return `<span class="correcao-prefix">${escapeHtml(t.text)}</span>`;
+    if (t.kind === 'section') return `<span class="correcao-token section">${escapeHtml(t.text)}</span>`;
+    const sel = _correcaoSel?.lIdx === lIdx && _correcaoSel?.tIdx === tIdx;
+    return `<button class="correcao-token ${t.kind}${sel?' sel':''}" onclick="selecionarCorrecaoToken(${lIdx},${tIdx})">${escapeHtml(t.text)}</button>`;
+  }).join('');
+
+  const painel = _correcaoSel?.lIdx === lIdx ? _renderCorrecaoPainel(lIdx) : '';
+  return `<div class="correcao-linha">${tokensHtml}</div>${painel}`;
+}
+
+function _renderCorrecaoPainel(lIdx) {
+  const { tIdx } = _correcaoSel;
+  const token = _correcaoLinhas[lIdx].tokens[tIdx];
+  return `
+    <div class="correcao-painel">
+      <input class="correcao-input" id="correcao-input" type="text" value="${escapeHtml(token.text)}"
+             oninput="validarCorrecaoInput(this)" placeholder="Ex: Am7, C#m, G7…">
+      <button class="correcao-sub-btn nav-btn" id="correcao-sub-btn"
+              ${CHORD_TOKEN_RE.test(token.text)?'':'disabled'}
+              onclick="substituirCorrecaoToken(${lIdx},${tIdx})">Substituir</button>
+      <button class="correcao-del-btn icon-btn" onclick="excluirCorrecaoToken(${lIdx},${tIdx})" title="Excluir token">
+        <span class="material-symbols-outlined">delete</span>
+      </button>
+      <button class="icon-btn" onclick="fecharCorrecaoPainel()" title="Cancelar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  `;
+}
+
+function selecionarCorrecaoToken(lIdx, tIdx) {
+  if (_correcaoSel?.lIdx === lIdx && _correcaoSel?.tIdx === tIdx) {
+    _correcaoSel = null;
+  } else {
+    _correcaoSel = { lIdx, tIdx };
+  }
+  _renderCorrecao();
+  if (_correcaoSel) setTimeout(() => {
+    const inp = document.getElementById('correcao-input');
+    if (inp) { inp.focus(); inp.select(); }
+  }, 40);
+}
+
+function validarCorrecaoInput(inp) {
+  const ok = CHORD_TOKEN_RE.test(inp.value.trim());
+  const btn = document.getElementById('correcao-sub-btn');
+  if (btn) btn.disabled = !ok;
+}
+
+function substituirCorrecaoToken(lIdx, tIdx) {
+  const val = document.getElementById('correcao-input')?.value.trim();
+  if (!val || !CHORD_TOKEN_RE.test(val)) return;
+  _correcaoLinhas[lIdx].tokens[tIdx] = { text: val, kind: 'ok' };
+  _correcaoSel = null;
+  _renderCorrecao();
+}
+
+function excluirCorrecaoToken(lIdx, tIdx) {
+  const tokens = _correcaoLinhas[lIdx].tokens;
+  // Remove o token e o espaço imediatamente anterior (se houver)
+  const prevIsSpace = tIdx > 0 && tokens[tIdx - 1].kind === 'space';
+  tokens.splice(prevIsSpace ? tIdx - 1 : tIdx, prevIsSpace ? 2 : 1);
+  _correcaoSel = null;
+  _renderCorrecao();
+}
+
+function fecharCorrecaoPainel() {
+  _correcaoSel = null;
+  _renderCorrecao();
+}
+
+function salvarCorrecao() {
+  const novaCifra = _correcaoLinhas.map(l => {
+    if (l.type === 'text') return l.raw;
+    return l.tokens.map(t => t.text).join('');
+  }).join('\n');
+  const novosAcordes = extrairAcordes(novaCifra);
+  atualizarMusica(musicaAtualId, { cifraTexto: novaCifra, acordes: novosAcordes });
+  _correcaoLinhas = [];
+  renderMusicaView();
+}
+
+function cancelarCorrecao() {
+  _correcaoLinhas = [];
+  _correcaoSel = null;
+  renderMusicaView();
 }
 
 function toggleAcordesMobile() {
