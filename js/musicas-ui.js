@@ -867,10 +867,25 @@ function fecharCorrecaoPainel() {
 }
 
 function salvarCorrecao() {
-  const novaCifra = _correcaoLinhas.map(l => {
-    if (l.type === 'text') return l.raw;
-    return l.tokens.map(t => t.text).join('');
-  }).join('\n');
+  const linhas = [];
+  _correcaoLinhas.forEach(l => {
+    if (!l.tokens) { linhas.push(l.raw ?? ''); return; }
+
+    if (l.type === 'lyric') {
+      // Tokens promovidos a acorde vão para uma linha de acordes acima
+      const okTokens = l.tokens.filter(t => t.kind === 'ok');
+      if (okTokens.length > 0) {
+        linhas.push(okTokens.map(t => t.text).join('  '));
+        const restoTexto = l.tokens.filter(t => t.kind !== 'ok').map(t => t.text).join('').trim();
+        if (restoTexto) linhas.push(restoTexto);
+      } else {
+        linhas.push(l.tokens.map(t => t.text).join(''));
+      }
+    } else {
+      linhas.push(l.tokens.map(t => t.text).join(''));
+    }
+  });
+  const novaCifra = linhas.join('\n');
   const novosAcordes = extrairAcordes(novaCifra);
   atualizarMusica(musicaAtualId, { cifraTexto: novaCifra, acordes: novosAcordes });
   _correcaoLinhas = [];
