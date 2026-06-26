@@ -656,7 +656,7 @@ function renderChordChipMobile(nomeAcorde) {
     }
     if (candidato) diagramaHtml = renderDiagram(candidato);
   } catch { diagramaHtml = `<div class="chord-chip-erro">?</div>`; }
-  const descMobile = modoNovato ? `<div class="chord-chip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
+  const descMobile = modoNomes ? `<div class="chord-chip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
   return `<div class="chord-chip chord-chip-mobile" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g,"\\'")}')">
     <div class="chord-chip-nome">${nomeAcorde}</div>
     ${descMobile}
