@@ -46,15 +46,38 @@ function fecharFonteMenu() {
   _renderFonteMenu();
 }
 
-function _renderFonteMenu() {
+function _setFonteSize(val) {
+  const n = parseInt(val, 10);
+  if (isNaN(n) || n < 8 || n > 72) return;
+  cifraFontSize = n;
+  localStorage.setItem('cifraFontSize', cifraFontSize);
+  _aplicarFonteCifra();
+  _syncFonteUI();
+}
+
+function _syncFonteUI() {
+  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
+  const badgeVal = document.querySelector('.fonte-badge-val');
+  if (badgeVal) badgeVal.textContent = cifraFontSize + 'px';
   const menu = document.getElementById('fonte-menu');
   if (!menu) return;
-  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
-  const badge = document.querySelector('.musica-fonte-badge');
-  if (badge) badge.querySelector('.fonte-badge-val').textContent = cifraFontSize + 'px';
   menu.classList.toggle('hidden', !fonteMenuAberto);
+  const inp = menu.querySelector('.fonte-size-input');
+  if (inp && document.activeElement !== inp) inp.value = cifraFontSize;
   menu.querySelector('.fonte-step-btn.minus')?.toggleAttribute('disabled', idx <= 0);
   menu.querySelector('.fonte-step-btn.plus')?.toggleAttribute('disabled', idx >= CIFRA_FONT_SIZES.length - 1);
+}
+
+function _renderFonteMenu() { _syncFonteUI(); }
+
+function aumentarFonte() {
+  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
+  if (idx < CIFRA_FONT_SIZES.length - 1) _setFonteSize(CIFRA_FONT_SIZES[idx + 1]);
+}
+
+function diminuirFonte() {
+  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
+  if (idx > 0) _setFonteSize(CIFRA_FONT_SIZES[idx - 1]);
 }
 
 function renderFonteControl() {
@@ -69,7 +92,10 @@ function renderFonteControl() {
       <div id="fonte-menu" class="tom-menu ${fonteMenuAberto ? '' : 'hidden'}">
         <div class="tom-menu-secao">
           <button class="tom-step-btn fonte-step-btn minus" onclick="diminuirFonte()" ${idx <= 0 ? 'disabled' : ''}>−</button>
-          <div class="tom-menu-atual">${cifraFontSize}px</div>
+          <input type="number" class="fonte-size-input" value="${cifraFontSize}" min="8" max="72"
+            oninput="_setFonteSize(this.value)"
+            onkeydown="if(event.key==='Enter'||event.key==='Escape'){fecharFonteMenu();event.preventDefault()}"
+            onclick="event.stopPropagation()">
           <button class="tom-step-btn fonte-step-btn plus" onclick="aumentarFonte()" ${idx >= CIFRA_FONT_SIZES.length - 1 ? 'disabled' : ''}>+</button>
         </div>
       </div>
