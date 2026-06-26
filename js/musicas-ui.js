@@ -151,15 +151,12 @@ function cancelarEditarCategoria() {
 
 function abrirModalGenero() {
   const n = musicasSelecionadas.size;
-  const generosExistentes = [...new Set(listarMusicas().map(m => m.genero || 'Outros'))].sort();
   document.getElementById('genero-modal-body').innerHTML = `
     <p class="genero-modal-subtitulo">${n} música(s) selecionada(s)</p>
     <div class="genero-modal-lista">
-      ${generosExistentes.map(g => `<button class="genero-modal-opt" onclick="salvarCategoriaSelecionadas('${g.replace(/'/g,"\\'")}'); fecharModalGenero()">${g}</button>`).join('')}
-    </div>
-    <div class="genero-modal-novo">
-      <input type="text" id="genero-modal-input" class="genero-modal-input" placeholder="Novo gênero…" onkeydown="if(event.key==='Enter') criarESalvarCategoriaModal()">
-      <button class="genero-modal-criar" onclick="criarESalvarCategoriaModal()"><span class="material-symbols-outlined">add</span></button>
+      ${GENEROS.map(g => `<button class="genero-modal-opt" onclick="salvarCategoriaSelecionadas('${g.replace(/'/g,"\\'")}'); fecharModalGenero()">
+        <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span>${g}
+      </button>`).join('')}
     </div>
   `;
   document.getElementById('genero-modal').classList.remove('hidden');
@@ -167,14 +164,6 @@ function abrirModalGenero() {
 
 function fecharModalGenero() {
   document.getElementById('genero-modal').classList.add('hidden');
-}
-
-function criarESalvarCategoriaModal() {
-  const input = document.getElementById('genero-modal-input');
-  const nome = input?.value.trim();
-  if (!nome) { input?.focus(); return; }
-  salvarCategoriaSelecionadas(nome);
-  fecharModalGenero();
 }
 
 function excluirSelecionadas() {
@@ -197,16 +186,12 @@ function salvarCategoriaSelecionadas(genero) {
 function renderSelecaoBar() {
   const n = musicasSelecionadas.size;
   if (!n) return '';
-  if (editandoCategoria) {
-    const generosExistentes = [...new Set(listarMusicas().map(m => m.genero || 'Outros'))].sort();
+  const isMobile = window.innerWidth <= 860;
+  if (editandoCategoria && !isMobile) {
     return `<div class="selecao-bar">
-      <span class="selecao-bar-label">Escolha o gênero para ${n} selecionada(s):</span>
+      <span class="selecao-bar-label">Gênero para ${n} selecionada(s):</span>
       <div class="selecao-bar-generos">
-        ${generosExistentes.map(g => `<button class="selecao-genero-btn" onclick="salvarCategoriaSelecionadas('${g.replace(/'/g,"\\'")}')">${g}</button>`).join('')}
-        <span class="selecao-genero-novo">
-          <input type="text" id="selecao-novo-genero" class="selecao-novo-genero-input" placeholder="Novo gênero…" onkeydown="if(event.key==='Enter') criarESalvarCategoria()">
-          <button class="selecao-genero-btn selecao-genero-criar" onclick="criarESalvarCategoria()"><span class="material-symbols-outlined">add</span></button>
-        </span>
+        ${GENEROS.map(g => `<button class="selecao-genero-btn" onclick="salvarCategoriaSelecionadas('${g.replace(/'/g,"\\'")}')"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">${GENERO_ICONS[g] || 'music_note'}</span> ${g}</button>`).join('')}
       </div>
       <button class="selecao-bar-cancel" onclick="cancelarEditarCategoria()"><span class="material-symbols-outlined">close</span></button>
     </div>`;
@@ -219,7 +204,8 @@ function renderSelecaoBar() {
   </div>`;
 }
 
-function criarESalvarCategoria() {
+function _legadoCriarCategoria() {
+  // mantido para não quebrar chamadas antigas no DOM já renderizado
   const input = document.getElementById('selecao-novo-genero');
   const nome = input?.value.trim();
   if (!nome) { input?.focus(); return; }
@@ -251,10 +237,11 @@ function renderMusicasLista() {
   if (musicaFiltroGenero !== 'todos' && !generosExistentes.includes(musicaFiltroGenero)) musicaFiltroGenero = 'todos';
 
   // ── Filtro Gênero: linha única com scroll + dropdown ──
+  const _gIcon = g => `<span class="material-symbols-outlined genero-chip-icon">${GENERO_ICONS[g] || 'music_note'}</span>`;
   const generoChips = (lista_, ativo, fn) =>
-    `<button class="genero-chip${ativo === 'todos' ? ' active' : ''}" onclick="${fn}('todos')">Todos <span class="filtro-count">${lista_.length}</span></button>` +
+    `<button class="genero-chip${ativo === 'todos' ? ' active' : ''}" onclick="${fn}('todos')"><span class="material-symbols-outlined genero-chip-icon">apps</span>Todos <span class="filtro-count">${lista_.length}</span></button>` +
     generosExistentes.map(g =>
-      `<button class="genero-chip${ativo === g ? ' active' : ''}" onclick="${fn}('${g.replace(/'/g, "\\'")}')">${g} <span class="filtro-count">${contPorGenero[g] || 0}</span></button>`
+      `<button class="genero-chip${ativo === g ? ' active' : ''}" onclick="${fn}('${g.replace(/'/g, "\\'")}')">${_gIcon(g)}${g} <span class="filtro-count">${contPorGenero[g] || 0}</span></button>`
     ).join('');
 
   let html = `<div class="filtro-secao">
@@ -333,6 +320,9 @@ function renderMusicasLista() {
 
   if (musicasSelecionadas.size > 0) html += `<div class="selecao-bar-spacer"></div>`;
   wrap.innerHTML = html;
+  // Esconder FAB no mobile quando seleção ativa
+  const fab = document.querySelector('.musicas-add-fab');
+  if (fab) fab.style.display = musicasSelecionadas.size > 0 ? 'none' : '';
   if (buscaTinhaFoco) {
     const input = document.getElementById('musica-busca-input');
     if (input) { input.focus(); input.setSelectionRange(musicaBusca.length, musicaBusca.length); }
@@ -913,11 +903,9 @@ function abrirEdicaoMusica() {
         <input type="text" id="edit-tom" value="${(musica.tom || '').replace(/"/g,'&quot;')}">
         <label>Gênero</label>
         <div class="musica-edit-genero-wrap">
-          <select id="edit-genero" class="musica-edit-select" onchange="toggleNovoGeneroInput(this.value)">
-            ${[...new Set([...(listarMusicas().map(m => m.genero || 'Outros')), ...GENEROS])].sort().map(g => `<option value="${g}"${(musica.genero || 'Outros') === g ? ' selected' : ''}>${g}</option>`).join('')}
-            <option value="__novo__">+ Criar novo gênero…</option>
+          <select id="edit-genero" class="musica-edit-select">
+            ${[...new Set([...GENEROS, musica.genero || ''])].filter(Boolean).map(g => `<option value="${g}"${(musica.genero || 'MPB') === g ? ' selected' : ''}>${g}</option>`).join('')}
           </select>
-          <input type="text" id="edit-genero-novo" class="musica-edit-genero-novo hidden" placeholder="Nome do novo gênero">
         </div>
         <label>Cifra</label>
         <textarea id="edit-cifra" rows="20">${musica.cifraTexto.replace(/</g,'&lt;')}</textarea>

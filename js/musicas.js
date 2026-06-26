@@ -1,5 +1,18 @@
 // ─── Gêneros disponíveis ────────────────────────────────────────────────────────
-const GENEROS = ['MPB', 'Samba', 'Rock', 'Internacional', 'Infantil', 'Gospel', 'Outros'];
+const GENEROS = [
+  'MPB', 'Nova MPB', 'Sertanejo', 'Funk', 'Forró', 'Rock', 'Rap', 'Reggae',
+  'Tradicional', 'Gospel', 'Instrumental', 'Samba', 'Pop', 'Internacional',
+  'Axé', 'Black Music', 'Infantil', 'Favoritos'
+];
+
+const GENERO_ICONS = {
+  'MPB': 'nature', 'Nova MPB': 'potted_plant', 'Sertanejo': 'landscape',
+  'Funk': 'speaker', 'Forró': 'celebration', 'Rock': 'bolt', 'Rap': 'mic',
+  'Reggae': 'wb_sunny', 'Tradicional': 'hourglass_empty', 'Gospel': 'church',
+  'Instrumental': 'piano', 'Samba': 'sports_bar', 'Pop': 'star',
+  'Internacional': 'language', 'Axé': 'whatshot', 'Black Music': 'album',
+  'Infantil': 'child_care', 'Favoritos': 'kid_star',
+};
 
 // Mapeamento título|artista (minúsculas) → gênero, gerado a partir do CSV classificado.
 const _csvGeneros = {

@@ -622,6 +622,9 @@ body {
 /* Chip de gênero: estilo de tab com sublinhado */
 .genero-chip {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: none !important;
   border: none !important;
   border-radius: 0 !important;
@@ -635,9 +638,11 @@ body {
   white-space: nowrap;
   font-family: inherit;
 }
+.genero-chip-icon { font-size: 16px; opacity: 0.7; }
+.genero-chip.active .genero-chip-icon { opacity: 1; }
 .genero-chip:hover { color: #333; }
 .genero-chip.active { color: #1a1a1a !important; border-bottom-color: #1a1a1a !important; }
-.genero-chip .filtro-count { background: #eee; color: #666; }
+.genero-chip .filtro-count { background: #eee; color: #666; border-radius: 9px; padding: 0 5px; font-size: 0.75rem; }
 .genero-chip.active .filtro-count { background: #e8e6e0; color: #333; }
 
 /* Chip de artista: estilo pílula */
@@ -846,57 +851,29 @@ body {
   padding-right: 2px;
 }
 .genero-modal-opt {
-  background: #f4f5ff;
-  border: 1.5px solid #dde0fa;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f7f8ff;
+  border: 1.5px solid #e8eafe;
   border-radius: 10px;
-  padding: 12px 10px;
-  text-align: center;
-  font-size: 0.9rem;
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 0.88rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   color: #3a3a5c;
   transition: background 0.1s, border-color 0.1s, color 0.1s;
 }
+.genero-modal-opt .material-symbols-outlined { font-size: 18px; opacity: 0.7; flex-shrink: 0; }
 .genero-modal-opt:hover, .genero-modal-opt:active {
   background: #5b7cf6;
   border-color: #5b7cf6;
   color: #fff;
 }
-.genero-modal-novo {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding-top: 14px;
-  border-top: 1px solid #eee;
-  flex-shrink: 0;
-}
-.genero-modal-input {
-  flex: 1;
-  padding: 10px 14px;
-  font-size: 0.9rem;
-  border: 1.5px solid #dde0fa;
-  border-radius: 10px;
-  font-family: inherit;
-  background: #f9f9ff;
-  color: #222;
-}
-.genero-modal-input:focus { outline: none; border-color: #5b7cf6; background: #fff; }
-.genero-modal-criar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #5b7cf6;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-family: inherit;
-  flex-shrink: 0;
-}
-.genero-modal-criar:hover { background: #4a6be0; }
-.genero-modal-criar .material-symbols-outlined { font-size: 20px; }
+.genero-modal-opt:hover .material-symbols-outlined,
+.genero-modal-opt:active .material-symbols-outlined { opacity: 1; }
 
 /* Bottom sheet em mobile */
 @media (max-width: 860px) {
