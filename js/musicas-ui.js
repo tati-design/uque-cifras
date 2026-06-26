@@ -334,7 +334,9 @@ function renderMusicasLista() {
       ? a.artista.localeCompare(b.artista) || a.titulo.localeCompare(b.titulo)
       : musicaOrdem === 'tom'
         ? (a.tom || '').localeCompare(b.tom || '') || a.titulo.localeCompare(b.titulo)
-        : a.titulo.localeCompare(b.titulo)
+        : musicaOrdem === 'rating'
+          ? (b.rating || 0) - (a.rating || 0) || a.titulo.localeCompare(b.titulo)
+          : a.titulo.localeCompare(b.titulo)
   );
 
   if (!lista.length) {
@@ -416,6 +418,7 @@ function renderMusicasLista() {
     <button class="musicas-ordem-btn${musicaOrdem === 'titulo' ? ' active' : ''}" onclick="setMusicaOrdem('titulo')">Título</button>
     <button class="musicas-ordem-btn${musicaOrdem === 'artista' ? ' active' : ''}" onclick="setMusicaOrdem('artista')">Artista</button>
     <button class="musicas-ordem-btn musicas-ordem-btn-tom${musicaOrdem === 'tom' ? ' active' : ''}" onclick="setMusicaOrdem('tom')">Tom</button>
+    <button class="musicas-ordem-btn${musicaOrdem === 'rating' ? ' active' : ''}" onclick="setMusicaOrdem('rating')"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;font-variation-settings:'FILL' 1">star</span></button>
   </div>`;
 
   html += `<div class="musicas-tabela-wrap"><table class="musicas-tabela">
@@ -453,7 +456,10 @@ function renderMusicaRow(m) {
       <td class="musica-row-check" onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
         <input type="checkbox" class="musica-check" ${selecionado ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
       </td>
-      <td class="musica-row-titulo">${m.titulo}</td>
+      <td class="musica-row-titulo">
+        ${m.titulo}
+        ${m.rating ? `<span class="musica-row-rating-mini">${Array.from({length:m.rating},()=>'<span class="material-symbols-outlined" style="font-size:11px;font-variation-settings:\'FILL\' 1;color:#f5a623;vertical-align:middle">star</span>').join('')}</span>` : ''}
+      </td>
       <td class="musica-row-artista">${m.artista}</td>
       <td class="musica-row-genero col-genero">${m.genero || 'Outros'}</td>
       <td class="musica-row-tom col-tom">
@@ -656,6 +662,9 @@ function renderMusicaView() {
       <div class="musica-view-titulo-wrap">
         <h1 class="musica-titulo">${musica.titulo}</h1>
         <div class="musica-artista">${musica.artista}</div>
+        <div class="musica-rating-header">
+          ${[1,2,3,4,5].map(i => `<button class="rating-star-btn" onclick="avaliarMusica('${musica.id}',${(musica.rating||0)===i?0:i})" title="${i} estrela${i>1?'s':''}"><span class="material-symbols-outlined rating-star-icon" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":""}">star</span></button>`).join('')}
+        </div>
       </div>
       <button class="icon-btn musica-nav-chevron" onclick="navegarMusica(1)" title="Próxima música">
         <span class="material-symbols-outlined">chevron_right</span>
@@ -713,17 +722,7 @@ function renderMusicaView() {
         </button>` : ''}
       </div>
     </div>
-    <div class="musica-conteudo">
-      <pre class="musica-cifra" id="musica-cifra-scroll">${renderCifraHtml(musica.cifraTexto, semitons)}</pre>
-      <div class="musica-acordes">
-        <div class="resize-handle" onmousedown="iniciarResizeAcordes(event)"></div>
-        <div class="musica-acordes-titulo">Acordes</div>
-        <div class="musica-acordes-grid">
-          ${acordesAtuais.length ? acordesAtuais.map(renderChordChip).join('') : '<div class="fav-empty">Nenhum acorde identificado.</div>'}
-        </div>
-      </div>
-    </div>
-    ${s.ativo ? `<div class="autoscroll-bar-bottom">
+    ${s.ativo ? `<div class="autoscroll-bar-top">
       <button class="icon-btn" onclick="alternarAutoScrollPlay()"><span class="material-symbols-outlined">${s.rodando ? 'pause' : 'play_arrow'}</span></button>
       <button class="icon-btn" onclick="reiniciarAutoScroll()"><span class="material-symbols-outlined">replay</span></button>
       <span class="material-symbols-outlined autoscroll-speed-icon">speed</span>
@@ -736,6 +735,16 @@ function renderMusicaView() {
       </div>
       <button class="musica-acordes-mobile-close" onclick="toggleAcordesMobile()"><span class="material-symbols-outlined">close</span></button>
     </div>` : ''}
+    <div class="musica-conteudo">
+      <pre class="musica-cifra" id="musica-cifra-scroll">${renderCifraHtml(musica.cifraTexto, semitons)}</pre>
+      <div class="musica-acordes">
+        <div class="resize-handle" onmousedown="iniciarResizeAcordes(event)"></div>
+        <div class="musica-acordes-titulo">Acordes</div>
+        <div class="musica-acordes-grid">
+          ${acordesAtuais.length ? acordesAtuais.map(renderChordChip).join('') : '<div class="fav-empty">Nenhum acorde identificado.</div>'}
+        </div>
+      </div>
+    </div>
   `;
 
   const cifraEl = document.getElementById('musica-cifra-scroll');
@@ -1183,6 +1192,11 @@ function selecionarTom(notaAlvo) {
 }
 
 function resetarTom() { salvarTransposicao(0); }
+
+function avaliarMusica(id, rating) {
+  atualizarMusica(id, { rating });
+  renderMusicaView();
+}
 
 // ─── Autorrolagem ──────────────────────────────────────────────────────────────
 let autoScrollState = { ativo: false, rodando: false, velocidade: 3, rafId: null, ultimoTs: null, acumulado: 0 };

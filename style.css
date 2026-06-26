@@ -244,17 +244,16 @@ body {
 }
 
 /* ── Barra de autorrolagem (fica no fundo do musica-page-body) ────────────── */
-.autoscroll-bar-bottom {
+.autoscroll-bar-top {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 6px;
   background: #f3f2ee;
-  padding: 8px 16px;
-  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
-  border-top: 1px solid #e5e5e5;
+  padding: 6px 16px;
+  border-bottom: 1px solid #e5e5e5;
 }
-.autoscroll-bar-bottom .autoscroll-speed { flex: 1; max-width: 160px; accent-color: #5b7cf6; }
+.autoscroll-bar-top .autoscroll-speed { flex: 1; max-width: 160px; accent-color: #5b7cf6; }
 .autoscroll-speed-icon { font-size: 18px !important; color: #888; }
 
 /* Botão de iniciar autorrolagem (no toolbar) */
@@ -347,7 +346,6 @@ body {
   gap: 8px;
   overflow-x: auto;
   padding: 12px 14px;
-  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
   flex: 1;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -1498,3 +1496,30 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   color: var(--text);
 }
 .aprendiz-modal-all-btn .material-symbols-outlined { font-size: 20px; }
+
+/* ─── Rating de música ────────────────────────────────────────────────────── */
+.musica-rating-header {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 3px;
+}
+.rating-star-btn {
+  background: none;
+  border: none;
+  padding: 1px;
+  cursor: pointer;
+  line-height: 1;
+}
+.rating-star-icon {
+  font-size: 14px !important;
+  color: #ccc;
+  vertical-align: middle;
+}
+.musica-row-rating-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
