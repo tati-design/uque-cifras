@@ -2,6 +2,84 @@
 let modoSimplificar = localStorage.getItem('modoSimplificar') === 'true';
 let modoNomes       = localStorage.getItem('modoNomes')       === 'true';
 let modoEsconderTab = localStorage.getItem('modoEsconderTab') === 'true';
+
+// ─── Tamanho da fonte da cifra ────────────────────────────────────────────────
+const CIFRA_FONT_SIZES = [12, 13, 14, 15, 16, 18, 20, 22, 24];
+const CIFRA_FONT_DEFAULT = 14;
+let cifraFontSize = parseInt(localStorage.getItem('cifraFontSize') || CIFRA_FONT_DEFAULT, 10);
+let fonteMenuAberto = false;
+
+function _aplicarFonteCifra() {
+  const el = document.getElementById('musica-cifra-scroll');
+  if (el) el.style.fontSize = cifraFontSize + 'px';
+}
+
+function aumentarFonte() {
+  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
+  if (idx < CIFRA_FONT_SIZES.length - 1) {
+    cifraFontSize = CIFRA_FONT_SIZES[idx + 1];
+    localStorage.setItem('cifraFontSize', cifraFontSize);
+    _aplicarFonteCifra();
+    _renderFonteMenu();
+  }
+}
+
+function diminuirFonte() {
+  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
+  if (idx > 0) {
+    cifraFontSize = CIFRA_FONT_SIZES[idx - 1];
+    localStorage.setItem('cifraFontSize', cifraFontSize);
+    _aplicarFonteCifra();
+    _renderFonteMenu();
+  }
+}
+
+function toggleFonteMenu(e) {
+  if (e) e.stopPropagation();
+  fonteMenuAberto = !fonteMenuAberto;
+  _renderFonteMenu();
+}
+
+function fecharFonteMenu() {
+  if (!fonteMenuAberto) return;
+  fonteMenuAberto = false;
+  _renderFonteMenu();
+}
+
+function _renderFonteMenu() {
+  const menu = document.getElementById('fonte-menu');
+  if (!menu) return;
+  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
+  const badge = document.querySelector('.musica-fonte-badge');
+  if (badge) badge.querySelector('.fonte-badge-val').textContent = cifraFontSize + 'px';
+  menu.classList.toggle('hidden', !fonteMenuAberto);
+  menu.querySelector('.fonte-step-btn.minus')?.toggleAttribute('disabled', idx <= 0);
+  menu.querySelector('.fonte-step-btn.plus')?.toggleAttribute('disabled', idx >= CIFRA_FONT_SIZES.length - 1);
+}
+
+function renderFonteControl() {
+  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
+  return `
+    <div class="fonte-wrap">
+      <button class="musica-fonte-badge" onclick="toggleFonteMenu(event)">
+        <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">text_fields</span>
+        <span class="fonte-badge-val">${cifraFontSize}px</span>
+        <span class="material-symbols-outlined tom-badge-caret">expand_more</span>
+      </button>
+      <div id="fonte-menu" class="tom-menu ${fonteMenuAberto ? '' : 'hidden'}">
+        <div class="tom-menu-secao">
+          <button class="tom-step-btn fonte-step-btn minus" onclick="diminuirFonte()" ${idx <= 0 ? 'disabled' : ''}>−</button>
+          <div class="tom-menu-atual">${cifraFontSize}px</div>
+          <button class="tom-step-btn fonte-step-btn plus" onclick="aumentarFonte()" ${idx >= CIFRA_FONT_SIZES.length - 1 ? 'disabled' : ''}>+</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+document.addEventListener('click', e => {
+  if (fonteMenuAberto && !e.target.closest('.fonte-wrap')) fecharFonteMenu();
+});
 const modoNovato = () => modoSimplificar && modoNomes; // legado: ambos ativos
 
 function _salvarModos() {
@@ -574,7 +652,10 @@ function renderMusicaView() {
   // Body: toolbar + conteúdo + barra de autorrolagem (se ativa) + painel de acordes mobile (se aberto)
   document.getElementById('musica-page-body').innerHTML = `
     <div class="musica-toolbar">
-      ${musica.tom ? renderTomControl(tomAtual, musica.tom, semitons) : '<span></span>'}
+      <div class="musica-toolbar-left">
+        ${musica.tom ? renderTomControl(tomAtual, musica.tom, semitons) : ''}
+        ${renderFonteControl()}
+      </div>
       <div class="musica-toolbar-right">
         <button class="nav-btn musica-acordes-toggle${acordesMobileAbertos ? ' active' : ''}" onclick="toggleAcordesMobile()">
           <span class="material-symbols-outlined">library_music</span> Acordes
@@ -620,7 +701,7 @@ function renderMusicaView() {
       <button class="icon-btn" onclick="alternarAutoScrollPlay()"><span class="material-symbols-outlined">${s.rodando ? 'pause' : 'play_arrow'}</span></button>
       <button class="icon-btn" onclick="reiniciarAutoScroll()"><span class="material-symbols-outlined">replay</span></button>
       <span class="material-symbols-outlined autoscroll-speed-icon">speed</span>
-      <input type="range" class="autoscroll-speed" min="1" max="10" value="${s.velocidade}" oninput="ajustarVelocidadeAutoScroll(this.value)">
+      <input type="range" class="autoscroll-speed" min="1" max="20" value="${s.velocidade}" oninput="ajustarVelocidadeAutoScroll(this.value)">
       <button class="icon-btn" onclick="fecharAutoScroll()"><span class="material-symbols-outlined">close</span></button>
     </div>` : ''}
     ${acordesMobileAbertos ? `<div class="musica-acordes-mobile">
@@ -632,7 +713,10 @@ function renderMusicaView() {
   `;
 
   const cifraEl = document.getElementById('musica-cifra-scroll');
-  if (cifraEl) iniciarSwipeCifra(cifraEl);
+  if (cifraEl) {
+    iniciarSwipeCifra(cifraEl);
+    _aplicarFonteCifra();
+  }
 }
 
 function renderChordChip(nomeAcorde) {
@@ -1156,7 +1240,7 @@ function abrirEdicaoMusica() {
   const musica = buscarMusica(musicaAtualId);
   if (!musica) return;
 
-  // Header: cancelar
+  // Header: cancelar + salvar
   document.getElementById('musica-page-header').innerHTML = `
     <button class="nav-btn" onclick="renderMusicaView()">
       <span class="material-symbols-outlined">arrow_back</span>
@@ -1166,7 +1250,7 @@ function abrirEdicaoMusica() {
         <h1 class="musica-titulo">Editar música</h1>
       </div>
     </div>
-    <span></span>
+    <button class="nav-btn" style="font-weight:600;color:var(--accent)" onclick="salvarEdicaoMusica()">Salvar</button>
   `;
 
   // Body: formulário
@@ -1189,7 +1273,6 @@ function abrirEdicaoMusica() {
         <textarea id="edit-cifra" rows="20">${musica.cifraTexto.replace(/</g,'&lt;')}</textarea>
         <div class="musica-edit-actions">
           <button class="nav-btn" onclick="renderMusicaView()">Cancelar</button>
-          <button onclick="salvarEdicaoMusica()">Salvar alterações</button>
         </div>
       </div>
     </div>

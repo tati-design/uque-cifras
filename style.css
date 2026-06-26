@@ -118,11 +118,31 @@ body {
   gap: 12px;
   padding: 10px 16px 8px;
 }
+.musica-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .musica-toolbar-right {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+.fonte-wrap { position: relative; }
+.musica-fonte-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--surface2);
+  border: none;
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--text);
 }
 /* Botão "Acordes" (toggle do painel mobile): escondido no desktop */
 .musica-acordes-toggle { display: inline-flex; }
