@@ -66,6 +66,7 @@ function renderDiagram(candidato) {
     const r = casaPestana - offset;
     const barreY = ys(r) - rowH / 2;
     svg += `<rect x="${xs[0] - 4}" y="${barreY - 7}" width="${xs[3] - xs[0] + 8}" height="14" rx="7" fill="#5b7cf6" opacity="0.85"/>`;
+    svg += `<text x="${(xs[0] + xs[3]) / 2}" y="${barreY + 3.5}" text-anchor="middle" font-size="8" font-family="sans-serif" font-weight="bold" fill="#fff">${casaPestana}</text>`;
   }
 
   // Finger dots

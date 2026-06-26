@@ -537,7 +537,7 @@ function renderMusicaView() {
 
   const semitons = musica.transposicao || 0;
   const tomAtual = musica.tom ? transporAcorde(musica.tom, semitons) : '';
-  const acordesAtuais = [...new Set(musica.acordes.map(a => simplificarAcorde(transporAcorde(a, semitons))))];
+  const acordesAtuais = [...new Set(extrairAcordes(musica.cifraTexto).map(a => simplificarAcorde(transporAcorde(a, semitons))))];
   const s = autoScrollState;
 
   // Header: voltar | [‹] título [›] | editar/excluir/menu
@@ -1317,6 +1317,7 @@ function descreverAcorde(nome) {
   else if (m = s.match(/^min(\d{0,2})/))         { qualidade = 'menor';     numero = m[1]; s = s.slice(m[0].length); }
   else if (m = s.match(/^m(\d{0,2})/))           { qualidade = 'menor';     numero = m[1]; s = s.slice(m[0].length); }
   else if (m = s.match(/^dim(\d?)/))             { qualidade = 'diminuto';  numero = m[1]; s = s.slice(m[0].length); }
+  else if (m = s.match(/^[°º]/))                { qualidade = 'diminuto';  s = s.slice(1); }
   else if (m = s.match(/^aug(\d?)/))             { qualidade = 'aumentado'; numero = m[1]; s = s.slice(m[0].length); }
   else if (m = s.match(/^sus([24]?)/))           { qualidade = 'suspenso' + (m[1] === '2' ? ' dois' : ''); s = s.slice(m[0].length); }
   else if (m = s.match(/^(\d{1,2})(maj|M)?/))   { numero = m[1]; if (m[2]) qualidade = 'maior'; s = s.slice(m[0].length); }
