@@ -1161,11 +1161,14 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   vertical-align: baseline;
   line-height: 1.4;
 }
-.correcao-token.ok  { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
-.correcao-token.bad { background: #fdecea; color: #c0392b; border-color: #ef9a9a; }
+.correcao-token.ok   { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+.correcao-token.bad  { background: #fdecea; color: #c0392b; border-color: #ef9a9a; }
+.correcao-token.word { background: none; color: #aaa; border-color: transparent; font-weight: 400; }
 .correcao-token.section { background: #f3f2ee; color: #888; border-color: #ddd; cursor: default; }
-.correcao-token.ok:hover  { background: #c8e6c9; }
-.correcao-token.bad:hover { background: #ffcdd2; }
+.correcao-token.ok:hover   { background: #c8e6c9; }
+.correcao-token.bad:hover  { background: #ffcdd2; }
+.correcao-token.word:hover { background: #f3f2ee; color: #555; border-color: #ddd; }
+.correcao-linha.tab { color: #bbb; }
 .correcao-token.sel { outline: 2px solid #5b7cf6; outline-offset: 1px; }
 .correcao-prefix { color: #5b7cf6; font-weight: 700; }
 

@@ -720,30 +720,35 @@ function _looksLikeChordAttempt(t) {
 }
 
 function _tokenizarLinhaCorrecao(linhaRaw) {
-  const tabMatch = /^\s*[EBGDAe]\|/.test(linhaRaw);
-  if (tabMatch) return { type: 'text', raw: linhaRaw };
+  // Linhas de tablatura: mostrar mas não editar
+  if (/^\s*[EBGDAe]\|/.test(linhaRaw)) return { type: 'tab', tokens: [{ text: linhaRaw, kind: 'tab' }], raw: linhaRaw };
+  // Linha vazia
+  if (!linhaRaw.trim()) return { type: 'empty', tokens: [], raw: linhaRaw };
 
   const bracketMatch = linhaRaw.match(/^(\s*\[[^\]]*\]\s*)/);
   const prefixo = bracketMatch ? bracketMatch[1] : '';
   const resto = linhaRaw.slice(prefixo.length);
+
   const rawTokens = resto.trim().split(/\s+/).filter(Boolean);
   const chordTokens = rawTokens.filter(t => !isSectionToken(t));
-
-  // "linha de acordes" (estrita) ou "linha candidata" (todos tokens parecem acordes)
   const isChordLine = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
-  const isCandidate  = chordTokens.length > 0 && chordTokens.every(t => _looksLikeChordAttempt(t));
+  const isCandidate = chordTokens.length > 0 && chordTokens.every(t => _looksLikeChordAttempt(t));
+  const lineKind = (isChordLine || isCandidate) ? 'chord' : 'lyric';
 
-  if (!isChordLine && !isCandidate) return { type: 'text', raw: linhaRaw };
-
-  // Tokeniza com espaços preservados
   const tokens = [];
   if (prefixo) tokens.push({ text: prefixo, kind: 'prefix' });
   resto.split(/(\s+)/).forEach(s => {
     if (/^\s+$/.test(s) || s === '') { if (s) tokens.push({ text: s, kind: 'space' }); return; }
-    if (isSectionToken(s)) { tokens.push({ text: s, kind: 'section' }); return; }
-    tokens.push({ text: s, kind: isValidChordToken(s) ? 'ok' : 'bad' });
+    if (lineKind === 'chord' && isSectionToken(s)) { tokens.push({ text: s, kind: 'section' }); return; }
+    if (lineKind === 'chord') {
+      tokens.push({ text: s, kind: isValidChordToken(s) ? 'ok' : 'bad' });
+    } else {
+      // palavra de letra: sempre 'word' (cinza), mesmo que seja acorde válido
+      // o usuário promove explicitamente ao substituir no painel
+      tokens.push({ text: s, kind: 'word' });
+    }
   });
-  return { type: 'chord', tokens, raw: linhaRaw };
+  return { type: lineKind, tokens, raw: linhaRaw };
 }
 
 function abrirCorrecaoAcordes() {
@@ -770,7 +775,7 @@ function _renderCorrecao() {
   `;
 
   const badCount = _correcaoLinhas.reduce((n, l) =>
-    n + (l.type === 'chord' ? l.tokens.filter(t => t.kind === 'bad').length : 0), 0);
+    n + (l.tokens ? l.tokens.filter(t => t.kind === 'bad').length : 0), 0);
 
   document.getElementById('musica-page-body').innerHTML = `
     <div class="correcao-legenda-bar">
@@ -785,9 +790,9 @@ function _renderCorrecao() {
 }
 
 function _renderCorrecaoLinha(linha, lIdx) {
-  if (linha.type === 'text') {
-    return `<div class="correcao-linha texto">${escapeHtml(linha.raw) || ' '}</div>`;
-  }
+  if (linha.type === 'empty') return `<div class="correcao-linha"> </div>`;
+  if (linha.type === 'tab')   return `<div class="correcao-linha tab">${escapeHtml(linha.tokens[0]?.text || '')}</div>`;
+
   const tokensHtml = linha.tokens.map((t, tIdx) => {
     if (t.kind === 'space')   return t.text.replace(/ /g, ' ');
     if (t.kind === 'prefix')  return `<span class="correcao-prefix">${escapeHtml(t.text)}</span>`;
