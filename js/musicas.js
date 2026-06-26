@@ -8,7 +8,7 @@ const GENEROS = [
 const GENERO_ICONS = {
   'MPB': 'nature', 'Nova MPB': 'potted_plant', 'Sertanejo': 'landscape',
   'Funk': 'speaker', 'Forró': 'celebration', 'Rock': 'bolt', 'Rap': 'mic',
-  'Reggae': 'wb_sunny', 'Tradicional': 'hourglass_empty', 'Gospel': 'church',
+  'Reggae': 'self_improvement', 'Tradicional': 'hourglass_empty', 'Gospel': 'church',
   'Instrumental': 'piano', 'Samba': 'sports_bar', 'Pop': 'star',
   'Internacional': 'language', 'Axé': 'whatshot', 'Black Music': 'album',
   'Infantil': 'child_care', 'Favoritos': 'kid_star',
