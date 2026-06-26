@@ -1025,7 +1025,9 @@ function exportarBackup() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `cifras-ukulele-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const d = new Date();
+  const data = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+  a.download = `uque-backup-${data}-${dados.musicas.length}mus-${dados.favoritos.length}aco.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
