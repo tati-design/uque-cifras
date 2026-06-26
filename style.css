@@ -807,57 +807,81 @@ body {
     border-top: 1.5px solid #c6cffa;
     margin-bottom: 0;
     padding: 10px 16px;
-    padding-bottom: max(10px, calc(10px + env(safe-area-inset-bottom, 0px)));
+    padding-bottom: max(18px, calc(8px + env(safe-area-inset-bottom, 20px)));
     flex-wrap: nowrap;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.10);
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.12);
   }
   .selecao-bar-label { font-size: 0.78rem; }
   .selecao-bar-action { font-size: 0.78rem; padding: 5px 10px; }
-  .selecao-bar-spacer { height: 70px; }
+  .selecao-bar-spacer { height: 80px; }
 }
 
 /* ── Modal de gênero ─────────────────────────────────────────────────────── */
-.genero-modal-content { max-width: 380px; width: 100%; }
-.genero-modal-body { padding: 4px 0 8px; }
-.genero-modal-subtitulo { font-size: 0.82rem; color: #666; margin-bottom: 14px; padding: 0 4px; }
-.genero-modal-lista {
+.genero-modal-content {
+  max-width: 420px;
+  width: 100%;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 50vh;
+}
+.genero-modal-body {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.genero-modal-subtitulo {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 12px;
+}
+.genero-modal-lista {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   overflow-y: auto;
-  margin-bottom: 14px;
+  flex: 1;
+  margin-bottom: 16px;
+  padding-right: 2px;
 }
 .genero-modal-opt {
-  background: none;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 9px;
-  padding: 10px 14px;
-  text-align: left;
-  font-size: 0.95rem;
+  background: #f4f5ff;
+  border: 1.5px solid #dde0fa;
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  color: #222;
-  transition: background 0.12s, border-color 0.12s;
+  color: #3a3a5c;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
 }
-.genero-modal-opt:hover, .genero-modal-opt:active { background: #eef0fc; border-color: #5b7cf6; color: #3a5ae8; }
+.genero-modal-opt:hover, .genero-modal-opt:active {
+  background: #5b7cf6;
+  border-color: #5b7cf6;
+  color: #fff;
+}
 .genero-modal-novo {
   display: flex;
   gap: 8px;
   align-items: center;
-  padding-top: 8px;
+  padding-top: 14px;
   border-top: 1px solid #eee;
+  flex-shrink: 0;
 }
 .genero-modal-input {
   flex: 1;
-  padding: 8px 12px;
+  padding: 10px 14px;
   font-size: 0.9rem;
-  border: 1.5px solid #c6cffa;
-  border-radius: 8px;
+  border: 1.5px solid #dde0fa;
+  border-radius: 10px;
   font-family: inherit;
-  background: #fff;
+  background: #f9f9ff;
+  color: #222;
 }
-.genero-modal-input:focus { outline: none; border-color: #5b7cf6; }
+.genero-modal-input:focus { outline: none; border-color: #5b7cf6; background: #fff; }
 .genero-modal-criar {
   display: flex;
   align-items: center;
@@ -865,12 +889,32 @@ body {
   background: #5b7cf6;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
   cursor: pointer;
   font-family: inherit;
+  flex-shrink: 0;
 }
 .genero-modal-criar:hover { background: #4a6be0; }
+.genero-modal-criar .material-symbols-outlined { font-size: 20px; }
+
+/* Bottom sheet em mobile */
+@media (max-width: 860px) {
+  #genero-modal.modal-overlay-center {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .genero-modal-content {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 75vh;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  }
+  .genero-modal-content .modal-header {
+    border-radius: 20px 20px 0 0;
+  }
+}
 
 /* Ordenação */
 .musicas-ordem-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
