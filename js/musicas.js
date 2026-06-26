@@ -196,17 +196,38 @@ function removerMusica(id) {
 }
 
 // ─── Parser do texto colado ─────────────────────────────────────────────────────
-// Token de acorde válido: precisa "casar" inteiro (^...$) para não confundir
-// palavras de letra de música (ex: "Can", "Do") com acordes de verdade.
-// ° = diminuto, /5- = quinta bemol, paren pode vir antes OU depois do slash
-const CHORD_TOKEN_RE = /^[A-G](?:#|b)?(?:°|(?:(?:maj|min|dim|aug|sus[24]?|m|M)\d{0,2}|\d{1,2}(?:maj|M)?))?(?:\+)?(?:\([^)]{1,12}\))?(?:\/(?:[A-G](?:#|b)?|\d+[-+]?))?(?:\([^)]{1,12}\))?(?:\+)?$/;
-
 // Tokens que aparecem em linhas de acordes mas não são acordes (parênteses, repetições, rótulos)
 function isSectionToken(t) {
   return /^[()[\]]$/.test(t) ||       // parênteses/colchetes avulsos
          /^\(\d+x\)$/i.test(t) ||     // (2x), (3x) etc.
          /^[\w.]+:$/.test(t) ||       // Final:, Introd.: etc.
          /^\/+$/.test(t);             // / ou // marcador de compasso
+}
+
+// Normaliza caracteres parecidos antes de validar (ex: º U+00BA → ° U+00B0)
+function _normToken(t) {
+  return t.replace(/º/g, '°');
+}
+
+// Cache para evitar chamar calcularNotasAcorde repetidamente com o mesmo token
+const _chordValidCache = new Map();
+
+// Valida usando o mesmo parser de teoria musical usado na tab Acordes.
+// Assim tudo que funciona na busca de acordes também é reconhecido na cifra.
+function isValidChordToken(t) {
+  const norm = _normToken(t);
+  if (_chordValidCache.has(norm)) return _chordValidCache.get(norm);
+  // Precisa começar com nota para não confundir palavras de letra (ex: "Do", "Am" pt-BR)
+  if (!/^[A-G][#b]?/.test(norm)) { _chordValidCache.set(norm, false); return false; }
+  try {
+    // Ignora o baixo (parte após /) para validar só o acorde base
+    calcularNotasAcorde(norm.replace(/\/.*$/, ''));
+    _chordValidCache.set(norm, true);
+    return true;
+  } catch {
+    _chordValidCache.set(norm, false);
+    return false;
+  }
 }
 
 function extrairAcordes(cifraTexto) {
@@ -218,7 +239,7 @@ function extrairAcordes(cifraTexto) {
     if (!tokens.length) return;
     const chordTokens = tokens.filter(t => !isSectionToken(t));
     if (!chordTokens.length) return;
-    if (!chordTokens.every(t => CHORD_TOKEN_RE.test(t))) return;
+    if (!chordTokens.every(t => isValidChordToken(t))) return;
     chordTokens.forEach(t => {
       if (!vistos.has(t)) { vistos.add(t); ordem.push(t); }
     });

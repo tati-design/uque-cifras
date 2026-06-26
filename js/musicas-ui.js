@@ -684,7 +684,7 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
     const resto = linhaRaw.slice(prefixo.length);
     const tokens = resto.trim().split(/\s+/).filter(Boolean);
     const chordTokens = tokens.filter(t => !isSectionToken(t));
-    const isChordLine = chordTokens.length > 0 && chordTokens.every(t => CHORD_TOKEN_RE.test(t));
+    const isChordLine = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
     if (!isChordLine) return prefixoHtml + escapeHtml(resto);
 
     const partes = resto.split(/(\s+)/);
@@ -717,7 +717,7 @@ function _tokenizarLinhaCorrecao(linhaRaw) {
   const chordTokens = rawTokens.filter(t => !isSectionToken(t));
 
   // "linha de acordes" (estrita) ou "linha candidata" (todos tokens parecem acordes)
-  const isChordLine = chordTokens.length > 0 && chordTokens.every(t => CHORD_TOKEN_RE.test(t));
+  const isChordLine = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
   const isCandidate  = chordTokens.length > 0 && chordTokens.every(t => _looksLikeChordAttempt(t));
 
   if (!isChordLine && !isCandidate) return { type: 'text', raw: linhaRaw };
@@ -728,7 +728,7 @@ function _tokenizarLinhaCorrecao(linhaRaw) {
   resto.split(/(\s+)/).forEach(s => {
     if (/^\s+$/.test(s) || s === '') { if (s) tokens.push({ text: s, kind: 'space' }); return; }
     if (isSectionToken(s)) { tokens.push({ text: s, kind: 'section' }); return; }
-    tokens.push({ text: s, kind: CHORD_TOKEN_RE.test(s) ? 'ok' : 'bad' });
+    tokens.push({ text: s, kind: isValidChordToken(s) ? 'ok' : 'bad' });
   });
   return { type: 'chord', tokens, raw: linhaRaw };
 }
@@ -795,7 +795,7 @@ function _renderCorrecaoPainel(lIdx) {
       <input class="correcao-input" id="correcao-input" type="text" value="${escapeHtml(token.text)}"
              oninput="validarCorrecaoInput(this)" placeholder="Ex: Am7, C#m, G7…">
       <button class="correcao-sub-btn nav-btn" id="correcao-sub-btn"
-              ${CHORD_TOKEN_RE.test(token.text)?'':'disabled'}
+              ${isValidChordToken(token.text)?'':'disabled'}
               onclick="substituirCorrecaoToken(${lIdx},${tIdx})">Substituir</button>
       <button class="correcao-del-btn icon-btn" onclick="excluirCorrecaoToken(${lIdx},${tIdx})" title="Excluir token">
         <span class="material-symbols-outlined">delete</span>
@@ -821,14 +821,14 @@ function selecionarCorrecaoToken(lIdx, tIdx) {
 }
 
 function validarCorrecaoInput(inp) {
-  const ok = CHORD_TOKEN_RE.test(inp.value.trim());
+  const ok = isValidChordToken(inp.value.trim());
   const btn = document.getElementById('correcao-sub-btn');
   if (btn) btn.disabled = !ok;
 }
 
 function substituirCorrecaoToken(lIdx, tIdx) {
   const val = document.getElementById('correcao-input')?.value.trim();
-  if (!val || !CHORD_TOKEN_RE.test(val)) return;
+  if (!val || !isValidChordToken(val)) return;
   _correcaoLinhas[lIdx].tokens[tIdx] = { text: val, kind: 'ok' };
   _correcaoSel = null;
   _renderCorrecao();
