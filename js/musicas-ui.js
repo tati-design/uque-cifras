@@ -684,8 +684,10 @@ function escapeHtml(s) {
 }
 
 function renderCifraHtml(cifraTexto, semitons = 0) {
-  return cifraTexto.split('\n').map(linhaRaw => {
-    if (modoEsconderTab && /^\s*[EBGDAe]\|/.test(linhaRaw)) return '';
+  const linhas = modoEsconderTab
+    ? cifraTexto.split('\n').filter(l => !/^\s*[EBGDAe]\|/.test(l))
+    : cifraTexto.split('\n');
+  return linhas.map(linhaRaw => {
 
     // Prefixo [seção] → negrito
     const bracketMatch = linhaRaw.match(/^(\s*\[[^\]]*\]\s*)/);
