@@ -763,6 +763,8 @@ function abrirCorrecaoAcordes() {
 
 function _renderCorrecao() {
   const musica = buscarMusica(musicaAtualId);
+  const badCount = _correcaoLinhas.reduce((n, l) =>
+    n + (l.tokens ? l.tokens.filter(t => t.kind === 'bad').length : 0), 0);
 
   document.getElementById('musica-page-header').innerHTML = `
     <button class="nav-btn" onclick="cancelarCorrecao()">
@@ -772,19 +774,18 @@ function _renderCorrecao() {
       <h1 class="musica-titulo" style="font-size:1rem">Corrigir acordes</h1>
       <div class="musica-artista">${musica.titulo}</div>
     </div>
-    <button class="nav-btn" style="font-weight:600;color:var(--accent)" onclick="salvarCorrecao()">Salvar</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      ${badCount ? `<button class="correcao-fix-all-btn" onclick="abrirCorrecaoTodos()">Corrigir todos</button>` : ''}
+      <button class="nav-btn" style="font-weight:600;color:var(--accent)" onclick="salvarCorrecao()">Salvar</button>
+    </div>
   `;
-
-  const badCount = _correcaoLinhas.reduce((n, l) =>
-    n + (l.tokens ? l.tokens.filter(t => t.kind === 'bad').length : 0), 0);
 
   document.getElementById('musica-page-body').innerHTML = `
     <div class="correcao-legenda-bar">
-      <span class="correcao-badge ok">Am</span><span> reconhecido</span>
-      <span class="correcao-badge bad">G#º</span><span> não reconhecido</span>
-      ${badCount
-        ? `<button class="correcao-fix-all-btn" onclick="abrirCorrecaoTodos()">${badCount} não reconhecido${badCount>1?'s':''} — Corrigir todos</button>`
-        : `<span class="correcao-count ok">Tudo ok!</span>`}
+      <span class="correcao-badge ok">Am</span> reconhecido
+      <span class="correcao-badge bad" style="margin-left:10px">G#º</span> não reconhecido
+      <span class="correcao-badge word" style="margin-left:10px">texto</span> letra (clique para promover a acorde)
+      ${badCount ? `<span class="correcao-count">${badCount} não reconhecido${badCount>1?'s':''}</span>` : `<span class="correcao-count ok">Tudo ok!</span>`}
     </div>
     ${_correcaoTodosAberto ? _renderCorrecaoTodosPanel() : ''}
     <div class="correcao-cifra">
@@ -812,6 +813,7 @@ function _renderCorrecaoLinha(linha, lIdx) {
 function _renderCorrecaoPainel(lIdx) {
   const { tIdx } = _correcaoSel;
   const token = _correcaoLinhas[lIdx].tokens[tIdx];
+  const isChordToken = token.kind === 'ok' || token.kind === 'bad';
   return `
     <div class="correcao-painel">
       <input class="correcao-input" id="correcao-input" type="text" value="${escapeHtml(token.text)}"
@@ -819,9 +821,10 @@ function _renderCorrecaoPainel(lIdx) {
       <button class="correcao-sub-btn nav-btn" id="correcao-sub-btn"
               ${isValidChordToken(token.text)?'':'disabled'}
               onclick="substituirCorrecaoToken(${lIdx},${tIdx})">Substituir</button>
-      <button class="correcao-del-btn icon-btn" onclick="excluirCorrecaoToken(${lIdx},${tIdx})" title="Excluir token">
-        <span class="material-symbols-outlined">delete</span>
-      </button>
+      ${isChordToken ? `
+      <button class="correcao-nao-acorde-btn nav-btn" onclick="naoEAcordeToken(${lIdx},${tIdx})" title="Não é acorde — mantém o texto mas remove da leitura de acordes">
+        <span class="material-symbols-outlined">label_off</span> Não é acorde
+      </button>` : ''}
       <button class="icon-btn" onclick="fecharCorrecaoPainel()" title="Cancelar">
         <span class="material-symbols-outlined">close</span>
       </button>
@@ -858,9 +861,14 @@ function substituirCorrecaoToken(lIdx, tIdx) {
 
 function excluirCorrecaoToken(lIdx, tIdx) {
   const tokens = _correcaoLinhas[lIdx].tokens;
-  // Remove o token e o espaço imediatamente anterior (se houver)
   const prevIsSpace = tIdx > 0 && tokens[tIdx - 1].kind === 'space';
   tokens.splice(prevIsSpace ? tIdx - 1 : tIdx, prevIsSpace ? 2 : 1);
+  _correcaoSel = null;
+  _renderCorrecao();
+}
+
+function naoEAcordeToken(lIdx, tIdx) {
+  _correcaoLinhas[lIdx].tokens[tIdx].kind = 'word';
   _correcaoSel = null;
   _renderCorrecao();
 }
