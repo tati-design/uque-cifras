@@ -1429,3 +1429,65 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   /* Tabela: esconde colunas menos importantes no mobile */
   .col-genero, .col-tom, .col-opcoes { display: none; }
 }
+
+/* ─── Modal Modo Aprendiz ────────────────────────────────────────────────── */
+.aprendiz-modal-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+.aprendiz-modal-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.aprendiz-modal-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  width: 100%;
+  color: var(--text);
+}
+.aprendiz-modal-opt.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+.aprendiz-modal-opt-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+.aprendiz-modal-opt.active .aprendiz-modal-opt-icon { color: var(--accent); }
+.aprendiz-modal-opt-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+.aprendiz-modal-opt-texto strong { font-weight: 600; }
+.aprendiz-modal-opt-texto span { font-size: 12px; color: var(--text-secondary); }
+.aprendiz-modal-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+  padding: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface2);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text);
+}
+.aprendiz-modal-all-btn .material-symbols-outlined { font-size: 20px; }

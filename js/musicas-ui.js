@@ -1636,3 +1636,63 @@ document.addEventListener('mouseout', e => {
     esconderChordTooltip();
   }
 });
+
+// ─── Modal Modo Aprendiz ──────────────────────────────────────────────────────
+function abrirAprendizModal() {
+  fecharMusicasMenu();
+  _renderAprendizModal();
+  document.getElementById('aprendiz-modal').classList.remove('hidden');
+}
+
+function fecharAprendizModal() {
+  document.getElementById('aprendiz-modal').classList.add('hidden');
+}
+
+function _renderAprendizModal() {
+  const opts = [
+    {
+      flag: 'modoSimplificar',
+      icon: 'tune',
+      titulo: 'Simplificar acordes',
+      desc: 'Substitui acordes complexos por versões mais fáceis (ex: F → Fmaj7, Bb → A#).',
+      toggle: 'toggleModoSimplificar()',
+    },
+    {
+      flag: 'modoNomes',
+      icon: 'info',
+      titulo: 'Mostrar nomes',
+      desc: 'Exibe o nome do acorde (ex: "Lá menor") ao passar o mouse sobre ele.',
+      toggle: 'toggleModoNomes()',
+    },
+    {
+      flag: 'modoEsconderTab',
+      icon: 'hide_source',
+      titulo: 'Esconder tablatura',
+      desc: 'Remove as linhas de tablatura da cifra, deixando só acordes e letra.',
+      toggle: 'toggleModoEsconderTab()',
+    },
+  ];
+
+  const ativo = modoSimplificar || modoNomes || modoEsconderTab;
+
+  document.getElementById('aprendiz-modal-body').innerHTML = `
+    <p class="aprendiz-modal-desc">Ferramentas para facilitar o aprendizado. Ative cada modo individualmente ou todos de uma vez.</p>
+    <div class="aprendiz-modal-opts">
+      ${opts.map(o => {
+        const ligado = window[o.flag];
+        return `
+          <button class="aprendiz-modal-opt${ligado ? ' active' : ''}" onclick="${o.toggle}; _renderAprendizModal()">
+            <span class="material-symbols-outlined aprendiz-modal-opt-icon">${ligado ? 'check_circle' : 'radio_button_unchecked'}</span>
+            <div class="aprendiz-modal-opt-texto">
+              <strong>${o.titulo}</strong>
+              <span>${o.desc}</span>
+            </div>
+          </button>`;
+      }).join('')}
+    </div>
+    <button class="aprendiz-modal-all-btn" onclick="toggleModoNovato(); _renderAprendizModal()">
+      <span class="material-symbols-outlined">${ativo ? 'toggle_on' : 'toggle_off'}</span>
+      ${ativo ? 'Desativar todos' : 'Ativar todos'}
+    </button>
+  `;
+}

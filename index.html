@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=65">
+<link rel="stylesheet" href="style.css?v=66">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0..1,0" />
 </head>
 <body>
@@ -39,7 +39,7 @@
         <span class="material-symbols-outlined">more_vert</span>
       </button>
       <div id="musicas-menu" class="dropdown-menu hidden">
-        <button id="btn-modo-novato" onclick="toggleModoNovato()"><span class="material-symbols-outlined">toggle_off</span> Modo Aprendiz</button>
+        <button id="btn-modo-novato" onclick="abrirAprendizModal()"><span class="material-symbols-outlined">school</span> Modo Aprendiz</button>
         <hr style="border:none;border-top:1px solid #eee;margin:4px 0">
         <button onclick="exportarBackup()"><span class="material-symbols-outlined">download</span> Exportar backup (.json)</button>
         <button onclick="abrirSeletorImportacao()"><span class="material-symbols-outlined">upload</span> Importar backup (.json)</button>
@@ -129,6 +129,16 @@
   </div>
 </div>
 
+<div id="aprendiz-modal" class="modal-overlay modal-overlay-center hidden" onclick="if(event.target===this) fecharAprendizModal()">
+  <div class="modal-content modal-content-small">
+    <div class="modal-header">
+      <h2><span class="material-symbols-outlined">school</span> Modo Aprendiz</h2>
+      <button class="modal-close" onclick="fecharAprendizModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div id="aprendiz-modal-body" class="fav-modal-body"></div>
+  </div>
+</div>
+
 <div id="genero-modal" class="modal-overlay modal-overlay-center hidden" onclick="if(event.target===this) fecharModalGenero()">
   <div class="modal-content genero-modal-content">
     <div class="modal-header">
@@ -146,7 +156,7 @@
 <script src="js/favoritos.js?v=37"></script>
 <script src="js/musicas.js?v=63"></script>
 <script src="js/ui.js?v=37"></script>
-<script src="js/musicas-ui.js?v=71"></script>
+<script src="js/musicas-ui.js?v=72"></script>
 <script src="js/app.js?v=48"></script>
 </body>
 </html>
