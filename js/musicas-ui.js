@@ -1,18 +1,21 @@
 // ─── Modo Aprendiz ───────────────────────────────────────────────────────────────
 let modoSimplificar = localStorage.getItem('modoSimplificar') === 'true';
 let modoNomes       = localStorage.getItem('modoNomes')       === 'true';
+let modoEsconderTab = localStorage.getItem('modoEsconderTab') === 'true';
 const modoNovato = () => modoSimplificar && modoNomes; // legado: ambos ativos
 
 function _salvarModos() {
   localStorage.setItem('modoSimplificar', modoSimplificar);
   localStorage.setItem('modoNomes', modoNomes);
+  localStorage.setItem('modoEsconderTab', modoEsconderTab);
 }
 
 function toggleModoNovato() {
-  // Botão principal: se ambos ativos → desliga tudo; caso contrário → liga tudo
-  const ligar = !(modoSimplificar && modoNomes);
+  // Botão principal: se todos ativos → desliga tudo; caso contrário → liga tudo
+  const ligar = !(modoSimplificar && modoNomes && modoEsconderTab);
   modoSimplificar = ligar;
   modoNomes = ligar;
+  modoEsconderTab = ligar;
   _salvarModos();
   renderMusicaView();
   atualizarMenuModoNovato();
@@ -27,6 +30,13 @@ function toggleModoSimplificar() {
 
 function toggleModoNomes() {
   modoNomes = !modoNomes;
+  _salvarModos();
+  renderMusicaView();
+  atualizarMenuModoNovato();
+}
+
+function toggleModoEsconderTab() {
+  modoEsconderTab = !modoEsconderTab;
   _salvarModos();
   renderMusicaView();
   atualizarMenuModoNovato();
@@ -569,7 +579,7 @@ function renderMusicaView() {
         <button class="nav-btn musica-acordes-toggle${acordesMobileAbertos ? ' active' : ''}" onclick="toggleAcordesMobile()">
           <span class="material-symbols-outlined">library_music</span> Acordes
         </button>
-        <div class="aprendiz-split-btn${(modoSimplificar || modoNomes) ? ' active' : ''}">
+        <div class="aprendiz-split-btn${(modoSimplificar || modoNomes || modoEsconderTab) ? ' active' : ''}">
           <button class="aprendiz-main" onclick="toggleModoNovato()" title="Modo Aprendiz">
             <span class="material-symbols-outlined">school</span>
           </button>
@@ -584,6 +594,10 @@ function renderMusicaView() {
             <button class="aprendiz-opt" onclick="toggleModoNomes()">
               <span class="material-symbols-outlined">${modoNomes ? 'check_box' : 'check_box_outline_blank'}</span>
               Mostrar nomes
+            </button>
+            <button class="aprendiz-opt" onclick="toggleModoEsconderTab()">
+              <span class="material-symbols-outlined">${modoEsconderTab ? 'check_box' : 'check_box_outline_blank'}</span>
+              Esconder tablatura
             </button>
           </div>
         </div>
@@ -671,8 +685,7 @@ function escapeHtml(s) {
 
 function renderCifraHtml(cifraTexto, semitons = 0) {
   return cifraTexto.split('\n').map(linhaRaw => {
-    // Esconder linhas de tablatura no modo simplificar
-    if (modoSimplificar && /^\s*[EBGDAe]\|/.test(linhaRaw)) return '';
+    if (modoEsconderTab && /^\s*[EBGDAe]\|/.test(linhaRaw)) return '';
 
     // Prefixo [seção] → negrito
     const bracketMatch = linhaRaw.match(/^(\s*\[[^\]]*\]\s*)/);
