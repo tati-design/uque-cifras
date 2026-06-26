@@ -78,6 +78,7 @@ function renderDiagram(candidato) {
       const dotY = ys(r) - rowH / 2;
       const isBarre = casaPestana && f === casaPestana;
       svg += `<circle cx="${xs[i]}" cy="${dotY}" r="7" fill="${isBarre ? '#5b7cf6' : '#222'}"/>`;
+      if (!isBarre) svg += `<text x="${xs[i]}" y="${dotY + 3.5}" text-anchor="middle" font-size="8" font-family="sans-serif" font-weight="bold" fill="#fff">${f}</text>`;
     }
   });
 
