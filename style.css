@@ -1188,6 +1188,24 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 .correcao-sub-btn { font-weight: 600; }
 .correcao-sub-btn:disabled { opacity: 0.4; pointer-events: none; }
 .correcao-del-btn { color: #c0392b; }
+
+.correcao-fix-all-btn {
+  margin-left: auto; background: #fdecea; color: #c0392b;
+  border: 1.5px solid #ef9a9a; border-radius: 8px;
+  padding: 3px 10px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.correcao-fix-all-btn:hover { background: #ffcdd2; }
+
+.correcao-todos-panel {
+  background: #fff; border-bottom: 1.5px solid #e0dfd9;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+}
+.correcao-todos-titulo { font-weight: 700; font-size: 0.9rem; color: #1a1a1a; }
+.correcao-todos-lista { display: flex; flex-direction: column; gap: 8px; }
+.correcao-todos-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.correcao-todos-count { font-size: 0.8rem; color: #888; min-width: 24px; }
+.correcao-todos-actions { display: flex; gap: 8px; padding-top: 4px; }
 .chord-tooltip {
   display: none;
   position: fixed;

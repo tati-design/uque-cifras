@@ -239,8 +239,10 @@ function extrairAcordes(cifraTexto) {
     if (!tokens.length) return;
     const chordTokens = tokens.filter(t => !isSectionToken(t));
     if (!chordTokens.length) return;
-    if (!chordTokens.every(t => isValidChordToken(t))) return;
-    chordTokens.forEach(t => {
+    // Linha pura de acordes OU linha mista (parte acordes, parte letra)
+    const validChords = chordTokens.filter(t => isValidChordToken(t));
+    if (!validChords.length) return;
+    validChords.forEach(t => {
       if (!vistos.has(t)) { vistos.add(t); ordem.push(t); }
     });
   });

@@ -697,13 +697,14 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
     const resto = linhaRaw.slice(prefixo.length);
     const tokens = resto.trim().split(/\s+/).filter(Boolean);
     const chordTokens = tokens.filter(t => !isSectionToken(t));
-    const isChordLine = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
-    if (!isChordLine) return prefixoHtml + escapeHtml(resto);
+    const validChords = chordTokens.filter(t => isValidChordToken(t));
+    if (!validChords.length) return prefixoHtml + escapeHtml(resto);
 
     const partes = resto.split(/(\s+)/);
     const restoHtml = partes.map(p => {
       if (p === '' || /^\s+$/.test(p)) return p;
       if (isSectionToken(p)) return escapeHtml(p);
+      if (!isValidChordToken(p)) return escapeHtml(p); // texto de letra em linha mista
       const transposto = simplificarAcorde(transporAcorde(p, semitons));
       return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}">${escapeHtml(transposto)}</span>`;
     }).join('');
@@ -781,8 +782,11 @@ function _renderCorrecao() {
     <div class="correcao-legenda-bar">
       <span class="correcao-badge ok">Am</span><span> reconhecido</span>
       <span class="correcao-badge bad">G#º</span><span> não reconhecido</span>
-      ${badCount ? `<span class="correcao-count">${badCount} token${badCount>1?'s':''} a corrigir</span>` : `<span class="correcao-count ok">Tudo ok!</span>`}
+      ${badCount
+        ? `<button class="correcao-fix-all-btn" onclick="abrirCorrecaoTodos()">${badCount} não reconhecido${badCount>1?'s':''} — Corrigir todos</button>`
+        : `<span class="correcao-count ok">Tudo ok!</span>`}
     </div>
+    ${_correcaoTodosAberto ? _renderCorrecaoTodosPanel() : ''}
     <div class="correcao-cifra">
       ${_correcaoLinhas.map((l, lIdx) => _renderCorrecaoLinha(l, lIdx)).join('')}
     </div>
@@ -867,29 +871,84 @@ function fecharCorrecaoPainel() {
 }
 
 function salvarCorrecao() {
-  const linhas = [];
-  _correcaoLinhas.forEach(l => {
-    if (!l.tokens) { linhas.push(l.raw ?? ''); return; }
-
-    if (l.type === 'lyric') {
-      // Tokens promovidos a acorde vão para uma linha de acordes acima
-      const okTokens = l.tokens.filter(t => t.kind === 'ok');
-      if (okTokens.length > 0) {
-        linhas.push(okTokens.map(t => t.text).join('  '));
-        const restoTexto = l.tokens.filter(t => t.kind !== 'ok').map(t => t.text).join('').trim();
-        if (restoTexto) linhas.push(restoTexto);
-      } else {
-        linhas.push(l.tokens.map(t => t.text).join(''));
-      }
-    } else {
-      linhas.push(l.tokens.map(t => t.text).join(''));
-    }
-  });
-  const novaCifra = linhas.join('\n');
+  const novaCifra = _correcaoLinhas.map(l =>
+    l.tokens ? l.tokens.map(t => t.text).join('') : (l.raw ?? '')
+  ).join('\n');
   const novosAcordes = extrairAcordes(novaCifra);
   atualizarMusica(musicaAtualId, { cifraTexto: novaCifra, acordes: novosAcordes });
   _correcaoLinhas = [];
   renderMusicaView();
+}
+
+// ─── Corrigir todos ───────────────────────────────────────────────────────────
+let _correcaoTodosAberto = false;
+
+function abrirCorrecaoTodos() {
+  _correcaoTodosAberto = true;
+  _renderCorrecao();
+  setTimeout(() => document.querySelector('.correcao-todos-input')?.focus(), 40);
+}
+
+function fecharCorrecaoTodos() {
+  _correcaoTodosAberto = false;
+  _renderCorrecao();
+}
+
+function _getBadTokensUnicos() {
+  const map = new Map(); // texto → [{ lIdx, tIdx }]
+  _correcaoLinhas.forEach((l, lIdx) => {
+    if (!l.tokens) return;
+    l.tokens.forEach((t, tIdx) => {
+      if (t.kind !== 'bad') return;
+      if (!map.has(t.text)) map.set(t.text, []);
+      map.get(t.text).push({ lIdx, tIdx });
+    });
+  });
+  return map;
+}
+
+function aplicarCorrecaoTodos() {
+  const badMap = _getBadTokensUnicos();
+  let aplicados = 0;
+  badMap.forEach((ocorrencias, textoOriginal) => {
+    const inp = document.getElementById(`correcao-todos-inp-${CSS.escape(textoOriginal)}`);
+    const val = inp?.value.trim();
+    if (!val || !isValidChordToken(val)) return;
+    ocorrencias.forEach(({ lIdx, tIdx }) => {
+      _correcaoLinhas[lIdx].tokens[tIdx] = { text: val, kind: 'ok' };
+    });
+    aplicados++;
+  });
+  _correcaoTodosAberto = false;
+  _renderCorrecao();
+}
+
+function _renderCorrecaoTodosPanel() {
+  const badMap = _getBadTokensUnicos();
+  if (!badMap.size) return `<div class="correcao-todos-panel"><p style="color:#27ae60;font-weight:600">Nenhum token não reconhecido.</p></div>`;
+  const rows = [...badMap.entries()].map(([text, occs]) => `
+    <div class="correcao-todos-row">
+      <span class="correcao-badge bad" style="min-width:80px;text-align:center">${escapeHtml(text)}</span>
+      <span class="correcao-todos-count">${occs.length}×</span>
+      <input class="correcao-input correcao-todos-input" id="correcao-todos-inp-${escapeHtml(CSS.escape(text))}"
+             placeholder="Acorde correto…" oninput="validarCorrecaoTodosInput(this)">
+    </div>
+  `).join('');
+  return `
+    <div class="correcao-todos-panel">
+      <div class="correcao-todos-titulo">Corrigir todos os não reconhecidos</div>
+      <div class="correcao-todos-lista">${rows}</div>
+      <div class="correcao-todos-actions">
+        <button class="nav-btn" style="font-weight:600;color:var(--accent)" onclick="aplicarCorrecaoTodos()">Aplicar todos</button>
+        <button class="nav-btn" onclick="fecharCorrecaoTodos()">Cancelar</button>
+      </div>
+    </div>
+  `;
+}
+
+function validarCorrecaoTodosInput(inp) {
+  const ok = isValidChordToken(inp.value.trim());
+  inp.style.borderColor = inp.value.trim() ? (ok ? '#a5d6a7' : '#ef9a9a') : '';
 }
 
 function cancelarCorrecao() {
