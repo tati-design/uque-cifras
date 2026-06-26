@@ -209,18 +209,23 @@ function _normToken(t) {
   return t.replace(/º/g, '°');
 }
 
+// Filtro rígido de forma: garante que o token inteiro ($) é notação de acorde,
+// evitando falsos positivos como "Everyone's" (E + lixo) ou "Between" (B + lixo).
+// Só passa se o string completo for compatível com padrão de acorde.
+const _CHORD_SHAPE_RE = /^[A-G](?:#|b)?(?:[°º]|(?:(?:maj|min|dim|aug|sus[24]?|m|M)\d{0,2}|\d{1,2}(?:maj|M)?))?(?:\+)?(?:\([^)]{1,12}\))?(?:\/(?:[A-G](?:#|b)?|\d+[-+]?))?(?:\([^)]{1,12}\))?(?:\+)?$/;
+
 // Cache para evitar chamar calcularNotasAcorde repetidamente com o mesmo token
 const _chordValidCache = new Map();
 
-// Valida usando o mesmo parser de teoria musical usado na tab Acordes.
-// Assim tudo que funciona na busca de acordes também é reconhecido na cifra.
+// Valida em dois passos: forma (regex) + teoria musical (calcularNotasAcorde).
+// Preferível não identificar a identificar palavra normal como acorde.
 function isValidChordToken(t) {
   const norm = _normToken(t);
   if (_chordValidCache.has(norm)) return _chordValidCache.get(norm);
-  // Precisa começar com nota para não confundir palavras de letra (ex: "Do", "Am" pt-BR)
-  if (!/^[A-G][#b]?/.test(norm)) { _chordValidCache.set(norm, false); return false; }
+  // 1. Forma estrita: token inteiro deve ser notação de acorde
+  if (!_CHORD_SHAPE_RE.test(norm)) { _chordValidCache.set(norm, false); return false; }
+  // 2. Teoria musical: parser valida se as notas fazem sentido
   try {
-    // Ignora o baixo (parte após /) para validar só o acorde base
     calcularNotasAcorde(norm.replace(/\/.*$/, ''));
     _chordValidCache.set(norm, true);
     return true;
