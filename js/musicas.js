@@ -127,12 +127,18 @@ function migrarIdsUnicos() {
   if (alterado) salvarListaMusicas(lista);
 }
 
+// Corrige erros de digitação históricos nos nomes de gênero
+const _GENERO_ALIASES = { 'Reagge': 'Reggae', 'reagge': 'Reggae', 'Outros': 'MPB' };
+
 function migrarGeneros() {
   const lista = listarMusicas();
   let alterado = false;
   lista.forEach(m => {
     if (!m.genero) {
-      m.genero = obterGeneroCSV(m.titulo, m.artista) || 'Outros';
+      m.genero = obterGeneroCSV(m.titulo, m.artista) || 'MPB';
+      alterado = true;
+    } else if (_GENERO_ALIASES[m.genero]) {
+      m.genero = _GENERO_ALIASES[m.genero];
       alterado = true;
     }
   });
