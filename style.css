@@ -433,8 +433,8 @@ body {
 .brand-logo-mobile { display: none; }
 
 .header-tabs {
-  flex: none;       /* não expande */
-  margin: 0 auto;   /* centraliza entre logo e ⋮ */
+  flex: none;
+  margin-right: auto; /* empurra ações para a direita */
 }
 
 /* ── Botões ─────────────────────────────────────────────────────────────────── */
@@ -461,36 +461,32 @@ body {
 .nav-btn:hover { background: #e8e6e0; }
 .nav-btn.active { background: #5b7cf6; color: #fff; }
 
-/* ── Tabs (dentro do header) ─────────────────────────────────────────────────── */
+/* ── Nav links (dentro do header) ───────────────────────────────────────────── */
 .tabs {
   display: flex;
-  gap: 4px;
-  background: #f0efea;
-  border-radius: 12px;
-  padding: 4px;
+  gap: 2px;
+  background: none;
+  border-radius: 0;
+  padding: 0;
 }
 .tab-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  background: transparent;
-  color: #777;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 9px;
+  background: none;
+  color: #999;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
+  transition: color 0.15s, background 0.15s;
 }
-.tab-btn:hover { background: #e8e6e0; }
-.tab-btn.active {
-  background: #fff;
-  color: #5b7cf6;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
+.tab-btn:hover { color: #333; background: #f3f2ee; }
+.tab-btn.active { color: #1a1a1a; font-weight: 600; background: none; box-shadow: none; }
 .tab-panel.hidden { display: none; }
 
 /* ── Cabeçalho da aba de músicas (desktop) ─────────────────────────────────── */
@@ -1271,9 +1267,8 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   /* Header mais compacto */
   .site-header { padding: 8px 12px; gap: 8px; margin: 0 -16px 16px; }
 
-  /* Tabs preenchem espaço restante no mobile */
-  .header-tabs { flex: 1; margin: 0; }
-  .tab-btn { flex: 1; padding: 8px 6px; font-size: 0.78rem; }
+  .header-tabs { flex: none; margin-right: auto; }
+  .tab-btn { flex: none; padding: 6px 10px; font-size: 0.82rem; }
 
   /* Esconde header da aba (h2 + botão desktop) */
   .musicas-tab-header { display: none; }
