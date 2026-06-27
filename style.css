@@ -96,6 +96,14 @@ body {
   .musica-nav-chevron { display: flex; }
   .musica-mobile-menu-wrap { display: none !important; }
 }
+/* Chevrons sem fundo, cor azul */
+.musica-nav-chevron.icon-btn {
+  background: none !important;
+  color: #5b7cf6 !important;
+  width: auto;
+  padding: 0 6px;
+}
+.musica-nav-chevron.icon-btn:hover { background: none !important; }
 /* Mobile: menu ⋮ */
 .musica-mobile-menu-wrap { display: block; }
 .musica-mobile-menu-btn { display: flex; }
@@ -264,36 +272,37 @@ body {
   position: relative;
   display: inline-flex;
   align-items: stretch;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  overflow: visible;
-  background: #fff;
+  border: none;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #f3f2ee;
+  height: 38px;
 }
-.aprendiz-split-btn.active { border-color: #5b7cf6; background: #f0f2ff; }
+.aprendiz-split-btn.active { background: #5b7cf6; }
+.aprendiz-split-btn:hover { background: #e8e6e0; }
+.aprendiz-split-btn.active:hover { background: #4a6be8; }
 .aprendiz-main {
   display: flex;
   align-items: center;
-  padding: 5px 8px;
+  padding: 0 9px;
   background: transparent;
   border: none;
   cursor: pointer;
   color: #555;
-  border-radius: 6px 0 0 6px;
 }
-.aprendiz-split-btn.active .aprendiz-main { color: #5b7cf6; }
+.aprendiz-split-btn.active .aprendiz-main { color: #fff; }
 .aprendiz-main .material-symbols-outlined { font-size: 20px; }
 .aprendiz-arrow {
   display: flex;
   align-items: center;
-  padding: 5px 4px;
+  padding: 0 5px;
   background: transparent;
   border: none;
-  border-left: 1.5px solid #ddd;
+  border-left: 1.5px solid rgba(0,0,0,0.12);
   cursor: pointer;
-  color: #888;
-  border-radius: 0 6px 6px 0;
+  color: #777;
 }
-.aprendiz-split-btn.active .aprendiz-arrow { border-left-color: #c0c8ff; color: #5b7cf6; }
+.aprendiz-split-btn.active .aprendiz-arrow { border-left-color: rgba(255,255,255,0.3); color: #fff; }
 .aprendiz-arrow .material-symbols-outlined { font-size: 16px; }
 .aprendiz-dropdown {
   position: absolute;

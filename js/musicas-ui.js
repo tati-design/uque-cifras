@@ -690,7 +690,7 @@ function renderMusicaView() {
         ${musica.tom ? renderTomControl(tomAtual, musica.tom, semitons) : ''}
       </div>
       <div class="musica-toolbar-right">
-        <button class="icon-btn fullscreen-btn" onclick="toggleFullscreenMusica()" title="Tela cheia">
+        <button class="icon-btn fullscreen-btn${modoFullscreen ? ' active' : ''}" onclick="toggleFullscreenMusica()" title="Tela cheia">
           <span class="material-symbols-outlined">${modoFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
         </button>
         <button class="nav-btn musica-acordes-toggle${acordesMobileAbertos ? ' active' : ''}" onclick="toggleAcordesMobile()">
@@ -722,8 +722,8 @@ function renderMusicaView() {
           <span class="material-symbols-outlined">arrow_cool_down</span><span class="autoscroll-start-label"> Autorrolagem</span>
         </button>` : ''}
         <div class="opcoes-wrap">
-          <button class="icon-btn${opcoesMenuAberto ? ' active' : ''}" onclick="toggleOpcoesMenu(event)" title="Opções">
-            <span class="material-symbols-outlined">tune</span>
+          <button class="icon-btn" onclick="toggleOpcoesMenu(event)" title="Opções">
+            <span class="material-symbols-outlined">apps</span>
           </button>
           <div id="opcoes-menu" class="opcoes-menu ${opcoesMenuAberto ? '' : 'hidden'}">
             <div class="opcoes-row">
@@ -1153,8 +1153,11 @@ let modoFullscreen = false;
 function toggleFullscreenMusica() {
   modoFullscreen = !modoFullscreen;
   document.getElementById('musica-page-header')?.classList.toggle('musica-header-hidden', modoFullscreen);
-  const btn = document.querySelector('.fullscreen-btn .material-symbols-outlined');
-  if (btn) btn.textContent = modoFullscreen ? 'fullscreen_exit' : 'fullscreen';
+  const btnEl = document.querySelector('.fullscreen-btn');
+  if (btnEl) {
+    btnEl.classList.toggle('active', modoFullscreen);
+    btnEl.querySelector('.material-symbols-outlined').textContent = modoFullscreen ? 'fullscreen_exit' : 'fullscreen';
+  }
 }
 
 function toggleOpcoesMenu(e) {
