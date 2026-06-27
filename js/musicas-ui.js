@@ -1278,6 +1278,15 @@ function alternarAutoScrollPlay() {
   renderToolbarAutoScroll();
 }
 
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && autoScrollState.ativo) {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    e.preventDefault();
+    alternarAutoScrollPlay();
+  }
+});
+
 function reiniciarAutoScroll() {
   const el = obterCifraScrollEl();
   if (el) el.scrollTop = 0;
