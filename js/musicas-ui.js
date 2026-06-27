@@ -468,30 +468,34 @@ function renderMusicasLista() {
   if (musicaFiltroGenero !== 'todos' && !generosExistentes.includes(musicaFiltroGenero)) musicaFiltroGenero = 'todos';
 
   // ── Gênero: mobile = pill+sheet, desktop = tabs com contador (sem TODOS) ──
-  const generoAtualLabel = musicaFiltroGenero === 'todos' ? 'Gênero' : musicaFiltroGenero;
-  const generoAtualIcon  = musicaFiltroGenero === 'todos' ? 'apps' : (GENERO_ICONS[musicaFiltroGenero] || 'music_note');
+  // tabs de gênero: desktop com contador, mobile sem contador mas com TODOS fixo à direita
+  const generoTabsMobile = generosExistentes.map(g =>
+    `<button class="genero-tab${musicaFiltroGenero === g ? ' active' : ''}" onclick="setMusicaFiltroGenero('${g.replace(/'/g, "\\'")}')">
+      <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span>
+      <span class="genero-tab-label">${g.toUpperCase()}</span>
+    </button>`
+  ).join('');
+
+  const generoTabsDesktop = generosExistentes.map(g =>
+    `<button class="genero-tab${musicaFiltroGenero === g ? ' active' : ''}" onclick="setMusicaFiltroGenero('${g.replace(/'/g, "\\'")}')">
+      <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span>
+      <span class="genero-tab-label">${g.toUpperCase()}</span>
+      <span class="genero-tab-count">${contPorGenero[g] || 0}</span>
+    </button>`
+  ).join('');
 
   let html = `
-  <!-- Mobile: TODOS sempre visível + pill de gênero -->
-  <div class="genero-row-mobile">
-    <button class="genero-todos-pill${musicaFiltroGenero === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroGenero('todos')">
-      <span class="material-symbols-outlined" style="font-size:15px">apps</span> TODOS
-    </button>
-    <button class="genero-pill-btn${musicaFiltroGenero !== 'todos' ? ' ativo' : ''}" onclick="abrirGeneroSheet()">
-      <span class="material-symbols-outlined" style="font-size:15px">${generoAtualIcon}</span>
-      ${generoAtualLabel.toUpperCase()}
-      <span class="material-symbols-outlined" style="font-size:15px">expand_more</span>
+  <!-- Mobile: tabs sem contador + TODOS fixo na direita -->
+  <div class="genero-tabs-row genero-tabs-mobile-wrap">
+    <div class="genero-tabs-scroll">${generoTabsMobile}</div>
+    <button class="genero-todos-fixo${musicaFiltroGenero === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroGenero('todos')">
+      <span class="material-symbols-outlined">apps</span>
+      <span>TODOS</span>
     </button>
   </div>
   <!-- Desktop: tabs com contador, sem TODOS -->
   <div class="genero-tabs-row genero-tabs-desktop">
-    ${generosExistentes.map(g =>
-      `<button class="genero-tab${musicaFiltroGenero === g ? ' active' : ''}" onclick="setMusicaFiltroGenero('${g.replace(/'/g, "\\'")}')">
-        <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span>
-        <span class="genero-tab-label">${g.toUpperCase()}</span>
-        <span class="genero-tab-count">${contPorGenero[g] || 0}</span>
-      </button>`
-    ).join('')}
+    ${generoTabsDesktop}
   </div>`;
 
   const listaPorGenero = musicaFiltroGenero === 'todos' ? lista : lista.filter(m => (m.genero || 'Outros') === musicaFiltroGenero);

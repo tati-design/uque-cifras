@@ -641,35 +641,44 @@ body {
 }
 .genero-tab.active .genero-tab-count { background: #ddd; color: #444; }
 
-/* Mobile: pill de gênero */
-.genero-row-mobile {
+/* Mobile: tabs scrolláveis + TODOS fixo à direita */
+.genero-tabs-mobile-wrap {
   display: none;
-  gap: 8px;
-  padding: 10px 0 6px;
-  border-bottom: 1.5px solid #e8e6e0;
+  padding: 0;
+  overflow: hidden;
 }
-.genero-todos-pill, .genero-pill-btn {
+.genero-tabs-scroll {
+  flex: 1;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.genero-tabs-scroll::-webkit-scrollbar { display: none; }
+.genero-todos-fixo {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #f3f2ee;
-  color: #555;
-  font-size: 0.75rem;
+  background: #fff;
+  color: #517DFE;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 7px 12px;
+  letter-spacing: 0.05em;
+  padding: 10px 12px;
   border: none;
-  border-radius: 20px;
+  border-left: 1.5px solid #e8e6e0;
+  border-bottom: 2.5px solid transparent;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
+  flex-shrink: 0;
 }
-.genero-todos-pill.active { background: #1a1a1a; color: #fff; }
-.genero-pill-btn.ativo { background: #517DFE; color: #fff; }
+.genero-todos-fixo .material-symbols-outlined { font-size: 15px; }
+.genero-todos-fixo.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
 .genero-tabs-desktop { display: flex; }
 
 @media (max-width: 700px) {
-  .genero-row-mobile { display: flex; }
+  .genero-tabs-mobile-wrap { display: flex; }
   .genero-tabs-desktop { display: none; }
 }
 
