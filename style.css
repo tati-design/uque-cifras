@@ -631,6 +631,99 @@ body {
 .genero-tab .material-symbols-outlined { font-size: 15px; }
 .genero-tab:hover { color: #555; }
 .genero-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+.genero-tab-count {
+  background: #ede9e3;
+  color: #777;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 1px 5px;
+}
+.genero-tab.active .genero-tab-count { background: #ddd; color: #444; }
+
+/* Mobile: pill de gênero */
+.genero-row-mobile {
+  display: none;
+  gap: 8px;
+  padding: 10px 0 6px;
+  border-bottom: 1.5px solid #e8e6e0;
+}
+.genero-todos-pill, .genero-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f2ee;
+  color: #555;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.genero-todos-pill.active { background: #1a1a1a; color: #fff; }
+.genero-pill-btn.ativo { background: #517DFE; color: #fff; }
+.genero-tabs-desktop { display: flex; }
+
+@media (max-width: 700px) {
+  .genero-row-mobile { display: flex; }
+  .genero-tabs-desktop { display: none; }
+}
+
+/* Genre sheet list */
+.sheet-genero-list { display: flex; flex-direction: column; gap: 4px; padding: 4px 0 8px; }
+.sheet-genero-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F8F7F4;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  text-align: left;
+}
+.sheet-genero-opt.active { background: #517DFE; color: #fff; }
+.sheet-genero-opt.active .sheet-opt-count { background: #DAE4FF; color: #517DFE; }
+.sheet-genero-icon { font-size: 18px; }
+.sheet-genero-nome { flex: 1; }
+
+/* Desktop toolbar inline font+rating */
+.toolbar-desktop-extras {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toolbar-fonte-inline {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.toolbar-fonte-val {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  min-width: 22px;
+  text-align: center;
+}
+.toolbar-rating-inline {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+.opcoes-wrap-mobile { display: none; }
+
+@media (max-width: 860px) {
+  .toolbar-desktop-extras { display: none; }
+  .opcoes-wrap-mobile { display: block; }
+}
 
 /* Linha de controles: busca + artista + AZ */
 .lista-controles-row {

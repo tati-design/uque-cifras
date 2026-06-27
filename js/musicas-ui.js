@@ -411,6 +411,38 @@ function selecionarArtistaSheet(artista) {
   fecharArtistaSheet();
 }
 
+function abrirGeneroSheet() {
+  const lista = listarMusicas();
+  const contPorGenero = {};
+  lista.forEach(m => { const g = m.genero || 'Outros'; contPorGenero[g] = (contPorGenero[g] || 0) + 1; });
+  const generosExistentes = [...new Set(lista.map(m => m.genero || 'Outros'))].sort();
+
+  const body = document.getElementById('genero-sheet-body');
+  body.innerHTML = `
+    <div class="sheet-genero-list">
+      ${generosExistentes.map(g => `
+        <button class="sheet-genero-opt${musicaFiltroGenero === g ? ' active' : ''}" onclick="selecionarGeneroSheet('${g.replace(/'/g, "\\'")}')">
+          <span class="material-symbols-outlined sheet-genero-icon">${GENERO_ICONS[g] || 'music_note'}</span>
+          <span class="sheet-genero-nome">${g}</span>
+          <span class="sheet-opt-count">${contPorGenero[g] || 0}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+  document.getElementById('genero-sheet-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharGeneroSheet() {
+  document.getElementById('genero-sheet-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function selecionarGeneroSheet(genero) {
+  setMusicaFiltroGenero(genero);
+  fecharGeneroSheet();
+}
+
 function renderMusicasLista() {
   const wrap = document.getElementById('musicas-lista');
   const buscaTinhaFoco = document.activeElement?.id === 'musica-busca-input';
@@ -435,14 +467,29 @@ function renderMusicasLista() {
   const generosExistentes = [...new Set(lista.map(m => m.genero || 'Outros'))].sort((a, b) => (contPorGenero[b] || 0) - (contPorGenero[a] || 0));
   if (musicaFiltroGenero !== 'todos' && !generosExistentes.includes(musicaFiltroGenero)) musicaFiltroGenero = 'todos';
 
-  // ── Tabs de gênero ──
-  let html = `<div class="genero-tabs-row">
-    <button class="genero-tab${musicaFiltroGenero === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroGenero('todos')">
-      <span class="material-symbols-outlined">apps</span><span class="genero-tab-label">TODOS</span>
+  // ── Gênero: mobile = pill+sheet, desktop = tabs com contador (sem TODOS) ──
+  const generoAtualLabel = musicaFiltroGenero === 'todos' ? 'Gênero' : musicaFiltroGenero;
+  const generoAtualIcon  = musicaFiltroGenero === 'todos' ? 'apps' : (GENERO_ICONS[musicaFiltroGenero] || 'music_note');
+
+  let html = `
+  <!-- Mobile: TODOS sempre visível + pill de gênero -->
+  <div class="genero-row-mobile">
+    <button class="genero-todos-pill${musicaFiltroGenero === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroGenero('todos')">
+      <span class="material-symbols-outlined" style="font-size:15px">apps</span> TODOS
     </button>
+    <button class="genero-pill-btn${musicaFiltroGenero !== 'todos' ? ' ativo' : ''}" onclick="abrirGeneroSheet()">
+      <span class="material-symbols-outlined" style="font-size:15px">${generoAtualIcon}</span>
+      ${generoAtualLabel.toUpperCase()}
+      <span class="material-symbols-outlined" style="font-size:15px">expand_more</span>
+    </button>
+  </div>
+  <!-- Desktop: tabs com contador, sem TODOS -->
+  <div class="genero-tabs-row genero-tabs-desktop">
     ${generosExistentes.map(g =>
       `<button class="genero-tab${musicaFiltroGenero === g ? ' active' : ''}" onclick="setMusicaFiltroGenero('${g.replace(/'/g, "\\'")}')">
-        <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span><span class="genero-tab-label">${g.toUpperCase()}</span>
+        <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span>
+        <span class="genero-tab-label">${g.toUpperCase()}</span>
+        <span class="genero-tab-count">${contPorGenero[g] || 0}</span>
       </button>`
     ).join('')}
   </div>`;
@@ -807,7 +854,23 @@ function renderMusicaView() {
             <button class="icon-btn" onclick="fecharAutoScroll()" title="Fechar"><span class="material-symbols-outlined">close</span></button>
           </div>` : ''}
         </div>
-        <div class="opcoes-wrap">
+        <!-- Desktop: controles inline de fonte + avaliação -->
+        <div class="toolbar-desktop-extras">
+          <div class="toolbar-fonte-inline">
+            <button class="icon-btn" onclick="diminuirFonte()" title="Diminuir fonte"><span class="material-symbols-outlined">text_decrease</span></button>
+            <span class="toolbar-fonte-val">${cifraFontSize}</span>
+            <button class="icon-btn" onclick="aumentarFonte()" title="Aumentar fonte"><span class="material-symbols-outlined">text_increase</span></button>
+          </div>
+          <div class="toolbar-rating-inline">
+            ${[1,2,3,4,5].map(i =>
+              `<button class="opcoes-rating-star" onclick="avaliarMusica('${musica.id}',${(musica.rating||0)===i?0:i})">
+                <span class="material-symbols-outlined" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":"color:#bbb"}">star</span>
+              </button>`
+            ).join('')}
+          </div>
+        </div>
+        <!-- Mobile: botão apps com menu -->
+        <div class="opcoes-wrap opcoes-wrap-mobile">
           <button class="icon-btn" onclick="toggleOpcoesMenu(event)" title="Opções">
             <span class="material-symbols-outlined">apps</span>
           </button>
