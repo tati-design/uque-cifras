@@ -739,7 +739,7 @@ function renderMusicaView() {
               <span class="opcoes-row-label">Avaliação</span>
               ${[1,2,3,4,5].map(i =>
                 `<button class="opcoes-rating-star" onclick="avaliarMusica('${musica.id}',${(musica.rating||0)===i?0:i});event.stopPropagation()">
-                  <span class="material-symbols-outlined" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":""}">star</span>
+                  <span class="material-symbols-outlined" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":"color:#bbb"}">star</span>
                 </button>`
               ).join('')}
             </div>

@@ -274,13 +274,11 @@ body {
   align-items: stretch;
   border: none;
   border-radius: 9px;
-  overflow: hidden;
+  overflow: visible;
   background: #f3f2ee;
   height: 38px;
 }
 .aprendiz-split-btn.active { background: #5b7cf6; }
-.aprendiz-split-btn:hover { background: #e8e6e0; }
-.aprendiz-split-btn.active:hover { background: #4a6be8; }
 .aprendiz-main {
   display: flex;
   align-items: center;
@@ -289,8 +287,11 @@ body {
   border: none;
   cursor: pointer;
   color: #555;
+  border-radius: 9px 0 0 9px;
 }
+.aprendiz-main:hover { background: rgba(0,0,0,0.06); }
 .aprendiz-split-btn.active .aprendiz-main { color: #fff; }
+.aprendiz-main:hover, .aprendiz-split-btn.active .aprendiz-main:hover { background: rgba(0,0,0,0.08); }
 .aprendiz-main .material-symbols-outlined { font-size: 20px; }
 .aprendiz-arrow {
   display: flex;
@@ -301,7 +302,9 @@ body {
   border-left: 1.5px solid rgba(0,0,0,0.12);
   cursor: pointer;
   color: #777;
+  border-radius: 0 9px 9px 0;
 }
+.aprendiz-arrow:hover { background: rgba(0,0,0,0.06); }
 .aprendiz-split-btn.active .aprendiz-arrow { border-left-color: rgba(255,255,255,0.3); color: #fff; }
 .aprendiz-arrow .material-symbols-outlined { font-size: 16px; }
 .aprendiz-dropdown {
