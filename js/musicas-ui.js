@@ -469,7 +469,10 @@ function renderMusicasLista() {
   html += `<div class="lista-controles-row">
     <div class="busca-input-wrap">
       <input id="musica-busca-input" class="musica-busca-input-novo" type="text" placeholder="Pesquisar" value="${musicaBusca.replace(/"/g, '&quot;')}" oninput="setMusicaBusca(this.value)">
-      <span class="material-symbols-outlined busca-icon-novo">search</span>
+      ${musicaBusca
+        ? `<button class="busca-clear-btn" onclick="setMusicaBusca('')" tabindex="-1"><span class="material-symbols-outlined">cancel</span></button>`
+        : `<span class="material-symbols-outlined busca-icon-novo">search</span>`
+      }
     </div>
     <div class="filtro-row-outer artista-filtro-wrap">
       <button class="artista-filtro-btn${musicaFiltroArtista !== 'todos' ? ' ativo' : ''}" onclick="toggleArtistaFiltro(event)">
@@ -1975,10 +1978,10 @@ function _substituirAcordeCifra(cifra, original, novo, occAlvo = -1) {
 document.addEventListener('click', e => {
   const token = e.target.closest('.chord-token');
   if (!token) return;
-  // No mobile não há tooltip — abre o sheet
   if (window.innerWidth <= 860) {
     e.preventDefault();
     e.stopPropagation();
+    esconderChordTooltip();
     abrirNotaSheet(token);
   }
 });

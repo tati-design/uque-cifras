@@ -667,6 +667,22 @@ body {
   color: #aaa;
   pointer-events: none;
 }
+.busca-clear-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+.busca-clear-btn:hover { color: #555; }
+.busca-clear-btn .material-symbols-outlined { font-size: 18px; }
 .artista-filtro-wrap { position: relative; flex-shrink: 0; }
 .artista-filtro-btn {
   display: inline-flex;
