@@ -1,6 +1,7 @@
 // ─── SVG Diagram Renderer ─────────────────────────────────────────────────────
 function renderDiagram(candidato, opts = {}) {
   const showNoteLabels = opts.showNoteLabels !== false;
+  const padBoverride = opts.padB;
   const pos = candidato.posicoes;
   const notasTocadas = candidato.notasTocadas;
   const casaPestana = detectarPestana(pos);
@@ -14,7 +15,7 @@ function renderDiagram(candidato, opts = {}) {
   const NUM_ROWS = 5;
   const offset = casaMaxPressionada > 5 ? casaMinPressionada - 1 : 0;
 
-  const W = 120, padL = 18, padT = 28, padB = 30;
+  const W = 120, padL = 18, padT = 28, padB = padBoverride !== undefined ? padBoverride : 30;
   const colW = (W - padL - 10) / 3;
   const rowH = 22;
   const H = padT + NUM_ROWS * rowH + padB;

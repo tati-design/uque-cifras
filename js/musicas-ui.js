@@ -795,7 +795,7 @@ function renderChordChipMobile(nomeAcorde) {
       const idx = r.cands.findIndex(c => posicoesIguais(c.posicoes, favorito.posicoes));
       if (idx !== -1) candidato = r.cands[idx];
     }
-    if (candidato) diagramaHtml = renderDiagram(candidato, { showNoteLabels: false });
+    if (candidato) diagramaHtml = renderDiagram(candidato, { showNoteLabels: false, padB: 10 });
   } catch { diagramaHtml = `<div class="chord-chip-erro">?</div>`; }
   const descMobile = modoNomes ? `<div class="chord-chip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
   return `<div class="chord-chip-mobile" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g,"\\'")}')">
