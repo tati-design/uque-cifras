@@ -1534,8 +1534,8 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 .musica-header-hidden { display: none !important; }
 
 /* ─── Rating dropdown (5 estrelas) ──────────────────────────────────────── */
-.rating-wrap { position: relative; }
-.rating-menu {
+.opcoes-wrap { position: relative; }
+.opcoes-menu {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
@@ -1544,15 +1544,30 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.14);
   display: flex;
-  gap: 2px;
-  padding: 8px 10px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
   z-index: 200;
   white-space: nowrap;
 }
-.rating-menu-star {
+.opcoes-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.opcoes-rating-row { justify-content: center; gap: 2px; }
+.opcoes-rating-star {
   background: none;
   border: none;
   padding: 2px;
   cursor: pointer;
   line-height: 1;
+}
+.opcoes-fonte-input {
+  width: 44px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 2px 4px;
+  font-size: 0.85rem;
 }

@@ -582,6 +582,7 @@ function fecharMusicaView() {
   autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
   acordesMobileAbertos = false;
   modoFullscreen = false;
+  opcoesMenuAberto = false;
 
   document.getElementById('view-musica').classList.add('hidden');
   document.getElementById('view-lista').classList.remove('hidden');
@@ -669,9 +670,6 @@ function renderMusicaView() {
       </button>
     </div>
     <div class="musica-page-header-actions">
-      <button class="icon-btn fullscreen-btn" onclick="toggleFullscreenMusica()" title="Tela cheia">
-        <span class="material-symbols-outlined">${modoFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
-      </button>
       <div class="menu-wrap">
         <button class="icon-btn" onclick="toggleMusicaMenuMobile(event)">
           <span class="material-symbols-outlined">more_vert</span>
@@ -690,7 +688,6 @@ function renderMusicaView() {
     <div class="musica-toolbar">
       <div class="musica-toolbar-left">
         ${musica.tom ? renderTomControl(tomAtual, musica.tom, semitons) : ''}
-        ${renderFonteControl()}
       </div>
       <div class="musica-toolbar-right">
         <button class="nav-btn musica-acordes-toggle${acordesMobileAbertos ? ' active' : ''}" onclick="toggleAcordesMobile()">
@@ -721,11 +718,30 @@ function renderMusicaView() {
         ${!s.ativo ? `<button class="nav-btn autoscroll-start-btn" onclick="iniciarAutoScroll()" title="Autorrolagem">
           <span class="material-symbols-outlined">arrow_cool_down</span><span class="autoscroll-start-label"> Autorrolagem</span>
         </button>` : ''}
-        <div class="rating-wrap">
-          <button class="icon-btn" onclick="toggleRatingMenu(event,'${musica.id}',${musica.rating||0})" title="Avaliar música">
-            <span class="material-symbols-outlined" style="${musica.rating ? `font-variation-settings:'FILL' 1;color:#f5a623` : ''}">star</span>
+        <button class="icon-btn fullscreen-btn" onclick="toggleFullscreenMusica()" title="Tela cheia">
+          <span class="material-symbols-outlined">${modoFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
+        </button>
+        <div class="opcoes-wrap">
+          <button class="icon-btn${opcoesMenuAberto ? ' active' : ''}" onclick="toggleOpcoesMenu(event)" title="Opções">
+            <span class="material-symbols-outlined">tune</span>
           </button>
-          <div id="rating-menu" class="rating-menu hidden"></div>
+          <div id="opcoes-menu" class="opcoes-menu ${opcoesMenuAberto ? '' : 'hidden'}">
+            <div class="opcoes-row">
+              <button class="icon-btn" onclick="diminuirFonte();event.stopPropagation()"><span class="material-symbols-outlined">text_decrease</span></button>
+              <input type="number" class="fonte-size-input opcoes-fonte-input" value="${cifraFontSize}" min="8" max="72"
+                oninput="_setFonteSize(this.value)"
+                onkeydown="if(event.key==='Enter'||event.key==='Escape'){fecharOpcoesMenu();event.preventDefault()}"
+                onclick="event.stopPropagation()">
+              <button class="icon-btn" onclick="aumentarFonte();event.stopPropagation()"><span class="material-symbols-outlined">text_increase</span></button>
+            </div>
+            <div class="opcoes-row opcoes-rating-row">
+              ${[1,2,3,4,5].map(i =>
+                `<button class="opcoes-rating-star" onclick="avaliarMusica('${musica.id}',${(musica.rating||0)===i?0:i});event.stopPropagation()">
+                  <span class="material-symbols-outlined" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":""}">star</span>
+                </button>`
+              ).join('')}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1129,7 +1145,7 @@ function iniciarSwipeCifra(el) {
 
 // ─── Controle de tom ───────────────────────────────────────────────────────────
 let tomMenuAberto = false;
-let ratingMenuAberto = false;
+let opcoesMenuAberto = false;
 let modoFullscreen = false;
 
 function toggleFullscreenMusica() {
@@ -1139,32 +1155,19 @@ function toggleFullscreenMusica() {
   if (btn) btn.textContent = modoFullscreen ? 'fullscreen_exit' : 'fullscreen';
 }
 
-function toggleRatingMenu(e, id, rating) {
+function toggleOpcoesMenu(e) {
   if (e) e.stopPropagation();
-  ratingMenuAberto = !ratingMenuAberto;
-  const menu = document.getElementById('rating-menu');
-  if (!menu) return;
-  menu.classList.toggle('hidden', !ratingMenuAberto);
-  if (ratingMenuAberto) _renderRatingMenu(id, rating);
+  opcoesMenuAberto = !opcoesMenuAberto;
+  document.getElementById('opcoes-menu')?.classList.toggle('hidden', !opcoesMenuAberto);
 }
 
-function fecharRatingMenu() {
-  ratingMenuAberto = false;
-  document.getElementById('rating-menu')?.classList.add('hidden');
-}
-
-function _renderRatingMenu(id, currentRating) {
-  const menu = document.getElementById('rating-menu');
-  if (!menu) return;
-  menu.innerHTML = [1,2,3,4,5].map(i =>
-    `<button class="rating-menu-star" onclick="avaliarMusica('${id}',${currentRating===i?0:i});fecharRatingMenu();renderMusicaView()">
-      <span class="material-symbols-outlined" style="font-size:22px;${i<=currentRating?"font-variation-settings:'FILL' 1;color:#f5a623":"color:#ccc"}">star</span>
-    </button>`
-  ).join('');
+function fecharOpcoesMenu() {
+  opcoesMenuAberto = false;
+  document.getElementById('opcoes-menu')?.classList.add('hidden');
 }
 
 document.addEventListener('click', e => {
-  if (ratingMenuAberto && !e.target.closest('.rating-wrap')) fecharRatingMenu();
+  if (opcoesMenuAberto && !e.target.closest('.opcoes-wrap')) fecharOpcoesMenu();
 });
 
 function renderTomControl(tomAtual, tomOriginal, semitons) {
