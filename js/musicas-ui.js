@@ -474,7 +474,11 @@ function renderMusicasLista() {
 
   // ── Gênero: mobile = pill+sheet, desktop = tabs com contador (sem TODOS) ──
   // tabs de gênero: desktop com contador, mobile sem contador mas com TODOS fixo à direita
-  const generoTabsMobile = generosExistentes.map(g =>
+  const todosTabMobile = `<button class="genero-tab${musicaFiltroGenero === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroGenero('todos')">
+    <span class="material-symbols-outlined">apps</span>
+    <span class="genero-tab-label">TODOS</span>
+  </button>`;
+  const generoTabsMobile = todosTabMobile + generosExistentes.map(g =>
     `<button class="genero-tab${musicaFiltroGenero === g ? ' active' : ''}" onclick="setMusicaFiltroGenero('${g.replace(/'/g, "\\'")}')">
       <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span>
       <span class="genero-tab-label">${g.toUpperCase()}</span>
@@ -493,7 +497,7 @@ function renderMusicasLista() {
   <!-- Mobile: tabs sem contador + TODOS fixo na direita -->
   <div class="genero-tabs-row genero-tabs-mobile-wrap">
     <div class="genero-tabs-scroll">${generoTabsMobile}</div>
-    <button class="genero-todos-fixo" onclick="abrirGeneroSheet()">TODOS</button>
+    <button class="genero-todos-fixo" onclick="abrirGeneroSheet()">VER GÊNEROS</button>
   </div>
   <!-- Desktop: tabs com contador, sem TODOS -->
   <div class="genero-tabs-row genero-tabs-desktop">

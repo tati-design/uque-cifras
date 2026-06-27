@@ -666,6 +666,7 @@ body {
   padding: 10px 14px;
   border: none;
   border-left: 1px solid #D4D5E5;
+  border-radius: 0;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
