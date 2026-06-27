@@ -629,8 +629,11 @@ body {
   -webkit-appearance: none;
 }
 .genero-tab .material-symbols-outlined { font-size: 15px; }
-.genero-tab:hover { color: #555; }
+.genero-tab:hover { color: #333; background: #ede9e3; }
 .genero-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+.genero-tab.active:hover { color: #000; background: #e0dcd6; border-bottom-color: #000; }
+.genero-todos-fixo:hover { background: #ede9e3; }
+.genero-todos-fixo:active { background: #dedad4; }
 .genero-tab-count {
   background: #ede9e3;
   color: #777;
