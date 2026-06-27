@@ -690,6 +690,9 @@ function renderMusicaView() {
         ${musica.tom ? renderTomControl(tomAtual, musica.tom, semitons) : ''}
       </div>
       <div class="musica-toolbar-right">
+        <button class="icon-btn fullscreen-btn" onclick="toggleFullscreenMusica()" title="Tela cheia">
+          <span class="material-symbols-outlined">${modoFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
+        </button>
         <button class="nav-btn musica-acordes-toggle${acordesMobileAbertos ? ' active' : ''}" onclick="toggleAcordesMobile()">
           <span class="material-symbols-outlined">library_music</span><span class="toolbar-btn-label"> Acordes</span>
         </button>
@@ -718,15 +721,13 @@ function renderMusicaView() {
         ${!s.ativo ? `<button class="nav-btn autoscroll-start-btn" onclick="iniciarAutoScroll()" title="Autorrolagem">
           <span class="material-symbols-outlined">arrow_cool_down</span><span class="autoscroll-start-label"> Autorrolagem</span>
         </button>` : ''}
-        <button class="icon-btn fullscreen-btn" onclick="toggleFullscreenMusica()" title="Tela cheia">
-          <span class="material-symbols-outlined">${modoFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
-        </button>
         <div class="opcoes-wrap">
           <button class="icon-btn${opcoesMenuAberto ? ' active' : ''}" onclick="toggleOpcoesMenu(event)" title="Opções">
             <span class="material-symbols-outlined">tune</span>
           </button>
           <div id="opcoes-menu" class="opcoes-menu ${opcoesMenuAberto ? '' : 'hidden'}">
             <div class="opcoes-row">
+              <span class="opcoes-row-label">Fonte</span>
               <button class="icon-btn" onclick="diminuirFonte();event.stopPropagation()"><span class="material-symbols-outlined">text_decrease</span></button>
               <input type="number" class="fonte-size-input opcoes-fonte-input" value="${cifraFontSize}" min="8" max="72"
                 oninput="_setFonteSize(this.value)"
@@ -735,6 +736,7 @@ function renderMusicaView() {
               <button class="icon-btn" onclick="aumentarFonte();event.stopPropagation()"><span class="material-symbols-outlined">text_increase</span></button>
             </div>
             <div class="opcoes-row opcoes-rating-row">
+              <span class="opcoes-row-label">Avaliação</span>
               ${[1,2,3,4,5].map(i =>
                 `<button class="opcoes-rating-star" onclick="avaliarMusica('${musica.id}',${(musica.rating||0)===i?0:i});event.stopPropagation()">
                   <span class="material-symbols-outlined" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":""}">star</span>

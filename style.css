@@ -1545,17 +1545,25 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   box-shadow: 0 6px 20px rgba(0,0,0,0.14);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
+  gap: 2px;
+  padding: 8px 12px;
   z-index: 200;
   white-space: nowrap;
 }
+.opcoes-menu.hidden { display: none !important; }
 .opcoes-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 4px 0;
 }
-.opcoes-rating-row { justify-content: center; gap: 2px; }
+.opcoes-row + .opcoes-row { border-top: 1px solid #f0f0f0; }
+.opcoes-row-label {
+  font-size: 0.78rem;
+  color: #888;
+  min-width: 72px;
+}
+.opcoes-rating-row { gap: 2px; }
 .opcoes-rating-star {
   background: none;
   border: none;
