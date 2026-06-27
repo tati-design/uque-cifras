@@ -658,23 +658,19 @@ body {
 .genero-todos-fixo {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: #fff;
+  background: #F8F7F4;
   color: #517DFE;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: none;
-  border-left: 1.5px solid #e8e6e0;
-  border-bottom: 2.5px solid transparent;
+  border-left: 1px solid #D4D5E5;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
   flex-shrink: 0;
 }
-.genero-todos-fixo .material-symbols-outlined { font-size: 15px; }
-.genero-todos-fixo.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
 .genero-tabs-desktop { display: flex; }
 
 @media (max-width: 700px) {

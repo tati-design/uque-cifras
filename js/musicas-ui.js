@@ -420,6 +420,11 @@ function abrirGeneroSheet() {
   const body = document.getElementById('genero-sheet-body');
   body.innerHTML = `
     <div class="sheet-genero-list">
+      <button class="sheet-genero-opt${musicaFiltroGenero === 'todos' ? ' active' : ''}" onclick="selecionarGeneroSheet('todos')">
+        <span class="material-symbols-outlined sheet-genero-icon">apps</span>
+        <span class="sheet-genero-nome">Todos</span>
+        <span class="sheet-opt-count">${lista.length}</span>
+      </button>
       ${generosExistentes.map(g => `
         <button class="sheet-genero-opt${musicaFiltroGenero === g ? ' active' : ''}" onclick="selecionarGeneroSheet('${g.replace(/'/g, "\\'")}')">
           <span class="material-symbols-outlined sheet-genero-icon">${GENERO_ICONS[g] || 'music_note'}</span>
@@ -488,10 +493,7 @@ function renderMusicasLista() {
   <!-- Mobile: tabs sem contador + TODOS fixo na direita -->
   <div class="genero-tabs-row genero-tabs-mobile-wrap">
     <div class="genero-tabs-scroll">${generoTabsMobile}</div>
-    <button class="genero-todos-fixo${musicaFiltroGenero === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroGenero('todos')">
-      <span class="material-symbols-outlined">apps</span>
-      <span>TODOS</span>
-    </button>
+    <button class="genero-todos-fixo" onclick="abrirGeneroSheet()">TODOS</button>
   </div>
   <!-- Desktop: tabs com contador, sem TODOS -->
   <div class="genero-tabs-row genero-tabs-desktop">
