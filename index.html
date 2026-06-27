@@ -36,7 +36,7 @@
 
     <div class="menu-wrap">
       <button class="icon-btn" onclick="toggleMusicasMenu(event)" title="Mais opções">
-        <span class="material-symbols-outlined">more_vert</span>
+        <span class="material-symbols-outlined">person</span>
       </button>
       <div id="musicas-menu" class="dropdown-menu hidden">
         <button id="btn-modo-novato" onclick="abrirAprendizModal()"><span class="material-symbols-outlined">school</span> Modo Aprendiz</button>
@@ -49,16 +49,9 @@
   </header>
 
   <div id="tab-musicas" class="tab-panel">
-    <div class="musicas-tab-header">
-      <h2 class="musicas-tab-titulo">Minhas Músicas</h2>
-      <button class="nav-btn nav-btn-primary" onclick="abrirAdicionarMusicaModal()">
-        <span class="material-symbols-outlined">add</span> Adicionar música
-      </button>
-    </div>
     <input type="file" id="backup-file-input" accept="application/json" style="display:none" onchange="importarBackupArquivo(this)">
     <div id="musicas-lista"></div>
-    <!-- FAB: só aparece no mobile -->
-    <button class="musicas-add-fab" onclick="abrirAdicionarMusicaModal()">
+    <button class="musicas-add-bottom" onclick="abrirAdicionarMusicaModal()">
       <span class="material-symbols-outlined">add</span> Adicionar música
     </button>
   </div>
@@ -146,6 +139,52 @@
       <button class="modal-close" onclick="fecharModalGenero()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div id="genero-modal-body" class="genero-modal-body"></div>
+  </div>
+</div>
+
+<!-- ═══ SHEETS MOBILE ═══════════════════════════════════════════════════════ -->
+
+<!-- Sheet: Ordenação -->
+<div id="ordenacao-sheet-overlay" class="sheet-overlay hidden" onclick="fecharOrdenacaoSheet()">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-header">
+      <span class="sheet-title">Ordenar por</span>
+      <button class="sheet-close-btn" onclick="fecharOrdenacaoSheet()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="sheet-body" id="ordenacao-sheet-body"></div>
+  </div>
+</div>
+
+<!-- Sheet: Artistas -->
+<div id="artista-sheet-overlay" class="sheet-overlay hidden" onclick="fecharArtistaSheet()">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-header">
+      <span class="sheet-title">Artistas</span>
+      <button class="sheet-close-btn" onclick="fecharArtistaSheet()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="sheet-body" id="artista-sheet-body"></div>
+  </div>
+</div>
+
+<div id="nota-sheet-overlay" class="sheet-overlay hidden" onclick="fecharNotaSheet()">
+  <div class="sheet nota-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-header">
+      <span class="sheet-title" id="nota-sheet-title">Acorde</span>
+      <button class="sheet-close-btn" onclick="fecharNotaSheet()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="nota-sheet-section-label">Substituir por</div>
+    <div class="nota-sheet-trocar-row">
+      <input id="nota-sheet-input" class="nota-sheet-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Ex: Am7" oninput="notaSheetInputChange()">
+      <button class="nota-sheet-confirmar" id="nota-sheet-confirmar" onclick="confirmarTrocaAcorde()" disabled>Substituir</button>
+    </div>
+    <label class="nota-sheet-todos-row">
+      <input type="checkbox" id="nota-sheet-todos-cb" checked>
+      <span id="nota-sheet-todos-label">Substituir todos da música</span>
+    </label>
+    <div class="nota-sheet-divider">
+      <span>Opções de diagrama</span>
+    </div>
+    <div class="nota-sheet-voicings" id="nota-sheet-voicings"></div>
   </div>
 </div>
 

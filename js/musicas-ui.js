@@ -191,7 +191,7 @@ function toggleFiltroDropdown(tipo, e) {
 }
 
 document.addEventListener('click', e => {
-  if (filtroDropdownAberto && !e.target.closest('.filtro-row-outer')) {
+  if (filtroDropdownAberto && !e.target.closest('.filtro-row-outer') && !e.target.closest('.az-sort-btn')) {
     filtroDropdownAberto = null;
     renderMusicasLista();
   }
@@ -326,17 +326,100 @@ function _legadoCriarCategoria() {
   salvarCategoriaSelecionadas(nome);
 }
 
+function toggleAzSort(e) {
+  if (window.innerWidth <= 700) { abrirOrdenacaoSheet(); return; }
+  if (e) e.stopPropagation();
+  filtroDropdownAberto = filtroDropdownAberto === 'ordem' ? null : 'ordem';
+  renderMusicasLista();
+}
+
+function toggleArtistaFiltro(e) {
+  if (window.innerWidth <= 700) { abrirArtistaSheet(); return; }
+  toggleFiltroDropdown('artista', e);
+}
+
+function selecionarOrdemDesktop(val) {
+  musicaOrdem = val;
+  filtroDropdownAberto = null;
+  renderMusicasLista();
+}
+
+// ── Bottom sheets mobile ──────────────────────────────────────────────────────
+
+const ORDEM_OPTS = [
+  { val: 'titulo',  icon: 'music_note',    label: 'Música'    },
+  { val: 'artista', icon: 'person',        label: 'Artista'   },
+  { val: 'rating',  icon: 'star',          label: 'Avaliação' },
+];
+
+function abrirOrdenacaoSheet() {
+  const body = document.getElementById('ordenacao-sheet-body');
+  body.innerHTML = ORDEM_OPTS.map(o => `
+    <button class="sheet-opt${musicaOrdem === o.val ? ' active' : ''}" onclick="selecionarOrdemSheet('${o.val}')">
+      <span class="material-symbols-outlined sheet-opt-icon">${o.icon}</span>
+      <span class="sheet-opt-label">${o.label}</span>
+      ${musicaOrdem === o.val ? '<span class="material-symbols-outlined sheet-opt-check">check</span>' : ''}
+    </button>
+  `).join('');
+  document.getElementById('ordenacao-sheet-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharOrdenacaoSheet() {
+  document.getElementById('ordenacao-sheet-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function selecionarOrdemSheet(val) {
+  musicaOrdem = val;
+  fecharOrdenacaoSheet();
+  renderMusicasLista();
+}
+
+function abrirArtistaSheet() {
+  const lista = listarMusicas();
+  const listaPorGenero = musicaFiltroGenero === 'todos' ? lista : lista.filter(m => (m.genero || 'Outros') === musicaFiltroGenero);
+  const contPorArtista = {};
+  listaPorGenero.forEach(m => { contPorArtista[m.artista] = (contPorArtista[m.artista] || 0) + 1; });
+  const artistas = [...new Set(listaPorGenero.map(m => m.artista))].sort((a, b) => (contPorArtista[b] || 0) - (contPorArtista[a] || 0));
+
+  const body = document.getElementById('artista-sheet-body');
+  const todosCls = musicaFiltroArtista === 'todos' ? ' active' : '';
+  body.innerHTML = `
+    <div class="sheet-artista-grid">
+      <button class="sheet-artista-opt todos${todosCls}" onclick="selecionarArtistaSheet('todos')">
+        Todos <span class="sheet-opt-count">${listaPorGenero.length}</span>
+      </button>
+      ${artistas.map(a => `
+        <button class="sheet-artista-opt${musicaFiltroArtista === a ? ' active' : ''}" onclick="selecionarArtistaSheet('${a.replace(/'/g, "\\'")}')">
+          ${a} <span class="sheet-opt-count">${contPorArtista[a]}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+  document.getElementById('artista-sheet-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharArtistaSheet() {
+  document.getElementById('artista-sheet-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function selecionarArtistaSheet(artista) {
+  setMusicaFiltroArtista(artista);
+  fecharArtistaSheet();
+}
+
 function renderMusicasLista() {
   const wrap = document.getElementById('musicas-lista');
   const buscaTinhaFoco = document.activeElement?.id === 'musica-busca-input';
   const lista = listarMusicas().sort((a, b) =>
     musicaOrdem === 'artista'
       ? a.artista.localeCompare(b.artista) || a.titulo.localeCompare(b.titulo)
-      : musicaOrdem === 'tom'
-        ? (a.tom || '').localeCompare(b.tom || '') || a.titulo.localeCompare(b.titulo)
-        : musicaOrdem === 'rating'
-          ? (b.rating || 0) - (a.rating || 0) || a.titulo.localeCompare(b.titulo)
-          : a.titulo.localeCompare(b.titulo)
+      : musicaOrdem === 'rating'
+        ? (b.rating || 0) - (a.rating || 0) || a.titulo.localeCompare(b.titulo)
+        : a.titulo.localeCompare(b.titulo)
   );
 
   if (!lista.length) {
@@ -346,57 +429,64 @@ function renderMusicasLista() {
     return;
   }
 
-  // Filtro por gênero
+  // Contagem por gênero
   const contPorGenero = {};
   lista.forEach(m => { const g = m.genero || 'Outros'; contPorGenero[g] = (contPorGenero[g] || 0) + 1; });
   const generosExistentes = [...new Set(lista.map(m => m.genero || 'Outros'))].sort((a, b) => (contPorGenero[b] || 0) - (contPorGenero[a] || 0));
   if (musicaFiltroGenero !== 'todos' && !generosExistentes.includes(musicaFiltroGenero)) musicaFiltroGenero = 'todos';
 
-  // ── Filtro Gênero: linha única com scroll + dropdown ──
-  const _gIcon = g => `<span class="material-symbols-outlined genero-chip-icon">${GENERO_ICONS[g] || 'music_note'}</span>`;
-  const generoChips = (lista_, ativo, fn) =>
-    `<button class="genero-chip${ativo === 'todos' ? ' active' : ''}" onclick="${fn}('todos')"><span class="material-symbols-outlined genero-chip-icon">apps</span>Todos <span class="filtro-count">${lista_.length}</span></button>` +
-    generosExistentes.map(g =>
-      `<button class="genero-chip${ativo === g ? ' active' : ''}" onclick="${fn}('${g.replace(/'/g, "\\'")}')">${_gIcon(g)}${g} <span class="filtro-count">${contPorGenero[g] || 0}</span></button>`
-    ).join('');
-
-  let html = `<div class="filtro-secao">
-    <div class="filtro-secao-label">Gênero</div>
-    <div class="filtro-row-outer">
-      <div class="filtro-row-with-btn">
-        <div class="filtro-chips-row">
-          ${generoChips(lista, musicaFiltroGenero, 'setMusicaFiltroGenero')}
-        </div>
-        <button class="ver-todos-btn" onclick="toggleFiltroDropdown('genero', event)">Ver todos</button>
-      </div>
-      ${filtroDropdownAberto === 'genero' ? `<div class="filtro-dropdown">${generoChips(lista, musicaFiltroGenero, 'setMusicaFiltroGenero')}</div>` : ''}
-    </div>
+  // ── Tabs de gênero ──
+  let html = `<div class="genero-tabs-row">
+    <button class="genero-tab${musicaFiltroGenero === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroGenero('todos')">
+      <span class="material-symbols-outlined">apps</span><span class="genero-tab-label">TODOS</span>
+    </button>
+    ${generosExistentes.map(g =>
+      `<button class="genero-tab${musicaFiltroGenero === g ? ' active' : ''}" onclick="setMusicaFiltroGenero('${g.replace(/'/g, "\\'")}')">
+        <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span><span class="genero-tab-label">${g.toUpperCase()}</span>
+      </button>`
+    ).join('')}
   </div>`;
 
   const listaPorGenero = musicaFiltroGenero === 'todos' ? lista : lista.filter(m => (m.genero || 'Outros') === musicaFiltroGenero);
 
-  // ── Filtro Artista: linha única com scroll + dropdown ──
+  // Contagem por artista
   const contPorArtista = {};
   listaPorGenero.forEach(m => { contPorArtista[m.artista] = (contPorArtista[m.artista] || 0) + 1; });
   const artistas = [...new Set(listaPorGenero.map(m => m.artista))].sort((a, b) => (contPorArtista[b] || 0) - (contPorArtista[a] || 0));
   if (musicaFiltroArtista !== 'todos' && !artistas.includes(musicaFiltroArtista)) musicaFiltroArtista = 'todos';
 
-  const artistaChips = (ativo) =>
-    `<button class="artista-chip${ativo === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroArtista('todos')">Todos <span class="filtro-count">${listaPorGenero.length}</span></button>` +
+  const artistaDropdownHtml =
+    `<button class="artista-chip artista-chip-todos${musicaFiltroArtista === 'todos' ? ' active' : ''}" onclick="setMusicaFiltroArtista('todos')">Todos <span class="filtro-count">${listaPorGenero.length}</span></button>` +
+    `<div class="artista-dropdown-grid">` +
     artistas.map(a =>
-      `<button class="artista-chip${ativo === a ? ' active' : ''}" onclick="setMusicaFiltroArtista('${a.replace(/'/g, "\\'")}')">${a} <span class="filtro-count">${contPorArtista[a] || 0}</span></button>`
-    ).join('');
+      `<button class="artista-chip${musicaFiltroArtista === a ? ' active' : ''}" onclick="setMusicaFiltroArtista('${a.replace(/'/g, "\\'")}')">${a} <span class="filtro-count">${contPorArtista[a] || 0}</span></button>`
+    ).join('') +
+    `</div>`;
 
-  html += `<div class="filtro-secao">
-    <div class="filtro-secao-label">Artista</div>
-    <div class="filtro-row-outer">
-      <div class="filtro-row-with-btn">
-        <div class="filtro-chips-row-artista">
-          ${artistaChips(musicaFiltroArtista)}
-        </div>
-        <button class="ver-todos-btn-artista" onclick="toggleFiltroDropdown('artista', event)">Ver todos</button>
-      </div>
-      ${filtroDropdownAberto === 'artista' ? `<div class="filtro-dropdown">${artistaChips(musicaFiltroArtista)}</div>` : ''}
+  const artistaBtnLabel = musicaFiltroArtista !== 'todos' ? musicaFiltroArtista : 'Artistas';
+
+  // ── Linha de controles: busca + artista + AZ ──
+  html += `<div class="lista-controles-row">
+    <div class="busca-input-wrap">
+      <input id="musica-busca-input" class="musica-busca-input-novo" type="text" placeholder="Pesquisar" value="${musicaBusca.replace(/"/g, '&quot;')}" oninput="setMusicaBusca(this.value)">
+      <span class="material-symbols-outlined busca-icon-novo">search</span>
+    </div>
+    <div class="filtro-row-outer artista-filtro-wrap">
+      <button class="artista-filtro-btn${musicaFiltroArtista !== 'todos' ? ' ativo' : ''}" onclick="toggleArtistaFiltro(event)">
+        ${artistaBtnLabel} <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">expand_more</span>
+      </button>
+      ${filtroDropdownAberto === 'artista' ? `<div class="filtro-dropdown artista-filtro-dropdown">${artistaDropdownHtml}</div>` : ''}
+    </div>
+    <div class="filtro-row-outer az-sort-wrap">
+      <button class="az-sort-btn${musicaOrdem !== 'titulo' ? ' ativo' : ''}" onclick="toggleAzSort(event)" title="Ordenar">
+        <span class="material-symbols-outlined">sort_by_alpha</span>
+      </button>
+      ${filtroDropdownAberto === 'ordem' ? `<div class="filtro-dropdown ordem-dropdown">
+        ${ORDEM_OPTS.map(o => `<button class="ordem-opt${musicaOrdem === o.val ? ' active' : ''}" onclick="selecionarOrdemDesktop('${o.val}')">
+          <span class="material-symbols-outlined ordem-opt-icon">${o.icon}</span>
+          <span>${o.label}</span>
+        </button>`).join('')}
+      </div>` : ''}
     </div>
   </div>`;
 
@@ -412,22 +502,13 @@ function renderMusicasLista() {
   _idsFiltradosAtual = listaFiltrada.map(m => m.id);
   const todosSelecionados = listaFiltrada.length > 0 && listaFiltrada.every(m => musicasSelecionadas.has(m.id));
 
-  html += `<div class="musicas-ordem-bar">
-    <input id="musica-busca-input" class="musica-busca-input" type="text" placeholder="Buscar música…" value="${musicaBusca.replace(/"/g, '&quot;')}" oninput="setMusicaBusca(this.value)">
-    <span class="musicas-ordem-label">Ordenar por</span>
-    <button class="musicas-ordem-btn${musicaOrdem === 'titulo' ? ' active' : ''}" onclick="setMusicaOrdem('titulo')">Título</button>
-    <button class="musicas-ordem-btn${musicaOrdem === 'artista' ? ' active' : ''}" onclick="setMusicaOrdem('artista')">Artista</button>
-    <button class="musicas-ordem-btn musicas-ordem-btn-tom${musicaOrdem === 'tom' ? ' active' : ''}" onclick="setMusicaOrdem('tom')">Tom</button>
-    <button class="musicas-ordem-btn${musicaOrdem === 'rating' ? ' active' : ''}" onclick="setMusicaOrdem('rating')"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;font-variation-settings:'FILL' 1">star</span></button>
-  </div>`;
-
   html += `<div class="musicas-tabela-wrap"><table class="musicas-tabela">
     <thead>
       <tr>
         <th class="musica-row-check-th">
           <input type="checkbox" class="musica-check" title="Selecionar todos" ${todosSelecionados ? 'checked' : ''} onclick="toggleSelecionarTodos(_idsFiltradosAtual, this.checked)">
         </th>
-        <th>Música</th><th>Artista</th><th class="col-genero">Gênero</th><th class="col-tom">Tom</th><th class="col-opcoes"></th>
+        <th>MÚSICA</th><th>ARTISTA</th><th class="col-genero">GÊNERO</th><th class="col-tom">TOM</th>
       </tr>
     </thead>
     <tbody>
@@ -437,9 +518,8 @@ function renderMusicasLista() {
 
   if (musicasSelecionadas.size > 0) html += `<div class="selecao-bar-spacer"></div>`;
   wrap.innerHTML = html;
-  // Esconder FAB no mobile quando seleção ativa
-  const fab = document.querySelector('.musicas-add-fab');
-  if (fab) fab.style.display = musicasSelecionadas.size > 0 ? 'none' : '';
+  const addBtn = document.querySelector('.musicas-add-bottom');
+  if (addBtn) addBtn.style.display = musicasSelecionadas.size > 0 ? 'none' : '';
   if (buscaTinhaFoco) {
     const input = document.getElementById('musica-busca-input');
     if (input) { input.focus(); input.setSelectionRange(musicaBusca.length, musicaBusca.length); }
@@ -451,14 +531,18 @@ function renderMusicaRow(m) {
   const semitons = m.transposicao || 0;
   const tomAtual = m.tom ? transporAcorde(m.tom, semitons) : '';
   const transposto = semitons !== 0;
+  const stars = m.rating
+    ? Array.from({length: 5}, (_, i) =>
+        `<span class="material-symbols-outlined musica-row-star" style="font-variation-settings:'FILL' ${i < m.rating ? 1 : 0}">star</span>`
+      ).join('')
+    : '';
   return `
     <tr class="musica-row${selecionado ? ' musica-row-selecionada' : ''}" onclick="abrirMusicaView('${m.id}')">
       <td class="musica-row-check" onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
         <input type="checkbox" class="musica-check" ${selecionado ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
       </td>
       <td class="musica-row-titulo">
-        ${m.titulo}
-        ${m.rating ? `<span class="musica-row-rating-mini">${Array.from({length:m.rating},()=>'<span class="material-symbols-outlined" style="font-size:11px;font-variation-settings:\'FILL\' 1;color:#f5a623;vertical-align:middle">star</span>').join('')}</span>` : ''}
+        ${m.titulo}${stars ? `<span class="musica-row-stars">${stars}</span>` : ''}
       </td>
       <td class="musica-row-artista">${m.artista}</td>
       <td class="musica-row-genero col-genero">${m.genero || 'Outros'}</td>
@@ -466,15 +550,6 @@ function renderMusicaRow(m) {
         ${m.tom ? `<span class="tom-cell" title="${transposto ? 'Tom alterado' : 'Tom original'}">
           <span class="material-symbols-outlined tom-cell-icon">${transposto ? 'sync_alt' : 'music_note'}</span>${tomAtual}
         </span>` : ''}
-      </td>
-      <td class="musica-row-opcoes col-opcoes" onclick="event.stopPropagation()">
-        <div class="menu-wrap">
-          <button class="icon-btn" onclick="toggleMusicaRowMenu(event, '${m.id}')" title="Mais opções"><span class="material-symbols-outlined">more_vert</span></button>
-          <div id="musica-row-menu-${m.id}" class="dropdown-menu hidden">
-            <button onclick="editarMusicaDaLista('${m.id}')"><span class="material-symbols-outlined">edit</span> Editar</button>
-            <button onclick="excluirMusicaDaLista('${m.id}')"><span class="material-symbols-outlined">delete</span> Excluir</button>
-          </div>
-        </div>
       </td>
     </tr>
   `;
@@ -839,6 +914,7 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
   const linhas = modoEsconderTab
     ? cifraTexto.split('\n').filter(l => !/^\s*[EBGDAe]\|/.test(l))
     : cifraTexto.split('\n');
+  const _occCount = {}; // original → count so far
   return linhas.map(linhaRaw => {
 
     // Prefixo [seção] → negrito
@@ -860,7 +936,8 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
       if (isSectionToken(p)) return escapeHtml(p);
       if (!isValidChordToken(p)) return escapeHtml(p); // texto de letra em linha mista
       const transposto = simplificarAcorde(transporAcorde(p, semitons));
-      return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}">${escapeHtml(transposto)}</span>`;
+      _occCount[p] = (_occCount[p] || 0) + 1;
+      return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}" data-acorde-original="${escapeHtml(p).replace(/"/g, '&quot;')}" data-acorde-occ="${_occCount[p] - 1}">${escapeHtml(transposto)}</span>`;
     }).join('');
     return prefixoHtml + restoHtml;
   }).join('\n');
@@ -1779,3 +1856,129 @@ function _renderAprendizModal() {
     </button>
   `;
 }
+
+// ─── Sheet "Editar Acorde" ────────────────────────────────────────────────────
+let _notaSheetState = null; // { original, display, semitons }
+
+function abrirNotaSheet(token) {
+  const display = token.dataset.acorde;
+  const original = token.dataset.acordeOriginal || display;
+  const occ = parseInt(token.dataset.acordeOcc ?? '0', 10);
+  const musica = buscarMusica(musicaAtualId);
+  const semitons = musica?.transposicao || 0;
+  _notaSheetState = { original, display, semitons, occ };
+
+  document.getElementById('nota-sheet-title').textContent = display;
+  const input = document.getElementById('nota-sheet-input');
+  input.value = display;
+  input.style.borderColor = '';
+  document.getElementById('nota-sheet-confirmar').disabled = true;
+  const cb = document.getElementById('nota-sheet-todos-cb');
+  if (cb) cb.checked = true;
+  const cbLabel = document.getElementById('nota-sheet-todos-label');
+  if (cbLabel) cbLabel.textContent = `Substituir todos "${display}" da música`;
+  _renderNotaSheetVoicings(display);
+
+  document.getElementById('nota-sheet-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => input.focus(), 200);
+}
+
+function fecharNotaSheet() {
+  document.getElementById('nota-sheet-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+  _notaSheetState = null;
+}
+
+function _normalizarAcordeInput(raw) {
+  // Accepts lowercase input: "am" → "Am", "f#m" → "F#m", "c" → "C"
+  if (!raw) return raw;
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+function notaSheetInputChange() {
+  const input = document.getElementById('nota-sheet-input');
+  const raw = input.value.trim();
+  const val = _normalizarAcordeInput(raw);
+  const valido = val.length > 0 && isValidChordToken(val);
+  const mudou = val !== (_notaSheetState?.display || '');
+  input.style.borderColor = raw && !valido ? '#e53e3e' : '';
+  document.getElementById('nota-sheet-confirmar').disabled = !(valido && mudou);
+  if (valido) _renderNotaSheetVoicings(val);
+}
+
+function _renderNotaSheetVoicings(nomeAcorde) {
+  const container = document.getElementById('nota-sheet-voicings');
+  try {
+    const r = obterAcordeInfo(nomeAcorde);
+    if (!r.cands.length) { container.innerHTML = '<p class="nota-sheet-vazio">Nenhum diagrama encontrado</p>'; return; }
+    container.innerHTML = r.cands.map((c, i) => {
+      const fav = ehFavorito(nomeAcorde, c.posicoes);
+      const svg = renderDiagram(c, { showNoteLabels: false, padB: 10 });
+      return `<button class="nota-sheet-voicing${fav ? ' fav' : ''}" onclick="notaSheetSelecionarVoicing(${i})" title="${fav ? '★ Favorito' : 'Posição ' + (i+1)}">
+        ${svg}
+        ${fav ? '<span class="nota-sheet-fav-badge material-symbols-outlined">star</span>' : ''}
+      </button>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<p class="nota-sheet-vazio">Acorde não reconhecido</p>';
+  }
+}
+
+function notaSheetSelecionarVoicing(idx) {
+  if (!_notaSheetState) return;
+  const nomeAcorde = document.getElementById('nota-sheet-input').value.trim() || _notaSheetState.display;
+  try {
+    const r = obterAcordeInfo(nomeAcorde);
+    const c = r.cands[idx];
+    toggleFavorito(nomeAcorde, r.notasNorm, c.posicoes);
+    _renderNotaSheetVoicings(nomeAcorde);
+    if (musicaAtualId) renderMusicaView();
+  } catch(e) {}
+}
+
+function confirmarTrocaAcorde() {
+  if (!_notaSheetState) return;
+  const input = document.getElementById('nota-sheet-input');
+  const novoDisplay = _normalizarAcordeInput(input.value.trim());
+  if (!isValidChordToken(novoDisplay)) return;
+
+  const { original, semitons, occ } = _notaSheetState;
+  const musica = buscarMusica(musicaAtualId);
+  if (!musica) return;
+
+  const novoOriginal = semitons !== 0 ? simplificarAcorde(transporAcorde(novoDisplay, -semitons)) : novoDisplay;
+  const todos = document.getElementById('nota-sheet-todos-cb')?.checked !== false;
+  const novaCifra = todos
+    ? _substituirAcordeCifra(musica.cifraTexto, original, novoOriginal, -1)
+    : _substituirAcordeCifra(musica.cifraTexto, original, novoOriginal, occ);
+
+  atualizarMusica(musicaAtualId, { cifraTexto: novaCifra, acordes: extrairAcordes(novaCifra) });
+  fecharNotaSheet();
+  renderMusicaView();
+}
+
+function _substituirAcordeCifra(cifra, original, novo, occAlvo = -1) {
+  let count = 0;
+  return cifra.split('\n').map(linha => {
+    const tokens = linha.trim().split(/\s+/).filter(Boolean);
+    if (!tokens.some(t => isValidChordToken(t))) return linha;
+    return linha.split(/(\s+)/).map(part => {
+      if (part !== original) return part;
+      const idx = count++;
+      return (occAlvo === -1 || idx === occAlvo) ? novo : part;
+    }).join('');
+  }).join('\n');
+}
+
+// Clique no chord-token abre o sheet (mobile) ou nada no desktop (já tem tooltip)
+document.addEventListener('click', e => {
+  const token = e.target.closest('.chord-token');
+  if (!token) return;
+  // No mobile não há tooltip — abre o sheet
+  if (window.innerWidth <= 860) {
+    e.preventDefault();
+    e.stopPropagation();
+    abrirNotaSheet(token);
+  }
+});

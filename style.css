@@ -365,10 +365,11 @@ body {
 /* ── Painel de acordes mobile (fundo do body, scroll horizontal) ─────────── */
 .musica-acordes-mobile {
   flex: 0 0 auto;
+  position: relative;
   display: flex;
   align-items: stretch;
   border-top: 1px solid #e5e5e5;
-  background: #fafaf8;
+  background: #fff;
   max-height: 260px;
 }
 .musica-acordes-mobile-scroll {
@@ -389,22 +390,26 @@ body {
   padding: 0 8px;
 }
 .musica-acordes-mobile-close {
-  flex: 0 0 auto;
-  align-self: flex-start;
-  margin: 8px 10px 0 0;
-  background: none;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(250,250,248,0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   color: #aaa;
   padding: 2px;
   border: none;
+  border-radius: 50%;
+  z-index: 2;
 }
 .musica-acordes-mobile-close:hover { background: none; color: #555; }
 .musica-acordes-mobile-close .material-symbols-outlined { font-size: 20px; }
 .chord-chip-mobile {
   flex: 0 0 auto;
   scroll-snap-align: start;
-  width: 119px;
-  padding: 4px 10px 4px;
-  background: none;
+  width: 90px;
+  padding: 4px 6px 4px;
+  background: #fff;
   border: none;
   border-right: 1px solid #e5e5e5;
   border-radius: 0;
@@ -567,22 +572,181 @@ body {
 .tab-panel.hidden { display: none; }
 
 /* ── Cabeçalho da aba de músicas (desktop) ─────────────────────────────────── */
-.musicas-tab-header {
+/* Botão adicionar música - fixo no rodapé */
+.musicas-add-bottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #5b7cf6;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+  position: sticky;
+  bottom: 16px;
+  box-shadow: 0 4px 16px rgba(91,124,246,0.35);
+}
+.musicas-add-bottom:hover { background: #4a6be8; }
+.musicas-add-bottom .material-symbols-outlined { font-size: 20px; }
+
+/* Tabs de gênero */
+.genero-tabs-row {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 1.5px solid #e8e6e0;
+  margin: 0 -16px 0;
+  padding: 0 16px;
+}
+.genero-tabs-row::-webkit-scrollbar { display: none; }
+.genero-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  color: #999;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+  -webkit-appearance: none;
+}
+.genero-tab .material-symbols-outlined { font-size: 15px; }
+.genero-tab:hover { color: #555; }
+.genero-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+
+/* Linha de controles: busca + artista + AZ */
+.lista-controles-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 8px;
+}
+.busca-input-wrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+.musica-busca-input-novo {
+  width: 100%;
+  box-sizing: border-box;
+  background: #f3f2ee;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 36px 9px 14px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: #333;
+  outline: none;
+}
+.musica-busca-input-novo::placeholder { color: #aaa; }
+.musica-busca-input-novo:focus { background: #eeecf8; }
+.busca-icon-novo {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #aaa;
+  pointer-events: none;
+}
+.artista-filtro-wrap { position: relative; flex-shrink: 0; }
+.artista-filtro-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #f3f2ee;
+  color: #444;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0 12px;
+  height: 38px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.artista-filtro-btn:hover { background: #e8e6e0; }
+.artista-filtro-btn.ativo { background: #2d2d2d; color: #fff; }
+.artista-filtro-dropdown {
+  min-width: 420px;
+  width: max-content;
+  left: auto;
+  right: 0;
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 8px;
+}
+.artista-dropdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
   margin-top: 4px;
 }
-.musicas-tab-titulo {
-  font-size: 1.7rem;
-  font-weight: 800;
-  color: #111;
-  letter-spacing: -0.5px;
+.artista-chip-todos {
+  display: flex;
+  width: 100%;
+  margin-bottom: 0;
+}
+.artista-filtro-dropdown .artista-chip {
+  text-align: left;
+  justify-content: space-between;
 }
 
-/* FAB: só no mobile */
-.musicas-add-fab { display: none; }
+/* Ordem dropdown desktop */
+.az-sort-wrap {
+  position: relative;
+}
+.az-sort-wrap .filtro-dropdown {
+  left: auto;
+  right: 0;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+}
+.ordem-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #1a1a1a;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+}
+.ordem-opt:hover { background: #F8F7F4; }
+.ordem-opt.active { background: #517DFE; color: #fff; }
+.ordem-opt-icon { font-size: 18px !important; }
+
+/* Stars na linha da música */
+.musica-row-stars { display: inline-flex; align-items: center; margin-left: 4px; vertical-align: middle; }
+.musica-row-star { font-size: 11px !important; color: #f5a623; }
 
 .menu-wrap { position: relative; }
 .icon-btn {
@@ -721,20 +885,27 @@ body {
 /* Chip de artista: estilo pílula */
 .artista-chip {
   flex-shrink: 0;
-  background: #f3f2ee;
-  color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F8F7F4;
+  color: #1a1a1a;
   border: none;
-  border-radius: 8px;
-  padding: 5px 10px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  border-radius: 4px;
+  padding: 0 10px;
+  height: 36px;
+  font-size: 0.82rem;
+  font-weight: 500;
   cursor: pointer;
-  white-space: nowrap;
   font-family: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.artista-chip:hover { background: #e8e6e0; }
-.artista-chip.active { background: #2d2d2d !important; color: #fff !important; }
-.artista-chip.active .filtro-count { background: rgba(255,255,255,0.18); }
+.artista-chip:hover { background: #eae8e3; }
+.artista-chip.active { background: #517DFE !important; color: #fff !important; }
+.artista-chip.active .filtro-count { background: #DAE4FF !important; color: #517DFE !important; }
+.artista-chip .filtro-count { background: #EAE8E7; color: #555; flex-shrink: 0; margin-left: 6px; }
 
 /* Botão "Ver todos" */
 .ver-todos-btn {
@@ -771,6 +942,7 @@ body {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
+  /* artista dropdown overrides these — see .artista-filtro-dropdown below */
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 12px;
@@ -780,6 +952,18 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* Artista dropdown: right-anchored, 2-col grid, overrides .filtro-dropdown */
+.filtro-dropdown.artista-filtro-dropdown {
+  left: auto;
+  right: 0;
+  min-width: 420px;
+  width: max-content;
+  padding: 8px;
+  display: block;
+  max-height: 440px;
+  overflow-y: auto;
 }
 
 .filtro-count {
@@ -994,37 +1178,34 @@ body {
 .musicas-ordem-btn:hover { background: #f3f2ee; border-color: #ccc; }
 .musicas-ordem-btn.active { background: #2d2d2d; color: #fff; border-color: #2d2d2d; }
 
-/* Tabela de músicas */
-.musicas-tabela-wrap { overflow-x: auto; }
+/* Tabela de músicas — full-width, sem card */
+.musicas-tabela-wrap { margin: 0 -16px; overflow-x: hidden; }
 .musicas-tabela {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  border: 1.5px solid #e5e5e5;
-  border-radius: 12px;
-  overflow: hidden;
 }
 .musicas-tabela thead th {
   text-align: left;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #888;
-  background: #fafaf8;
-  padding: 8px 12px;
-  border-bottom: 1px solid #eee;
+  letter-spacing: 0.06em;
+  color: #aaa;
+  background: #f8f7f4;
+  padding: 8px 16px;
+  border-bottom: 1px solid #eeece8;
 }
 .musica-row { cursor: pointer; }
-.musica-row:not(:last-child) td { border-bottom: 1px solid #f0f0ee; }
+.musica-row:not(:last-child) td { border-bottom: 1px solid #f0ede8; }
 .musica-row:hover { background: #fafaf8; }
 .musica-row-selecionada { background: #eef0fc !important; }
-.musica-row td { padding: 7px 12px; vertical-align: middle; }
-.musica-row-check-th { width: 32px; padding: 10px 8px 10px 12px !important; }
-.musica-row-check { width: 32px; padding: 7px 4px 7px 12px !important; text-align: center; cursor: default; }
+.musica-row td { padding: 12px 16px; vertical-align: middle; }
+.musica-row-check-th { width: 40px; padding: 8px 4px 8px 16px !important; }
+.musica-row-check { width: 40px; padding: 12px 4px 12px 16px !important; text-align: center; cursor: default; }
 .musica-check { width: 15px; height: 15px; cursor: pointer; accent-color: #5b7cf6; vertical-align: middle; }
-.musica-row-titulo { font-size: 0.92rem; font-weight: 700; color: #111; }
-.musica-row-artista { font-size: 0.84rem; color: #888; }
+.musica-row-titulo { font-size: 0.9rem; font-weight: 600; color: #111; }
+.musica-row-artista { font-size: 0.84rem; color: #999; }
 .musica-row-genero { font-size: 0.78rem; color: #888; white-space: nowrap; }
 .musica-row-tom { white-space: nowrap; }
 .tom-cell { display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem; font-weight: 600; color: #555; }
@@ -1473,6 +1654,145 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   .col-genero, .col-tom, .col-opcoes { display: none; }
 }
 
+/* ─── Bottom Sheets ──────────────────────────────────────────────────────── */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+.sheet-overlay.hidden { display: none; }
+.sheet {
+  width: 100%;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: sheetSlideUp 0.22s cubic-bezier(0.32,0.72,0,1);
+}
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0ede8;
+  flex-shrink: 0;
+}
+.sheet-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111;
+}
+.sheet-close-btn {
+  background: #f3f2ee;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #555;
+}
+.sheet-close-btn .material-symbols-outlined { font-size: 18px; }
+.sheet-body {
+  overflow-y: auto;
+  padding: 8px 12px 16px;
+  flex: 1;
+}
+
+/* Opções de ordenação */
+.sheet-opt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 12px;
+  background: #f8f7f4;
+  border: none;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+}
+.sheet-opt:last-child { margin-bottom: 0; }
+.sheet-opt.active { background: #5b7cf6; color: #fff; }
+.sheet-opt-icon { font-size: 20px !important; }
+.sheet-opt-label { flex: 1; }
+.sheet-opt-check { font-size: 18px !important; margin-left: auto; }
+
+/* Grid de artistas (2 colunas) */
+.sheet-artista-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.sheet-artista-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 11px 12px;
+  background: #f8f7f4;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sheet-artista-opt.todos {
+  grid-column: 1 / -1;
+  font-weight: 600;
+}
+.sheet-artista-opt.active { background: #5b7cf6; color: #fff; }
+.sheet-opt-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(0,0,0,0.08);
+  color: inherit;
+  border-radius: 8px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+.sheet-artista-opt.active .sheet-opt-count { background: rgba(255,255,255,0.25); }
+
+/* AZ button: ícone centralizado */
+.az-sort-btn {
+  background: #f3f2ee;
+  color: #555;
+  border: none;
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.az-sort-btn:hover { background: #e8e6e0; }
+.az-sort-btn.ativo { background: #2d2d2d; color: #fff; }
+.az-sort-btn .material-symbols-outlined { font-size: 20px !important; }
+
 /* ─── Modal Modo Aprendiz ────────────────────────────────────────────────── */
 .aprendiz-modal-desc {
   color: var(--text-secondary);
@@ -1611,3 +1931,123 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   padding: 2px 4px;
   font-size: 0.85rem;
 }
+
+/* ── Sheet "Editar Acorde" ──────────────────────────────────────────────────── */
+.nota-sheet {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.nota-sheet-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #999;
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 16px 8px;
+}
+.nota-sheet-trocar-row {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 10px;
+  align-items: center;
+}
+.nota-sheet-input {
+  flex: 1;
+  height: 44px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  background: #f8f7f4;
+  transition: border-color 0.15s;
+}
+.nota-sheet-input:focus { border-color: #517DFE; background: #fff; }
+.nota-sheet-confirmar {
+  height: 44px;
+  padding: 0 18px;
+  background: #517DFE;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.nota-sheet-confirmar:disabled { opacity: 0.35; cursor: default; }
+.nota-sheet-todos-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #444;
+}
+.nota-sheet-todos-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #517DFE;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nota-sheet-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.nota-sheet-divider::before,
+.nota-sheet-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e8e6e0;
+}
+.nota-sheet-voicings {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 0 16px 28px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.nota-sheet-voicings::-webkit-scrollbar { display: none; }
+.nota-sheet-voicing {
+  position: relative;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: 140px;
+  padding: 10px 8px 8px;
+  background: #fff;
+  border: 1.5px solid #e8e6e0;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.nota-sheet-voicing.fav { border-color: #517DFE; background: #EEF3FF; }
+.nota-sheet-voicing svg { width: 100%; height: auto; }
+.nota-sheet-fav-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 16px !important;
+  color: #517DFE;
+}
+.nota-sheet-vazio { font-size: 0.82rem; color: #999; padding: 8px 0; }
