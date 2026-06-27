@@ -718,9 +718,17 @@ function renderMusicaView() {
             </button>
           </div>
         </div>
-        ${!s.ativo ? `<button class="nav-btn autoscroll-start-btn" onclick="iniciarAutoScroll()" title="Autorrolagem">
-          <span class="material-symbols-outlined">arrow_cool_down</span><span class="autoscroll-start-label"> Autorrolagem</span>
-        </button>` : ''}
+        <div class="autoscroll-wrap">
+          <button class="nav-btn autoscroll-start-btn${s.ativo ? ' active' : ''}" onclick="${s.ativo ? 'alternarAutoScrollPlay()' : 'iniciarAutoScroll()'}" title="Autorrolagem">
+            <span class="material-symbols-outlined">${s.ativo ? (s.rodando ? 'pause' : 'play_arrow') : 'arrow_cool_down'}</span><span class="autoscroll-start-label"> Autorrolagem</span>
+          </button>
+          ${s.ativo ? `<div class="autoscroll-controls">
+            <button class="icon-btn" onclick="reiniciarAutoScroll()" title="Reiniciar"><span class="material-symbols-outlined">replay</span></button>
+            <span class="material-symbols-outlined autoscroll-speed-icon">speed</span>
+            <input type="range" class="autoscroll-speed" min="1" max="20" value="${s.velocidade}" oninput="ajustarVelocidadeAutoScroll(this.value)">
+            <button class="icon-btn" onclick="fecharAutoScroll()" title="Fechar"><span class="material-symbols-outlined">close</span></button>
+          </div>` : ''}
+        </div>
         <div class="opcoes-wrap">
           <button class="icon-btn" onclick="toggleOpcoesMenu(event)" title="Opções">
             <span class="material-symbols-outlined">apps</span>
@@ -747,13 +755,6 @@ function renderMusicaView() {
         </div>
       </div>
     </div>
-    ${s.ativo ? `<div class="autoscroll-bar-top">
-      <button class="icon-btn" onclick="alternarAutoScrollPlay()"><span class="material-symbols-outlined">${s.rodando ? 'pause' : 'play_arrow'}</span></button>
-      <button class="icon-btn" onclick="reiniciarAutoScroll()"><span class="material-symbols-outlined">replay</span></button>
-      <span class="material-symbols-outlined autoscroll-speed-icon">speed</span>
-      <input type="range" class="autoscroll-speed" min="1" max="20" value="${s.velocidade}" oninput="ajustarVelocidadeAutoScroll(this.value)">
-      <button class="icon-btn" onclick="fecharAutoScroll()"><span class="material-symbols-outlined">close</span></button>
-    </div>` : ''}
     ${acordesMobileAbertos ? `<div class="musica-acordes-mobile">
       <div class="musica-acordes-mobile-scroll">
         ${acordesAtuais.length ? acordesAtuais.map(renderChordChipMobile).join('') : '<span class="musica-acordes-mobile-vazio">Nenhum acorde identificado</span>'}
