@@ -1523,3 +1523,30 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   margin-left: 4px;
   vertical-align: middle;
 }
+
+/* ─── Fullscreen (esconde header da música) ──────────────────────────────── */
+.musica-header-hidden { display: none !important; }
+
+/* ─── Rating dropdown (5 estrelas) ──────────────────────────────────────── */
+.rating-wrap { position: relative; }
+.rating-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #fff;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+  display: flex;
+  gap: 2px;
+  padding: 8px 10px;
+  z-index: 200;
+  white-space: nowrap;
+}
+.rating-menu-star {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  line-height: 1;
+}

@@ -581,6 +581,7 @@ function fecharMusicaView() {
   pararLoopAutoScroll();
   autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
   acordesMobileAbertos = false;
+  modoFullscreen = false;
 
   document.getElementById('view-musica').classList.add('hidden');
   document.getElementById('view-lista').classList.remove('hidden');
@@ -662,15 +663,15 @@ function renderMusicaView() {
       <div class="musica-view-titulo-wrap">
         <h1 class="musica-titulo">${musica.titulo}</h1>
         <div class="musica-artista">${musica.artista}</div>
-        <div class="musica-rating-header">
-          ${[1,2,3,4,5].map(i => `<button class="rating-star-btn" onclick="avaliarMusica('${musica.id}',${(musica.rating||0)===i?0:i})" title="${i} estrela${i>1?'s':''}"><span class="material-symbols-outlined rating-star-icon" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":""}">star</span></button>`).join('')}
-        </div>
       </div>
       <button class="icon-btn musica-nav-chevron" onclick="navegarMusica(1)" title="Próxima música">
         <span class="material-symbols-outlined">chevron_right</span>
       </button>
     </div>
     <div class="musica-page-header-actions">
+      <button class="icon-btn fullscreen-btn" onclick="toggleFullscreenMusica()" title="Tela cheia">
+        <span class="material-symbols-outlined">${modoFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
+      </button>
       <div class="menu-wrap">
         <button class="icon-btn" onclick="toggleMusicaMenuMobile(event)">
           <span class="material-symbols-outlined">more_vert</span>
@@ -720,6 +721,12 @@ function renderMusicaView() {
         ${!s.ativo ? `<button class="nav-btn autoscroll-start-btn" onclick="iniciarAutoScroll()" title="Autorrolagem">
           <span class="material-symbols-outlined">arrow_cool_down</span><span class="autoscroll-start-label"> Autorrolagem</span>
         </button>` : ''}
+        <div class="rating-wrap">
+          <button class="icon-btn" onclick="toggleRatingMenu(event,'${musica.id}',${musica.rating||0})" title="Avaliar música">
+            <span class="material-symbols-outlined" style="${musica.rating ? `font-variation-settings:'FILL' 1;color:#f5a623` : ''}">star</span>
+          </button>
+          <div id="rating-menu" class="rating-menu hidden"></div>
+        </div>
       </div>
     </div>
     ${s.ativo ? `<div class="autoscroll-bar-top">
@@ -1122,6 +1129,43 @@ function iniciarSwipeCifra(el) {
 
 // ─── Controle de tom ───────────────────────────────────────────────────────────
 let tomMenuAberto = false;
+let ratingMenuAberto = false;
+let modoFullscreen = false;
+
+function toggleFullscreenMusica() {
+  modoFullscreen = !modoFullscreen;
+  document.getElementById('musica-page-header')?.classList.toggle('musica-header-hidden', modoFullscreen);
+  const btn = document.querySelector('.fullscreen-btn .material-symbols-outlined');
+  if (btn) btn.textContent = modoFullscreen ? 'fullscreen_exit' : 'fullscreen';
+}
+
+function toggleRatingMenu(e, id, rating) {
+  if (e) e.stopPropagation();
+  ratingMenuAberto = !ratingMenuAberto;
+  const menu = document.getElementById('rating-menu');
+  if (!menu) return;
+  menu.classList.toggle('hidden', !ratingMenuAberto);
+  if (ratingMenuAberto) _renderRatingMenu(id, rating);
+}
+
+function fecharRatingMenu() {
+  ratingMenuAberto = false;
+  document.getElementById('rating-menu')?.classList.add('hidden');
+}
+
+function _renderRatingMenu(id, currentRating) {
+  const menu = document.getElementById('rating-menu');
+  if (!menu) return;
+  menu.innerHTML = [1,2,3,4,5].map(i =>
+    `<button class="rating-menu-star" onclick="avaliarMusica('${id}',${currentRating===i?0:i});fecharRatingMenu();renderMusicaView()">
+      <span class="material-symbols-outlined" style="font-size:22px;${i<=currentRating?"font-variation-settings:'FILL' 1;color:#f5a623":"color:#ccc"}">star</span>
+    </button>`
+  ).join('');
+}
+
+document.addEventListener('click', e => {
+  if (ratingMenuAberto && !e.target.closest('.rating-wrap')) fecharRatingMenu();
+});
 
 function renderTomControl(tomAtual, tomOriginal, semitons) {
   const raizAtual = obterRaizNota(tomAtual);
