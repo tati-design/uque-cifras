@@ -252,6 +252,19 @@ body {
 }
 
 /* ── Barra de autorrolagem (fica no fundo do musica-page-body) ────────────── */
+/* barra mobile: visível só no mobile */
+.autoscroll-bar-top {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  background: #f3f2ee;
+  padding: 6px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+.autoscroll-bar-top .autoscroll-speed { flex: 1; max-width: 160px; accent-color: #5b7cf6; }
+@media (min-width: 861px) { .autoscroll-bar-top { display: none; } }
+
 .autoscroll-wrap { position: relative; }
 .autoscroll-controls {
   position: absolute;
@@ -261,13 +274,14 @@ body {
   border: 1.5px solid #e5e5e5;
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.14);
-  display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
   z-index: 200;
   white-space: nowrap;
+  display: none;
 }
+@media (min-width: 861px) { .autoscroll-controls { display: flex; } }
 .autoscroll-controls .autoscroll-speed { width: 110px; accent-color: #5b7cf6; }
 .autoscroll-speed-icon { font-size: 18px !important; color: #888; }
 .autoscroll-start-btn { white-space: nowrap; }

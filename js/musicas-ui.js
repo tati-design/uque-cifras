@@ -755,6 +755,13 @@ function renderMusicaView() {
         </div>
       </div>
     </div>
+    ${s.ativo ? `<div class="autoscroll-bar-top">
+      <button class="icon-btn" onclick="alternarAutoScrollPlay()"><span class="material-symbols-outlined">${s.rodando ? 'pause' : 'play_arrow'}</span></button>
+      <button class="icon-btn" onclick="reiniciarAutoScroll()"><span class="material-symbols-outlined">replay</span></button>
+      <span class="material-symbols-outlined autoscroll-speed-icon">speed</span>
+      <input type="range" class="autoscroll-speed" min="1" max="20" value="${s.velocidade}" oninput="ajustarVelocidadeAutoScroll(this.value)">
+      <button class="icon-btn" onclick="fecharAutoScroll()"><span class="material-symbols-outlined">close</span></button>
+    </div>` : ''}
     ${acordesMobileAbertos ? `<div class="musica-acordes-mobile">
       <div class="musica-acordes-mobile-scroll">
         ${acordesAtuais.length ? acordesAtuais.map(renderChordChipMobile).join('') : '<span class="musica-acordes-mobile-vazio">Nenhum acorde identificado</span>'}
