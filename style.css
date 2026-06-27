@@ -343,9 +343,9 @@ body {
 .musica-acordes-mobile-scroll {
   display: flex;
   flex-direction: row;
-  gap: 8px;
+  gap: 0;
   overflow-x: auto;
-  padding: 12px 14px;
+  padding: 8px 0;
   flex: 1;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -371,9 +371,15 @@ body {
 .chord-chip-mobile {
   flex: 0 0 auto;
   scroll-snap-align: start;
-  width: 140px;
-  padding: 8px 8px 4px;
+  width: 119px;
+  padding: 4px 10px 4px;
+  background: none;
+  border: none;
+  border-right: 1px solid #e5e5e5;
+  border-radius: 0;
 }
+.chord-chip-mobile:last-child { border-right: none; }
+.chord-chip-mobile:hover { border-color: transparent; border-right-color: #e5e5e5; }
 .chord-chip-mobile svg { width: 100%; height: auto; }
 
 /* ── Responsividade mobile (≤ 860px) ─────────────────────────────────────── */

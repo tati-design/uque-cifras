@@ -1,5 +1,6 @@
 // ─── SVG Diagram Renderer ─────────────────────────────────────────────────────
-function renderDiagram(candidato) {
+function renderDiagram(candidato, opts = {}) {
+  const showNoteLabels = opts.showNoteLabels !== false;
   const pos = candidato.posicoes;
   const notasTocadas = candidato.notasTocadas;
   const casaPestana = detectarPestana(pos);
@@ -83,7 +84,7 @@ function renderDiagram(candidato) {
   });
 
   // Note labels bottom
-  CORDAS.forEach((c, i) => {
+  if (showNoteLabels) CORDAS.forEach((c, i) => {
     const nota = notasTocadas[c];
     const isOpen = pos[c] === 0;
     svg += `<text x="${xs[i]}" y="${H - 4}" text-anchor="middle" font-size="8" font-family="sans-serif" fill="${isOpen ? '#5b7cf6' : '#555'}">${nota}</text>`;

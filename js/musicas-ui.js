@@ -795,10 +795,10 @@ function renderChordChipMobile(nomeAcorde) {
       const idx = r.cands.findIndex(c => posicoesIguais(c.posicoes, favorito.posicoes));
       if (idx !== -1) candidato = r.cands[idx];
     }
-    if (candidato) diagramaHtml = renderDiagram(candidato);
+    if (candidato) diagramaHtml = renderDiagram(candidato, { showNoteLabels: false });
   } catch { diagramaHtml = `<div class="chord-chip-erro">?</div>`; }
   const descMobile = modoNomes ? `<div class="chord-chip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
-  return `<div class="chord-chip chord-chip-mobile" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g,"\\'")}')">
+  return `<div class="chord-chip-mobile" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g,"\\'")}')">
     <div class="chord-chip-nome">${nomeAcorde}</div>
     ${descMobile}
     ${diagramaHtml}
