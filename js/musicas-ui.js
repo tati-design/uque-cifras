@@ -2048,14 +2048,13 @@ function _substituirAcordeCifra(cifra, original, novo, occAlvo = -1) {
   }).join('\n');
 }
 
-// Clique no chord-token abre o sheet (mobile) ou nada no desktop (já tem tooltip)
+// Clique no chord-token abre o modal de acorde completo
 document.addEventListener('click', e => {
   const token = e.target.closest('.chord-token');
   if (!token) return;
-  if (window.innerWidth <= 860) {
-    e.preventDefault();
-    e.stopPropagation();
-    esconderChordTooltip();
-    abrirNotaSheet(token);
-  }
+  e.preventDefault();
+  e.stopPropagation();
+  esconderChordTooltip();
+  const nomeAcorde = token.dataset.acordeOriginal || token.dataset.acorde;
+  if (nomeAcorde) abrirAcordeModal(nomeAcorde);
 });
