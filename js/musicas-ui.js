@@ -1,3 +1,6 @@
+// ─── Acordes fixados (pin) ────────────────────────────────────────────────────
+let _pinnedAcordesAtual = [];
+
 // ─── Modo Aprendiz ───────────────────────────────────────────────────────────────
 let modoSimplificar = localStorage.getItem('modoSimplificar') === 'true';
 let modoNomes       = localStorage.getItem('modoNomes')       === 'true';
@@ -784,7 +787,17 @@ function renderMusicaView() {
 
   const semitons = musica.transposicao || 0;
   const tomAtual = musica.tom ? transporAcorde(musica.tom, semitons) : '';
-  const acordesAtuais = [...new Set(extrairAcordes(musica.cifraTexto).map(a => simplificarAcorde(transporAcorde(a, semitons))))];
+  const pinned = musica.pinnedAcordes || [];
+  _pinnedAcordesAtual = pinned;
+  const acordesAtuaisRaw = [...new Set(extrairAcordes(musica.cifraTexto).map(a => simplificarAcorde(transporAcorde(a, semitons))))];
+  acordesAtuaisRaw.sort((a, b) => {
+    const ai = pinned.indexOf(a), bi = pinned.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return 0;
+  });
+  const acordesAtuais = acordesAtuaisRaw;
   const s = autoScrollState;
 
   // Header: voltar | [‹] título [›] | editar/excluir/menu
@@ -954,8 +967,10 @@ function renderChordChip(nomeAcorde) {
     diagramaHtml = `<div class="chord-chip-erro">?</div>`;
   }
   const descChip = modoNomes ? `<div class="chord-chip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
-  return `<div class="chord-chip" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g, "\\'")}')">
+  const isPinned = _pinnedAcordesAtual.includes(nomeAcorde);
+  return `<div class="chord-chip${isPinned ? ' chord-chip-pinned' : ''}" onclick="abrirNotaSheetPorNome('${nomeAcorde.replace(/'/g, "\\'")}')">
     <span class="material-symbols-outlined chord-chip-fav-badge" style="${ehFavoritado ? "font-variation-settings:'FILL' 1;" : ''}">kid_star</span>
+    ${isPinned ? '<span class="material-symbols-outlined chord-chip-pin-badge">push_pin</span>' : ''}
     <div class="chord-chip-nome">${nomeAcorde}</div>
     ${descChip}
     ${diagramaHtml}
@@ -975,7 +990,9 @@ function renderChordChipMobile(nomeAcorde) {
     if (candidato) diagramaHtml = renderDiagram(candidato, { showNoteLabels: false, padB: 10 });
   } catch { diagramaHtml = `<div class="chord-chip-erro">?</div>`; }
   const descMobile = modoNomes ? `<div class="chord-chip-desc">${escapeHtml(descreverAcorde(nomeAcorde))}</div>` : '';
-  return `<div class="chord-chip-mobile" onclick="abrirAcordeModal('${nomeAcorde.replace(/'/g,"\\'")}')">
+  const isPinnedMobile = _pinnedAcordesAtual.includes(nomeAcorde);
+  return `<div class="chord-chip-mobile${isPinnedMobile ? ' chord-chip-mobile-pinned' : ''}" onclick="abrirNotaSheetPorNome('${nomeAcorde.replace(/'/g,"\\'")}')">
+    ${isPinnedMobile ? '<span class="material-symbols-outlined chord-chip-pin-badge-mobile">push_pin</span>' : ''}
     <div class="chord-chip-nome">${nomeAcorde}</div>
     ${descMobile}
     ${diagramaHtml}
@@ -1955,10 +1972,44 @@ function abrirNotaSheet(token) {
   const cbLabel = document.getElementById('nota-sheet-todos-label');
   if (cbLabel) cbLabel.textContent = `Substituir todos "${display}" da música`;
   _renderNotaSheetVoicings(display);
+  _atualizarNotaSheetPinBtn();
 
   document.getElementById('nota-sheet-overlay').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   setTimeout(() => input.focus(), 200);
+}
+
+function abrirNotaSheetPorNome(nomeAcorde) {
+  const fakeToken = { dataset: { acorde: nomeAcorde, acordeOriginal: nomeAcorde, acordeOcc: '0' } };
+  abrirNotaSheet(fakeToken);
+}
+
+function _atualizarNotaSheetPinBtn() {
+  const btn = document.getElementById('nota-sheet-pin-btn');
+  if (!btn || !_notaSheetState) return;
+  const nome = _notaSheetState.display;
+  const musica = buscarMusica(musicaAtualId);
+  const pinned = musica?.pinnedAcordes || [];
+  const isPinned = pinned.includes(nome);
+  const icon = btn.querySelector('.material-symbols-outlined');
+  if (icon) icon.style.fontVariationSettings = isPinned ? "'FILL' 1" : "'FILL' 0";
+  btn.classList.toggle('active', isPinned);
+  btn.disabled = !isPinned && pinned.length >= 3;
+  btn.title = isPinned ? 'Desafixar' : (pinned.length >= 3 ? 'Limite de 3 fixados atingido' : 'Fixar na lista');
+}
+
+function toggleNotaSheetPin() {
+  if (!_notaSheetState || !musicaAtualId) return;
+  const nome = _notaSheetState.display;
+  const musica = buscarMusica(musicaAtualId);
+  const pinned = [...(musica?.pinnedAcordes || [])];
+  const idx = pinned.indexOf(nome);
+  if (idx !== -1) pinned.splice(idx, 1);
+  else if (pinned.length < 3) pinned.push(nome);
+  atualizarMusica(musicaAtualId, { pinnedAcordes: pinned });
+  _pinnedAcordesAtual = pinned;
+  _atualizarNotaSheetPinBtn();
+  renderMusicaView();
 }
 
 function fecharNotaSheet() {
@@ -2048,13 +2099,12 @@ function _substituirAcordeCifra(cifra, original, novo, occAlvo = -1) {
   }).join('\n');
 }
 
-// Clique no chord-token abre o modal de acorde completo
+// Clique no chord-token abre o nota-sheet (bottom sheet)
 document.addEventListener('click', e => {
   const token = e.target.closest('.chord-token');
   if (!token) return;
   e.preventDefault();
   e.stopPropagation();
   esconderChordTooltip();
-  const nomeAcorde = token.dataset.acordeOriginal || token.dataset.acorde;
-  if (nomeAcorde) abrirAcordeModal(nomeAcorde);
+  abrirNotaSheet(token);
 });

@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=84">
+<link rel="stylesheet" href="style.css?v=85">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0..1,0" />
 </head>
 <body>
@@ -180,6 +180,9 @@
   <div class="sheet nota-sheet" onclick="event.stopPropagation()">
     <div class="sheet-header">
       <span class="sheet-title" id="nota-sheet-title">Acorde</span>
+      <button class="icon-btn nota-sheet-pin-btn" id="nota-sheet-pin-btn" onclick="toggleNotaSheetPin()" title="Fixar na lista">
+        <span class="material-symbols-outlined">push_pin</span>
+      </button>
       <button class="sheet-close-btn" onclick="fecharNotaSheet()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="nota-sheet-section-label">Substituir por</div>
@@ -205,7 +208,7 @@
 <script src="js/favoritos.js?v=37"></script>
 <script src="js/musicas.js?v=63"></script>
 <script src="js/ui.js?v=37"></script>
-<script src="js/musicas-ui.js?v=92"></script>
+<script src="js/musicas-ui.js?v=93"></script>
 <script src="js/app.js?v=48"></script>
 </body>
 </html>
