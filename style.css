@@ -860,8 +860,9 @@ body {
   text-align: left;
   width: 100%;
 }
-.ordem-opt:hover { background: #F8F7F4; }
+.ordem-opt:hover { background: #ede9e3; }
 .ordem-opt.active { background: #517DFE; color: #fff; }
+.ordem-opt.active:hover { background: #3a6be0; }
 .ordem-opt-icon { font-size: 18px !important; }
 
 /* Stars na linha da música */
@@ -1883,7 +1884,9 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   grid-column: 1 / -1;
   font-weight: 600;
 }
+.sheet-artista-opt:hover { background: #ede9e3; }
 .sheet-artista-opt.active { background: #5b7cf6; color: #fff; }
+.sheet-artista-opt.active:hover { background: #3a6be0; }
 .sheet-opt-count {
   font-size: 0.72rem;
   font-weight: 700;
