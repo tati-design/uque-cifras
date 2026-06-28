@@ -769,7 +769,7 @@ function navegarMusica(direcao) {
   const novoIdx = (idx + direcao + ids.length) % ids.length;
   musicaAtualId = ids[novoIdx];
   tomMenuAberto = false;
-  acordesMobileAbertos = false;
+  // acordesMobileAbertos preservado intencionalmente: persiste ao navegar entre músicas
   pararLoopAutoScroll();
   autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
   history.replaceState({ musicaId: musicaAtualId }, '', '#m/' + musicaAtualId);
