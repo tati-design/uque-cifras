@@ -1003,14 +1003,15 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
     const resto = linhaRaw.slice(prefixo.length);
     const tokens = resto.trim().split(/\s+/).filter(Boolean);
     const chordTokens = tokens.filter(t => !isSectionToken(t));
-    const validChords = chordTokens.filter(t => isValidChordToken(t));
-    if (!validChords.length) return prefixoHtml + escapeHtml(resto);
+    // Linha de acorde: TODOS os tokens não-seção devem ser acordes válidos (mesma regra da correção)
+    const isChordLine = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
+    if (!isChordLine) return prefixoHtml + escapeHtml(resto);
 
     const partes = resto.split(/(\s+)/);
     const restoHtml = partes.map(p => {
       if (p === '' || /^\s+$/.test(p)) return p;
       if (isSectionToken(p)) return escapeHtml(p);
-      if (!isValidChordToken(p)) return escapeHtml(p); // texto de letra em linha mista
+      if (!isValidChordToken(p)) return escapeHtml(p);
       const transposto = simplificarAcorde(transporAcorde(p, semitons));
       _occCount[p] = (_occCount[p] || 0) + 1;
       return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}" data-acorde-original="${escapeHtml(p).replace(/"/g, '&quot;')}" data-acorde-occ="${_occCount[p] - 1}">${escapeHtml(transposto)}</span>`;
