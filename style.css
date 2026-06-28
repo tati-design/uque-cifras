@@ -631,7 +631,7 @@ body {
 .genero-tab .material-symbols-outlined { font-size: 15px; }
 .genero-tab:hover { color: #333; background: #ede9e3; }
 .genero-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
-.genero-tab.active:hover { color: #000; background: #e0dcd6; border-bottom-color: #000; }
+.genero-tab.active:hover { color: #517DFE; background: #dae4ff; border-bottom-color: #517DFE; }
 .genero-todos-fixo:hover { background: #ede9e3; }
 .genero-todos-fixo:active { background: #dedad4; }
 .genero-tab-count {
@@ -699,7 +699,9 @@ body {
   cursor: pointer;
   text-align: left;
 }
+.sheet-genero-opt:hover { background: #ede9e3; }
 .sheet-genero-opt.active { background: #517DFE; color: #fff; }
+.sheet-genero-opt.active:hover { background: #3a6be0; }
 .sheet-genero-opt.active .sheet-opt-count { background: #DAE4FF; color: #517DFE; }
 .sheet-genero-icon { font-size: 18px; }
 .sheet-genero-nome { flex: 1; }
