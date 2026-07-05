@@ -97,7 +97,7 @@ document.addEventListener('click', e => {
 let avaliarSheetMusicaId = null;
 let avaliarSheetDraft = null;
 
-function _renderAvaliacaoCategoriasBody(draft, onSelecionar, onLimpar) {
+function _renderAvaliacaoCategoriasBody(draft, onSelecionar, onLimpar, counts) {
   return AVALIACAO_CATEGORIAS.map(cat => {
     const atual = draft[cat.key];
     const nivelAtual = cat.niveis.find(n => n.valor === atual);
@@ -108,12 +108,15 @@ function _renderAvaliacaoCategoriasBody(draft, onSelecionar, onLimpar) {
           <button class="avaliar-categoria-limpar" onclick="${onLimpar}('${cat.key}')">Limpar</button>
         </div>
         <div class="avaliar-niveis-grid">
-          ${cat.niveis.map(n => `
+          ${cat.niveis.map(n => {
+            const count = counts?.[cat.key]?.[n.valor];
+            return `
             <button class="avaliar-nivel-opt${atual === n.valor ? ' active' : ''}" onclick="${onSelecionar}('${cat.key}',${n.valor})">
               <span class="material-symbols-outlined avaliar-nivel-icon">${n.icon}</span>
               <span class="avaliar-nivel-label">${n.label}</span>
-            </button>
-          `).join('')}
+              ${count != null ? `<span class="avaliar-nivel-count">${count}</span>` : ''}
+            </button>`;
+          }).join('')}
         </div>
         ${nivelAtual ? `<div class="avaliar-nivel-desc"><strong>${nivelAtual.label}:</strong> ${nivelAtual.desc}</div>` : ''}
       </div>
@@ -428,7 +431,15 @@ function toggleAvaliacaoFiltro(e) {
 function _renderAvaliacaoFiltroSheet() {
   const body = document.getElementById('avaliacao-filtro-sheet-body');
   if (body && avaliacaoFiltroDraft) {
-    body.innerHTML = _renderAvaliacaoCategoriasBody(avaliacaoFiltroDraft, 'selecionarAvaliacaoFiltroNivel', 'limparAvaliacaoFiltroCategoria');
+    const musicas = listarMusicas();
+    const counts = {};
+    AVALIACAO_CATEGORIAS.forEach(cat => {
+      counts[cat.key] = {};
+      cat.niveis.forEach(n => {
+        counts[cat.key][n.valor] = musicas.filter(m => m[cat.key] === n.valor).length;
+      });
+    });
+    body.innerHTML = _renderAvaliacaoCategoriasBody(avaliacaoFiltroDraft, 'selecionarAvaliacaoFiltroNivel', 'limparAvaliacaoFiltroCategoria', counts);
   }
 }
 

@@ -2017,6 +2017,8 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 .avaliar-nivel-opt.active .avaliar-nivel-label { color: #fff; }
 .avaliar-nivel-icon { font-size: 22px !important; color: #5b7cf6; }
 .avaliar-nivel-label { font-size: 0.78rem; font-weight: 600; color: #333; text-align: center; }
+.avaliar-nivel-count { font-size: 0.7rem; font-weight: 700; color: #5b7cf6; background: #eef0fd; border-radius: 10px; padding: 1px 6px; line-height: 1.4; }
+.avaliar-nivel-opt.active .avaliar-nivel-count { background: rgba(255,255,255,0.25); color: #fff; }
 .avaliar-nivel-desc {
   margin-top: 10px;
   font-size: 0.82rem;
