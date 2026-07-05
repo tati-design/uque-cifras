@@ -1874,12 +1874,22 @@ function importarBackupArquivo(input) {
     try {
       const dados = JSON.parse(e.target.result);
       let musicasAdicionadas = 0;
+      let musicasAtualizadas = 0;
       let favoritosAdicionados = 0;
 
       if (Array.isArray(dados.musicas)) {
         const lista = listarMusicas();
-        const existentes = new Set(lista.map(m => m.id));
-        dados.musicas.forEach(m => { if (!existentes.has(m.id)) { lista.push(m); musicasAdicionadas++; } });
+        const idxPorId = Object.fromEntries(lista.map((m, i) => [m.id, i]));
+        dados.musicas.forEach(m => {
+          if (!(m.id in idxPorId)) {
+            lista.push(m);
+            musicasAdicionadas++;
+          } else {
+            // Mescla dados do backup na música existente (restaura avaliações, pins, etc.)
+            lista[idxPorId[m.id]] = { ...lista[idxPorId[m.id]], ...m };
+            musicasAtualizadas++;
+          }
+        });
         salvarListaMusicas(lista);
       }
       if (Array.isArray(dados.favoritos)) {
@@ -1892,7 +1902,11 @@ function importarBackupArquivo(input) {
       renderMusicasLista();
       if (musicaAtualId) renderMusicaView();
       renderFavoritos();
-      alert(`Backup importado: ${musicasAdicionadas} música(s) e ${favoritosAdicionados} formato(s) de acorde adicionados.`);
+      const partes = [];
+      if (musicasAdicionadas) partes.push(`${musicasAdicionadas} música(s) adicionada(s)`);
+      if (musicasAtualizadas) partes.push(`${musicasAtualizadas} música(s) atualizada(s)`);
+      if (favoritosAdicionados) partes.push(`${favoritosAdicionados} formato(s) de acorde adicionado(s)`);
+      alert(`Backup importado: ${partes.join(', ') || 'nenhuma novidade'}.`);
     } catch {
       alert('Não consegui ler esse arquivo. Confira se é um backup válido (.json exportado por aqui).');
     }
