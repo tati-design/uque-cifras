@@ -152,24 +152,31 @@ function fecharAvaliarSheet() {
 function selecionarAvaliarNivel(categoriaKey, valor) {
   if (!avaliarSheetDraft) return;
   avaliarSheetDraft[categoriaKey] = avaliarSheetDraft[categoriaKey] === valor ? null : valor;
+  _persistirAvaliacao();
   _renderAvaliarSheet();
 }
 
 function limparAvaliarCategoria(categoriaKey) {
   if (!avaliarSheetDraft) return;
   avaliarSheetDraft[categoriaKey] = null;
+  _persistirAvaliacao();
   _renderAvaliarSheet();
 }
 
 function limparAvaliarTudo() {
   if (!avaliarSheetDraft) return;
   AVALIACAO_CATEGORIAS.forEach(cat => { avaliarSheetDraft[cat.key] = null; });
+  _persistirAvaliacao();
   _renderAvaliarSheet();
 }
 
-function salvarAvaliacao() {
+function _persistirAvaliacao() {
   if (!avaliarSheetMusicaId || !avaliarSheetDraft) return;
   atualizarMusica(avaliarSheetMusicaId, { ...avaliarSheetDraft });
+}
+
+function salvarAvaliacao() {
+  _persistirAvaliacao();
   fecharAvaliarSheet();
   renderMusicaView();
 }
@@ -700,7 +707,7 @@ function renderMusicasLista() {
         <th class="musica-row-check-th">
           <input type="checkbox" class="musica-check" title="Selecionar todos" ${todosSelecionados ? 'checked' : ''} onclick="toggleSelecionarTodos(_idsFiltradosAtual, this.checked)">
         </th>
-        <th>MÚSICA</th><th>ARTISTA</th><th class="col-genero">GÊNERO</th><th class="col-tom">TOM</th>
+        <th>MÚSICA</th><th>ARTISTA</th><th class="col-genero">GÊNERO</th><th class="col-tom">TOM</th><th class="col-avaliacao">AVALIAÇÃO</th>
       </tr>
     </thead>
     <tbody>
@@ -723,17 +730,24 @@ function renderMusicaRow(m) {
   const semitons = m.transposicao || 0;
   const tomAtual = m.tom ? transporAcorde(m.tom, semitons) : '';
   const transposto = semitons !== 0;
-  const avaliacaoTexto = AVALIACAO_CATEGORIAS
+  // Mobile: rating as subtitle under title
+  const avaliacaoTextoMobile = AVALIACAO_CATEGORIAS
     .map(cat => obterLabelNivel(cat.key, m[cat.key]))
     .filter(Boolean)
     .join(' • ');
+  // Desktop: each category in its own chip
+  const avaliacaoCelula = AVALIACAO_CATEGORIAS.map(cat => {
+    const label = obterLabelNivel(cat.key, m[cat.key]);
+    if (!label) return `<span class="avaliacao-chip avaliacao-chip-vazio" title="${cat.nome}"><span class="material-symbols-outlined avaliacao-chip-icon">${cat.icon}</span></span>`;
+    return `<span class="avaliacao-chip" title="${cat.nome}: ${label}"><span class="material-symbols-outlined avaliacao-chip-icon">${cat.icon}</span>${label}</span>`;
+  }).join('');
   return `
     <tr class="musica-row${selecionado ? ' musica-row-selecionada' : ''}" onclick="abrirMusicaView('${m.id}')">
       <td class="musica-row-check" onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
         <input type="checkbox" class="musica-check" ${selecionado ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
       </td>
       <td class="musica-row-titulo">
-        ${m.titulo}${avaliacaoTexto ? `<span class="musica-row-avaliacao">${avaliacaoTexto}</span>` : ''}
+        ${m.titulo}${avaliacaoTextoMobile ? `<span class="musica-row-avaliacao musica-row-avaliacao-mobile">${avaliacaoTextoMobile}</span>` : ''}
       </td>
       <td class="musica-row-artista">${m.artista}</td>
       <td class="musica-row-genero col-genero">${m.genero || 'Outros'}</td>
@@ -742,6 +756,7 @@ function renderMusicaRow(m) {
           <span class="material-symbols-outlined tom-cell-icon">${transposto ? 'sync_alt' : 'music_note'}</span>${tomAtual}
         </span>` : ''}
       </td>
+      <td class="col-avaliacao musica-row-avaliacao-desk">${avaliacaoCelula}</td>
     </tr>
   `;
 }
