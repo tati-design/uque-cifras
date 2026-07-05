@@ -14,6 +14,44 @@ const GENERO_ICONS = {
   'Infantil': 'child_care', 'Favoritos': 'kid_star',
 };
 
+// ─── Avaliação por categorias (Instrumento / Vocal / Engajamento) ──────────────
+// Cada categoria guarda um nível 0-3 em musica[key]; null/undefined = não avaliado.
+const AVALIACAO_CATEGORIAS = [
+  {
+    key: 'ratingInstrumento', nome: 'Instrumento', icon: 'piano',
+    niveis: [
+      { valor: 3, label: 'Fácil', desc: 'Poucas notas e conhecidas' },
+      { valor: 2, label: 'Desbloqueada', desc: 'Todas as notas conhecidas' },
+      { valor: 1, label: 'Chata', desc: 'Com notas conhecidas' },
+      { valor: 0, label: 'Impossível', desc: 'Ainda é inexecutável' },
+    ],
+  },
+  {
+    key: 'ratingVocal', nome: 'Vocal', icon: 'mic',
+    niveis: [
+      { valor: 3, label: 'Dou show', desc: 'Canto naturalmente bem essa' },
+      { valor: 2, label: 'Confortável', desc: 'Canto sem dificuldade' },
+      { valor: 1, label: 'Desafino', desc: 'Desafino pouco' },
+      { valor: 0, label: 'Inviável', desc: 'Não sai' },
+    ],
+  },
+  {
+    key: 'ratingEngajamento', nome: 'Engajamento', icon: 'groups',
+    niveis: [
+      { valor: 3, label: 'Hino', desc: 'Todo mundo conhece' },
+      { valor: 2, label: 'Nicho', desc: 'Funciona bem pra quem conhece' },
+      { valor: 1, label: 'Xodó', desc: 'Eu gosto muito de tocar para mim' },
+      { valor: 0, label: 'Flop', desc: 'Quase ninguém sabe qual é' },
+    ],
+  },
+];
+
+function obterLabelNivel(categoriaKey, valor) {
+  if (valor == null) return null;
+  const cat = AVALIACAO_CATEGORIAS.find(c => c.key === categoriaKey);
+  return cat?.niveis.find(n => n.valor === valor)?.label || null;
+}
+
 // Mapeamento título|artista (minúsculas) → gênero, gerado a partir do CSV classificado.
 const _csvGeneros = {
   'the loneliest girl|carole & tuesday': 'Internacional',

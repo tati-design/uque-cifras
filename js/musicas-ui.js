@@ -17,26 +17,6 @@ function _aplicarFonteCifra() {
   if (el) el.style.fontSize = cifraFontSize + 'px';
 }
 
-function aumentarFonte() {
-  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
-  if (idx < CIFRA_FONT_SIZES.length - 1) {
-    cifraFontSize = CIFRA_FONT_SIZES[idx + 1];
-    localStorage.setItem('cifraFontSize', cifraFontSize);
-    _aplicarFonteCifra();
-    _renderFonteMenu();
-  }
-}
-
-function diminuirFonte() {
-  const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
-  if (idx > 0) {
-    cifraFontSize = CIFRA_FONT_SIZES[idx - 1];
-    localStorage.setItem('cifraFontSize', cifraFontSize);
-    _aplicarFonteCifra();
-    _renderFonteMenu();
-  }
-}
-
 function toggleFonteMenu(e) {
   if (e) e.stopPropagation();
   fonteMenuAberto = !fonteMenuAberto;
@@ -63,12 +43,15 @@ function _syncFonteUI() {
   const badgeVal = document.querySelector('.fonte-badge-val');
   if (badgeVal) badgeVal.textContent = cifraFontSize + 'px';
   const menu = document.getElementById('fonte-menu');
-  if (!menu) return;
-  menu.classList.toggle('hidden', !fonteMenuAberto);
-  const inp = menu.querySelector('.fonte-size-input');
-  if (inp && document.activeElement !== inp) inp.value = cifraFontSize;
-  menu.querySelector('.fonte-step-btn.minus')?.toggleAttribute('disabled', idx <= 0);
-  menu.querySelector('.fonte-step-btn.plus')?.toggleAttribute('disabled', idx >= CIFRA_FONT_SIZES.length - 1);
+  if (menu) {
+    menu.classList.toggle('hidden', !fonteMenuAberto);
+    menu.querySelector('.fonte-step-btn.minus')?.toggleAttribute('disabled', idx <= 0);
+    menu.querySelector('.fonte-step-btn.plus')?.toggleAttribute('disabled', idx >= CIFRA_FONT_SIZES.length - 1);
+  }
+  // Sincroniza também o input dentro do menu mobile "Mais opções", se estiver aberto nessa etapa
+  document.querySelectorAll('.fonte-size-input, .opcoes-fonte-input').forEach(inp => {
+    if (document.activeElement !== inp) inp.value = cifraFontSize;
+  });
 }
 
 function _renderFonteMenu() { _syncFonteUI(); }
@@ -109,6 +92,88 @@ function renderFonteControl() {
 document.addEventListener('click', e => {
   if (fonteMenuAberto && !e.target.closest('.fonte-wrap')) fecharFonteMenu();
 });
+
+// ─── Avaliação (sheet: Instrumento / Vocal / Engajamento) ──────────────────────
+let avaliarSheetMusicaId = null;
+let avaliarSheetDraft = null;
+
+function _renderAvaliacaoCategoriasBody(draft, onSelecionar, onLimpar) {
+  return AVALIACAO_CATEGORIAS.map(cat => {
+    const atual = draft[cat.key];
+    const nivelAtual = cat.niveis.find(n => n.valor === atual);
+    return `
+      <div class="avaliar-categoria">
+        <div class="avaliar-categoria-header">
+          <span class="avaliar-categoria-nome">${cat.nome}</span>
+          <button class="avaliar-categoria-limpar" onclick="${onLimpar}('${cat.key}')">Limpar</button>
+        </div>
+        <div class="avaliar-niveis-grid">
+          ${cat.niveis.map(n => `
+            <button class="avaliar-nivel-opt${atual === n.valor ? ' active' : ''}" onclick="${onSelecionar}('${cat.key}',${n.valor})">
+              <span class="avaliar-nivel-num">${n.valor}</span>
+              <span class="avaliar-nivel-label">${n.label}</span>
+            </button>
+          `).join('')}
+        </div>
+        ${nivelAtual ? `<div class="avaliar-nivel-desc"><strong>${nivelAtual.label}:</strong> ${nivelAtual.desc}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function _renderAvaliarSheet() {
+  const body = document.getElementById('avaliar-sheet-body');
+  if (body && avaliarSheetDraft) {
+    body.innerHTML = _renderAvaliacaoCategoriasBody(avaliarSheetDraft, 'selecionarAvaliarNivel', 'limparAvaliarCategoria');
+  }
+}
+
+function abrirAvaliarSheet(id) {
+  const musica = buscarMusica(id);
+  if (!musica) return;
+  avaliarSheetMusicaId = id;
+  avaliarSheetDraft = {
+    ratingInstrumento: musica.ratingInstrumento ?? null,
+    ratingVocal: musica.ratingVocal ?? null,
+    ratingEngajamento: musica.ratingEngajamento ?? null,
+  };
+  _renderAvaliarSheet();
+  document.getElementById('avaliar-sheet-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharAvaliarSheet() {
+  document.getElementById('avaliar-sheet-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+  avaliarSheetMusicaId = null;
+  avaliarSheetDraft = null;
+}
+
+function selecionarAvaliarNivel(categoriaKey, valor) {
+  if (!avaliarSheetDraft) return;
+  avaliarSheetDraft[categoriaKey] = avaliarSheetDraft[categoriaKey] === valor ? null : valor;
+  _renderAvaliarSheet();
+}
+
+function limparAvaliarCategoria(categoriaKey) {
+  if (!avaliarSheetDraft) return;
+  avaliarSheetDraft[categoriaKey] = null;
+  _renderAvaliarSheet();
+}
+
+function limparAvaliarTudo() {
+  if (!avaliarSheetDraft) return;
+  AVALIACAO_CATEGORIAS.forEach(cat => { avaliarSheetDraft[cat.key] = null; });
+  _renderAvaliarSheet();
+}
+
+function salvarAvaliacao() {
+  if (!avaliarSheetMusicaId || !avaliarSheetDraft) return;
+  atualizarMusica(avaliarSheetMusicaId, { ...avaliarSheetDraft });
+  fecharAvaliarSheet();
+  renderMusicaView();
+}
+
 const modoNovato = () => modoSimplificar && modoNomes; // legado: ambos ativos
 
 function _salvarModos() {
@@ -182,6 +247,7 @@ function simplificarAcorde(nome) {
 // ─── Lista de músicas (aba "Minhas Músicas") ────────────────────────────────────
 let musicaFiltroGenero = 'todos';
 let musicaFiltroArtista = 'todos';
+let musicaFiltroAvaliacao = { ratingInstrumento: null, ratingVocal: null, ratingEngajamento: null };
 let musicaOrdem = 'titulo'; // 'titulo' | 'artista' | 'tom'
 let musicaBusca = '';
 let musicasSelecionadas = new Set();
@@ -341,6 +407,61 @@ function toggleArtistaFiltro(e) {
   toggleFiltroDropdown('artista', e);
 }
 
+function _avaliacaoFiltroAtiva() {
+  return AVALIACAO_CATEGORIAS.some(cat => musicaFiltroAvaliacao[cat.key] != null);
+}
+
+let avaliacaoFiltroDraft = null;
+
+function toggleAvaliacaoFiltro(e) {
+  if (e) e.stopPropagation();
+  abrirAvaliacaoFiltroSheet();
+}
+
+function _renderAvaliacaoFiltroSheet() {
+  const body = document.getElementById('avaliacao-filtro-sheet-body');
+  if (body && avaliacaoFiltroDraft) {
+    body.innerHTML = _renderAvaliacaoCategoriasBody(avaliacaoFiltroDraft, 'selecionarAvaliacaoFiltroNivel', 'limparAvaliacaoFiltroCategoria');
+  }
+}
+
+function abrirAvaliacaoFiltroSheet() {
+  avaliacaoFiltroDraft = { ...musicaFiltroAvaliacao };
+  _renderAvaliacaoFiltroSheet();
+  document.getElementById('avaliacao-filtro-sheet-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharAvaliacaoFiltroSheet() {
+  document.getElementById('avaliacao-filtro-sheet-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+  avaliacaoFiltroDraft = null;
+}
+
+function selecionarAvaliacaoFiltroNivel(categoriaKey, valor) {
+  if (!avaliacaoFiltroDraft) return;
+  avaliacaoFiltroDraft[categoriaKey] = avaliacaoFiltroDraft[categoriaKey] === valor ? null : valor;
+  _renderAvaliacaoFiltroSheet();
+}
+
+function limparAvaliacaoFiltroCategoria(categoriaKey) {
+  if (!avaliacaoFiltroDraft) return;
+  avaliacaoFiltroDraft[categoriaKey] = null;
+  _renderAvaliacaoFiltroSheet();
+}
+
+function limparAvaliacaoFiltroTudo() {
+  if (!avaliacaoFiltroDraft) return;
+  AVALIACAO_CATEGORIAS.forEach(cat => { avaliacaoFiltroDraft[cat.key] = null; });
+  _renderAvaliacaoFiltroSheet();
+}
+
+function aplicarAvaliacaoFiltro() {
+  musicaFiltroAvaliacao = { ...avaliacaoFiltroDraft };
+  fecharAvaliacaoFiltroSheet();
+  renderMusicasLista();
+}
+
 function selecionarOrdemDesktop(val) {
   musicaOrdem = val;
   filtroDropdownAberto = null;
@@ -352,7 +473,6 @@ function selecionarOrdemDesktop(val) {
 const ORDEM_OPTS = [
   { val: 'titulo',  icon: 'music_note',    label: 'Música'    },
   { val: 'artista', icon: 'person',        label: 'Artista'   },
-  { val: 'rating',  icon: 'star',          label: 'Avaliação' },
 ];
 
 function abrirOrdenacaoSheet() {
@@ -457,9 +577,7 @@ function renderMusicasLista() {
   const lista = listarMusicas().sort((a, b) =>
     musicaOrdem === 'artista'
       ? a.artista.localeCompare(b.artista) || a.titulo.localeCompare(b.titulo)
-      : musicaOrdem === 'rating'
-        ? (b.rating || 0) - (a.rating || 0) || a.titulo.localeCompare(b.titulo)
-        : a.titulo.localeCompare(b.titulo)
+      : a.titulo.localeCompare(b.titulo)
   );
 
   if (!lista.length) {
@@ -536,9 +654,17 @@ function renderMusicasLista() {
     </div>
     <div class="filtro-row-outer artista-filtro-wrap">
       <button class="artista-filtro-btn${musicaFiltroArtista !== 'todos' ? ' ativo' : ''}" onclick="toggleArtistaFiltro(event)">
-        ${artistaBtnLabel} <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">expand_more</span>
+        <span class="material-symbols-outlined filtro-btn-icon">diversity_1</span>
+        <span class="filtro-btn-label">${artistaBtnLabel}</span>
+        <span class="material-symbols-outlined filtro-btn-caret">expand_more</span>
       </button>
       ${filtroDropdownAberto === 'artista' ? `<div class="filtro-dropdown artista-filtro-dropdown">${artistaDropdownHtml}</div>` : ''}
+    </div>
+    <div class="filtro-row-outer avaliacao-filtro-wrap">
+      <button class="avaliacao-filtro-btn${_avaliacaoFiltroAtiva() ? ' ativo' : ''}" onclick="toggleAvaliacaoFiltro(event)">
+        <span class="material-symbols-outlined filtro-btn-icon">reviews</span>
+        <span class="filtro-btn-label">Avaliação</span>
+      </button>
     </div>
     <div class="filtro-row-outer az-sort-wrap">
       <button class="az-sort-btn${musicaOrdem !== 'titulo' ? ' ativo' : ''}" onclick="toggleAzSort(event)" title="Ordenar">
@@ -555,7 +681,10 @@ function renderMusicasLista() {
 
   html += renderSelecaoBar();
 
-  const listaFiltradaBase = musicaFiltroArtista === 'todos' ? listaPorGenero : listaPorGenero.filter(m => m.artista === musicaFiltroArtista);
+  const listaPorArtista = musicaFiltroArtista === 'todos' ? listaPorGenero : listaPorGenero.filter(m => m.artista === musicaFiltroArtista);
+  const listaFiltradaBase = listaPorArtista.filter(m =>
+    AVALIACAO_CATEGORIAS.every(cat => musicaFiltroAvaliacao[cat.key] == null || m[cat.key] === musicaFiltroAvaliacao[cat.key])
+  );
   const buscaTermo = musicaBusca.trim().toLowerCase();
   const listaFiltrada = buscaTermo
     ? listaFiltradaBase.filter(m =>
@@ -594,18 +723,17 @@ function renderMusicaRow(m) {
   const semitons = m.transposicao || 0;
   const tomAtual = m.tom ? transporAcorde(m.tom, semitons) : '';
   const transposto = semitons !== 0;
-  const stars = m.rating
-    ? Array.from({length: 5}, (_, i) =>
-        `<span class="material-symbols-outlined musica-row-star" style="font-variation-settings:'FILL' ${i < m.rating ? 1 : 0}">star</span>`
-      ).join('')
-    : '';
+  const avaliacaoTexto = AVALIACAO_CATEGORIAS
+    .map(cat => obterLabelNivel(cat.key, m[cat.key]))
+    .filter(Boolean)
+    .join(' • ');
   return `
     <tr class="musica-row${selecionado ? ' musica-row-selecionada' : ''}" onclick="abrirMusicaView('${m.id}')">
       <td class="musica-row-check" onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
         <input type="checkbox" class="musica-check" ${selecionado ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelecaoMusica('${m.id}')">
       </td>
       <td class="musica-row-titulo">
-        ${m.titulo}${stars ? `<span class="musica-row-stars">${stars}</span>` : ''}
+        ${m.titulo}${avaliacaoTexto ? `<span class="musica-row-avaliacao">${avaliacaoTexto}</span>` : ''}
       </td>
       <td class="musica-row-artista">${m.artista}</td>
       <td class="musica-row-genero col-genero">${m.genero || 'Outros'}</td>
@@ -721,6 +849,9 @@ function fecharMusicaView() {
   acordesMobileAbertos = false;
   modoFullscreen = false;
   opcoesMenuAberto = false;
+  opcoesMenuView = 'menu';
+  fonteMenuAberto = false;
+  avaliarMenuAberto = false;
 
   document.getElementById('view-musica').classList.add('hidden');
   document.getElementById('view-lista').classList.remove('hidden');
@@ -877,44 +1008,21 @@ function renderMusicaView() {
             <button class="icon-btn" onclick="fecharAutoScroll()" title="Fechar"><span class="material-symbols-outlined">close</span></button>
           </div>` : ''}
         </div>
-        <!-- Desktop: controles inline de fonte + avaliação -->
+        <!-- Desktop: botões com popup próprio (mesmo padrão do Tom) -->
         <div class="toolbar-desktop-extras">
-          <div class="toolbar-fonte-inline">
-            <button class="icon-btn" onclick="diminuirFonte()" title="Diminuir fonte"><span class="material-symbols-outlined">text_decrease</span></button>
-            <span class="toolbar-fonte-val">${cifraFontSize}</span>
-            <button class="icon-btn" onclick="aumentarFonte()" title="Aumentar fonte"><span class="material-symbols-outlined">text_increase</span></button>
-          </div>
-          <div class="toolbar-rating-inline">
-            ${[1,2,3,4,5].map(i =>
-              `<button class="opcoes-rating-star" onclick="avaliarMusica('${musica.id}',${(musica.rating||0)===i?0:i})">
-                <span class="material-symbols-outlined" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":"color:#bbb"}">star</span>
-              </button>`
-            ).join('')}
-          </div>
+          ${renderFonteControl()}
+          <button class="musica-fonte-badge" onclick="abrirAvaliarSheet('${musica.id}')">
+            <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">reviews</span>
+            <span class="toolbar-btn-label">Avaliar</span>
+          </button>
         </div>
-        <!-- Mobile: botão apps com menu -->
+        <!-- Mobile: botão apps com menu de duas etapas (lista → edição) -->
         <div class="opcoes-wrap opcoes-wrap-mobile">
           <button class="icon-btn" onclick="toggleOpcoesMenu(event)" title="Opções">
             <span class="material-symbols-outlined">apps</span>
           </button>
           <div id="opcoes-menu" class="opcoes-menu ${opcoesMenuAberto ? '' : 'hidden'}">
-            <div class="opcoes-row">
-              <span class="opcoes-row-label">Fonte</span>
-              <button class="icon-btn" onclick="diminuirFonte();event.stopPropagation()"><span class="material-symbols-outlined">text_decrease</span></button>
-              <input type="number" class="fonte-size-input opcoes-fonte-input" value="${cifraFontSize}" min="8" max="72"
-                oninput="_setFonteSize(this.value)"
-                onkeydown="if(event.key==='Enter'||event.key==='Escape'){fecharOpcoesMenu();event.preventDefault()}"
-                onclick="event.stopPropagation()">
-              <button class="icon-btn" onclick="aumentarFonte();event.stopPropagation()"><span class="material-symbols-outlined">text_increase</span></button>
-            </div>
-            <div class="opcoes-row opcoes-rating-row">
-              <span class="opcoes-row-label">Avaliação</span>
-              ${[1,2,3,4,5].map(i =>
-                `<button class="opcoes-rating-star" onclick="avaliarMusica('${musica.id}',${(musica.rating||0)===i?0:i});event.stopPropagation()">
-                  <span class="material-symbols-outlined" style="${i<=(musica.rating||0)?"font-variation-settings:'FILL' 1;color:#f5a623":"color:#bbb"}">star</span>
-                </button>`
-              ).join('')}
-            </div>
+            ${_renderOpcoesMenuConteudo()}
           </div>
         </div>
       </div>
@@ -1018,12 +1126,8 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
       : '';
 
     const resto = linhaRaw.slice(prefixo.length);
-    const tokens = resto.trim().split(/\s+/).filter(Boolean);
-    const chordTokens = tokens.filter(t => !isSectionToken(t));
-    // Linha de acorde: TODOS os tokens não-seção devem ser acordes válidos (mesma regra da correção)
-    const isChordLine = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
-    if (!isChordLine) return prefixoHtml + escapeHtml(resto);
-
+    // Destaca qualquer token que seja acorde válido, mesmo em linha mista com letra
+    // (ex: palavra promovida a acorde na correção, que fica na mesma linha da letra)
     const partes = resto.split(/(\s+)/);
     const restoHtml = partes.map(p => {
       if (p === '' || /^\s+$/.test(p)) return p;
@@ -1040,6 +1144,7 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
 // ─── Editor de Correção de Acordes ────────────────────────────────────────────
 let _correcaoLinhas = [];   // [{type:'chord'|'text', tokens:[...], raw}]
 let _correcaoSel = null;    // {lIdx, tIdx}
+let _correcaoSelTexto = ''; // texto original do token ao abrir o sheet (para "aplicar em todos")
 
 function _looksLikeChordAttempt(t) {
   return /^[A-G][#b]?/.test(t) && t.length <= 14;
@@ -1090,6 +1195,7 @@ function _renderCorrecao() {
   const musica = buscarMusica(musicaAtualId);
   const badCount = _correcaoLinhas.reduce((n, l) =>
     n + (l.tokens ? l.tokens.filter(t => t.kind === 'bad').length : 0), 0);
+  const scrollTop = document.querySelector('.correcao-cifra')?.scrollTop || 0;
 
   document.getElementById('musica-page-header').innerHTML = `
     <button class="nav-btn" onclick="cancelarCorrecao()">
@@ -1117,6 +1223,9 @@ function _renderCorrecao() {
       ${_correcaoLinhas.map((l, lIdx) => _renderCorrecaoLinha(l, lIdx)).join('')}
     </div>
   `;
+
+  const cifraEl = document.querySelector('.correcao-cifra');
+  if (cifraEl) cifraEl.scrollTop = scrollTop;
 }
 
 function _renderCorrecaoLinha(linha, lIdx) {
@@ -1131,75 +1240,96 @@ function _renderCorrecaoLinha(linha, lIdx) {
     return `<button class="correcao-token ${t.kind}${sel?' sel':''}" onclick="selecionarCorrecaoToken(${lIdx},${tIdx})">${escapeHtml(t.text)}</button>`;
   }).join('');
 
-  const painel = _correcaoSel?.lIdx === lIdx ? _renderCorrecaoPainel(lIdx) : '';
-  return `<div class="correcao-linha">${tokensHtml}</div>${painel}`;
-}
-
-function _renderCorrecaoPainel(lIdx) {
-  const { tIdx } = _correcaoSel;
-  const token = _correcaoLinhas[lIdx].tokens[tIdx];
-  const isChordToken = token.kind === 'ok' || token.kind === 'bad';
-  return `
-    <div class="correcao-painel">
-      <input class="correcao-input" id="correcao-input" type="text" value="${escapeHtml(token.text)}"
-             oninput="validarCorrecaoInput(this)" placeholder="Ex: Am7, C#m, G7…">
-      <button class="correcao-sub-btn nav-btn" id="correcao-sub-btn"
-              ${isValidChordToken(token.text)?'':'disabled'}
-              onclick="substituirCorrecaoToken(${lIdx},${tIdx})">Substituir</button>
-      ${isChordToken ? `
-      <button class="correcao-nao-acorde-btn nav-btn" onclick="naoEAcordeToken(${lIdx},${tIdx})" title="Não é acorde — mantém o texto mas remove da leitura de acordes">
-        <span class="material-symbols-outlined">label_off</span> Não é acorde
-      </button>` : ''}
-      <button class="icon-btn" onclick="fecharCorrecaoPainel()" title="Cancelar">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-  `;
+  return `<div class="correcao-linha">${tokensHtml}</div>`;
 }
 
 function selecionarCorrecaoToken(lIdx, tIdx) {
   if (_correcaoSel?.lIdx === lIdx && _correcaoSel?.tIdx === tIdx) {
-    _correcaoSel = null;
-  } else {
-    _correcaoSel = { lIdx, tIdx };
+    fecharCorrecaoPainel();
+    return;
   }
+  _abrirCorrecaoSheet(lIdx, tIdx);
   _renderCorrecao();
-  if (_correcaoSel) setTimeout(() => {
-    const inp = document.getElementById('correcao-input');
-    if (inp) { inp.focus(); inp.select(); }
-  }, 40);
 }
 
-function validarCorrecaoInput(inp) {
-  const ok = isValidChordToken(inp.value.trim());
-  const btn = document.getElementById('correcao-sub-btn');
-  if (btn) btn.disabled = !ok;
+function _abrirCorrecaoSheet(lIdx, tIdx) {
+  _correcaoSel = { lIdx, tIdx };
+  const token = _correcaoLinhas[lIdx].tokens[tIdx];
+  _correcaoSelTexto = token.text;
+  const isChordToken = token.kind === 'ok' || token.kind === 'bad';
+
+  const input = document.getElementById('correcao-sheet-input');
+  input.value = token.text;
+
+  const confirmarBtn = document.getElementById('correcao-sheet-confirmar');
+  confirmarBtn.textContent = token.kind === 'ok' ? 'Substituir acorde' : 'Adicionar acorde';
+  confirmarBtn.disabled = !isValidChordToken(token.text);
+
+  document.getElementById('correcao-sheet-todos-cb').checked = true;
+  document.getElementById('correcao-sheet-todos-label').textContent = `Buscar e aplicar em todos "${token.text}" da música`;
+  document.getElementById('correcao-sheet-nao-acorde-btn').style.display = isChordToken ? '' : 'none';
+
+  document.getElementById('correcao-sheet-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => { input.focus(); input.select(); }, 200);
 }
 
-function substituirCorrecaoToken(lIdx, tIdx) {
-  const val = document.getElementById('correcao-input')?.value.trim();
+function _validarCorrecaoSheetInput(inp) {
+  const btn = document.getElementById('correcao-sheet-confirmar');
+  if (btn) btn.disabled = !isValidChordToken(inp.value.trim());
+}
+
+function substituirCorrecaoToken() {
+  if (!_correcaoSel) return;
+  const val = document.getElementById('correcao-sheet-input')?.value.trim();
   if (!val || !isValidChordToken(val)) return;
-  _correcaoLinhas[lIdx].tokens[tIdx] = { text: val, kind: 'ok' };
-  _correcaoSel = null;
-  _renderCorrecao();
+  const { lIdx, tIdx } = _correcaoSel;
+  const aplicarTodos = document.getElementById('correcao-sheet-todos-cb')?.checked;
+  if (aplicarTodos) {
+    const textoOriginal = _correcaoSelTexto;
+    _correcaoLinhas.forEach(l => {
+      if (!l.tokens) return;
+      l.tokens.forEach(t => {
+        if (t.text === textoOriginal && (t.kind === 'ok' || t.kind === 'bad' || t.kind === 'word')) {
+          t.text = val; t.kind = 'ok';
+        }
+      });
+    });
+  } else {
+    _correcaoLinhas[lIdx].tokens[tIdx] = { text: val, kind: 'ok' };
+  }
+  fecharCorrecaoPainel();
 }
 
 function excluirCorrecaoToken(lIdx, tIdx) {
   const tokens = _correcaoLinhas[lIdx].tokens;
   const prevIsSpace = tIdx > 0 && tokens[tIdx - 1].kind === 'space';
   tokens.splice(prevIsSpace ? tIdx - 1 : tIdx, prevIsSpace ? 2 : 1);
-  _correcaoSel = null;
-  _renderCorrecao();
+  fecharCorrecaoPainel();
 }
 
-function naoEAcordeToken(lIdx, tIdx) {
-  _correcaoLinhas[lIdx].tokens[tIdx].kind = 'word';
-  _correcaoSel = null;
-  _renderCorrecao();
+function naoEAcordeToken() {
+  if (!_correcaoSel) return;
+  const { lIdx, tIdx } = _correcaoSel;
+  const aplicarTodos = document.getElementById('correcao-sheet-todos-cb')?.checked;
+  if (aplicarTodos) {
+    const textoOriginal = _correcaoSelTexto;
+    _correcaoLinhas.forEach(l => {
+      if (!l.tokens) return;
+      l.tokens.forEach(t => {
+        if ((t.kind === 'ok' || t.kind === 'bad') && t.text === textoOriginal) t.kind = 'word';
+      });
+    });
+  } else {
+    _correcaoLinhas[lIdx].tokens[tIdx].kind = 'word';
+  }
+  fecharCorrecaoPainel();
 }
 
 function fecharCorrecaoPainel() {
   _correcaoSel = null;
+  document.getElementById('correcao-sheet-overlay')?.classList.add('hidden');
+  document.body.style.overflow = '';
   _renderCorrecao();
 }
 
@@ -1327,6 +1457,7 @@ function iniciarSwipeCifra(el) {
 // ─── Controle de tom ───────────────────────────────────────────────────────────
 let tomMenuAberto = false;
 let opcoesMenuAberto = false;
+let opcoesMenuView = 'menu'; // 'menu' | 'fonte'
 let modoFullscreen = false;
 
 function toggleFullscreenMusica() {
@@ -1342,12 +1473,57 @@ function toggleFullscreenMusica() {
 function toggleOpcoesMenu(e) {
   if (e) e.stopPropagation();
   opcoesMenuAberto = !opcoesMenuAberto;
-  document.getElementById('opcoes-menu')?.classList.toggle('hidden', !opcoesMenuAberto);
+  if (opcoesMenuAberto) opcoesMenuView = 'menu';
+  _renderOpcoesMenu();
 }
 
 function fecharOpcoesMenu() {
   opcoesMenuAberto = false;
-  document.getElementById('opcoes-menu')?.classList.add('hidden');
+  _renderOpcoesMenu();
+}
+
+function _irOpcoesMenu(view) {
+  opcoesMenuView = view;
+  _renderOpcoesMenu();
+}
+
+function _renderOpcoesMenu() {
+  const el = document.getElementById('opcoes-menu');
+  if (!el) return;
+  el.classList.toggle('hidden', !opcoesMenuAberto);
+  el.innerHTML = _renderOpcoesMenuConteudo();
+}
+
+function _renderOpcoesMenuConteudo() {
+  if (opcoesMenuView === 'fonte') {
+    const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
+    return `
+      <button class="opcoes-menu-back" onclick="_irOpcoesMenu('menu');event.stopPropagation()">
+        <span class="material-symbols-outlined">chevron_left</span> Tamanho
+      </button>
+      <div class="opcoes-row">
+        <button class="icon-btn" onclick="diminuirFonte();event.stopPropagation()" ${idx <= 0 ? 'disabled' : ''}><span class="material-symbols-outlined">text_decrease</span></button>
+        <input type="number" class="opcoes-fonte-input" value="${cifraFontSize}" min="8" max="72"
+          oninput="_setFonteSize(this.value)"
+          onkeydown="if(event.key==='Enter'||event.key==='Escape'){fecharOpcoesMenu();event.preventDefault()}"
+          onclick="event.stopPropagation()">
+        <button class="icon-btn" onclick="aumentarFonte();event.stopPropagation()" ${idx >= CIFRA_FONT_SIZES.length - 1 ? 'disabled' : ''}><span class="material-symbols-outlined">text_increase</span></button>
+      </div>
+    `;
+  }
+  return `
+    <div class="opcoes-menu-titulo">Mais opções</div>
+    <button class="opcoes-menu-row" onclick="_irOpcoesMenu('fonte');event.stopPropagation()">
+      <span class="material-symbols-outlined">text_fields</span>
+      <span class="opcoes-menu-row-label">Tamanho: ${cifraFontSize}</span>
+      <span class="material-symbols-outlined opcoes-menu-row-chevron">chevron_right</span>
+    </button>
+    <button class="opcoes-menu-row" onclick="fecharOpcoesMenu();abrirAvaliarSheet('${musicaAtualId}');event.stopPropagation()">
+      <span class="material-symbols-outlined">reviews</span>
+      <span class="opcoes-menu-row-label">Avaliar</span>
+      <span class="material-symbols-outlined opcoes-menu-row-chevron">chevron_right</span>
+    </button>
+  `;
 }
 
 document.addEventListener('click', e => {
@@ -1423,11 +1599,6 @@ function selecionarTom(notaAlvo) {
 }
 
 function resetarTom() { salvarTransposicao(0); }
-
-function avaliarMusica(id, rating) {
-  atualizarMusica(id, { rating });
-  renderMusicaView();
-}
 
 // ─── Autorrolagem ──────────────────────────────────────────────────────────────
 let autoScrollState = { ativo: false, rodando: false, velocidade: 3, rafId: null, ultimoTs: null, acumulado: 0 };
@@ -2004,11 +2175,13 @@ function toggleNotaSheetPin() {
   const musica = buscarMusica(musicaAtualId);
   const pinned = [...(musica?.pinnedAcordes || [])];
   const idx = pinned.indexOf(nome);
+  let fixou = false;
   if (idx !== -1) pinned.splice(idx, 1);
-  else if (pinned.length < 3) pinned.push(nome);
+  else if (pinned.length < 3) { pinned.push(nome); fixou = true; }
   atualizarMusica(musicaAtualId, { pinnedAcordes: pinned });
   _pinnedAcordesAtual = pinned;
   _atualizarNotaSheetPinBtn();
+  if (fixou && window.innerWidth <= 860) acordesMobileAbertos = true;
   renderMusicaView();
 }
 
@@ -2045,7 +2218,7 @@ function _renderNotaSheetVoicings(nomeAcorde) {
       const svg = renderDiagram(c, { showNoteLabels: false, padB: 10 });
       return `<button class="nota-sheet-voicing${fav ? ' fav' : ''}" onclick="notaSheetSelecionarVoicing(${i})" title="${fav ? '★ Favorito' : 'Posição ' + (i+1)}">
         ${svg}
-        ${fav ? '<span class="nota-sheet-fav-badge material-symbols-outlined">star</span>' : ''}
+        ${fav ? `<span class="nota-sheet-fav-badge material-symbols-outlined" style="font-variation-settings:'FILL' 1;">star</span>` : ''}
       </button>`;
     }).join('');
   } catch(e) {
@@ -2055,7 +2228,8 @@ function _renderNotaSheetVoicings(nomeAcorde) {
 
 function notaSheetSelecionarVoicing(idx) {
   if (!_notaSheetState) return;
-  const nomeAcorde = document.getElementById('nota-sheet-input').value.trim() || _notaSheetState.display;
+  const raw = document.getElementById('nota-sheet-input').value.trim();
+  const nomeAcorde = (raw ? _normalizarAcordeInput(raw) : '') || _notaSheetState.display;
   try {
     const r = obterAcordeInfo(nomeAcorde);
     const c = r.cands[idx];
