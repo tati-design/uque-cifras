@@ -110,7 +110,7 @@ function _renderAvaliacaoCategoriasBody(draft, onSelecionar, onLimpar) {
         <div class="avaliar-niveis-grid">
           ${cat.niveis.map(n => `
             <button class="avaliar-nivel-opt${atual === n.valor ? ' active' : ''}" onclick="${onSelecionar}('${cat.key}',${n.valor})">
-              <span class="avaliar-nivel-num">${n.valor}</span>
+              <span class="material-symbols-outlined avaliar-nivel-icon">${n.icon}</span>
               <span class="avaliar-nivel-label">${n.label}</span>
             </button>
           `).join('')}
@@ -738,8 +738,9 @@ function renderMusicaRow(m) {
   // Desktop: each category in its own chip
   const avaliacaoCelula = AVALIACAO_CATEGORIAS.map(cat => {
     const label = obterLabelNivel(cat.key, m[cat.key]);
+    const icone = obterIconeNivel(cat.key, m[cat.key]);
     if (!label) return `<span class="avaliacao-chip avaliacao-chip-vazio" title="${cat.nome}"><span class="material-symbols-outlined avaliacao-chip-icon">${cat.icon}</span></span>`;
-    return `<span class="avaliacao-chip" title="${cat.nome}: ${label}"><span class="material-symbols-outlined avaliacao-chip-icon">${cat.icon}</span>${label}</span>`;
+    return `<span class="avaliacao-chip" title="${cat.nome}: ${label}"><span class="material-symbols-outlined avaliacao-chip-icon">${icone}</span>${label}</span>`;
   }).join('');
   return `
     <tr class="musica-row${selecionado ? ' musica-row-selecionada' : ''}" onclick="abrirMusicaView('${m.id}')">

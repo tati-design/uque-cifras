@@ -2013,21 +2013,9 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 .avaliar-nivel-opt:hover { background: #ede9e3; }
 .avaliar-nivel-opt.active { background: #5b7cf6; }
 .avaliar-nivel-opt.active:hover { background: #4a6be0; }
-.avaliar-nivel-opt.active .avaliar-nivel-num { background: #fff; color: #5b7cf6; }
+.avaliar-nivel-opt.active .avaliar-nivel-icon { color: #fff; }
 .avaliar-nivel-opt.active .avaliar-nivel-label { color: #fff; }
-.avaliar-nivel-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #e4e2f2;
-  color: #5b7cf6;
-  font-size: 0.85rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
+.avaliar-nivel-icon { font-size: 22px !important; color: #5b7cf6; }
 .avaliar-nivel-label { font-size: 0.78rem; font-weight: 600; color: #333; text-align: center; }
 .avaliar-nivel-desc {
   margin-top: 10px;

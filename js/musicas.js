@@ -20,28 +20,28 @@ const AVALIACAO_CATEGORIAS = [
   {
     key: 'ratingInstrumento', nome: 'Instrumento', icon: 'piano',
     niveis: [
-      { valor: 3, label: 'Fácil', desc: 'Poucas notas e conhecidas' },
-      { valor: 2, label: 'Desbloqueada', desc: 'Todas as notas conhecidas' },
-      { valor: 1, label: 'Chata', desc: 'Com notas conhecidas' },
-      { valor: 0, label: 'Impossível', desc: 'Ainda é inexecutável' },
+      { valor: 3, label: 'Fácil',        icon: 'bolt_boost',        desc: 'Poucas notas e conhecidas' },
+      { valor: 2, label: 'Desbloqueada', icon: 'lock_open',         desc: 'Todas as notas conhecidas' },
+      { valor: 1, label: 'Chata',        icon: 'sentiment_neutral', desc: 'Com notas conhecidas' },
+      { valor: 0, label: 'Impossível',   icon: 'do_not_disturb_on', desc: 'Ainda é inexecutável' },
     ],
   },
   {
     key: 'ratingVocal', nome: 'Vocal', icon: 'mic',
     niveis: [
-      { valor: 3, label: 'Dou show', desc: 'Canto naturalmente bem essa' },
-      { valor: 2, label: 'Confortável', desc: 'Canto sem dificuldade' },
-      { valor: 1, label: 'Desafino', desc: 'Desafino pouco' },
-      { valor: 0, label: 'Inviável', desc: 'Não sai' },
+      { valor: 3, label: 'Dou show',    icon: 'workspace_premium',  desc: 'Canto naturalmente bem essa' },
+      { valor: 2, label: 'Confortável', icon: 'sentiment_satisfied', desc: 'Canto sem dificuldade' },
+      { valor: 1, label: 'Desafino',    icon: 'hearing_disabled',   desc: 'Desafino pouco' },
+      { valor: 0, label: 'Inviável',    icon: 'mic_off',            desc: 'Não sai' },
     ],
   },
   {
     key: 'ratingEngajamento', nome: 'Engajamento', icon: 'groups',
     niveis: [
-      { valor: 3, label: 'Hino', desc: 'Todo mundo conhece' },
-      { valor: 2, label: 'Nicho', desc: 'Funciona bem pra quem conhece' },
-      { valor: 1, label: 'Xodó', desc: 'Eu gosto muito de tocar para mim' },
-      { valor: 0, label: 'Flop', desc: 'Quase ninguém sabe qual é' },
+      { valor: 3, label: 'Hino',  icon: 'social_leaderboard', desc: 'Todo mundo conhece' },
+      { valor: 2, label: 'Nicho', icon: 'point_scan',         desc: 'Funciona bem pra quem conhece' },
+      { valor: 1, label: 'Xodó',  icon: 'person_heart',       desc: 'Eu gosto muito de tocar para mim' },
+      { valor: 0, label: 'Flop',  icon: 'trending_down',      desc: 'Quase ninguém sabe qual é' },
     ],
   },
 ];
@@ -50,6 +50,12 @@ function obterLabelNivel(categoriaKey, valor) {
   if (valor == null) return null;
   const cat = AVALIACAO_CATEGORIAS.find(c => c.key === categoriaKey);
   return cat?.niveis.find(n => n.valor === valor)?.label || null;
+}
+
+function obterIconeNivel(categoriaKey, valor) {
+  if (valor == null) return null;
+  const cat = AVALIACAO_CATEGORIAS.find(c => c.key === categoriaKey);
+  return cat?.niveis.find(n => n.valor === valor)?.icon || null;
 }
 
 // Mapeamento título|artista (minúsculas) → gênero, gerado a partir do CSV classificado.
