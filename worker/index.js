@@ -15,6 +15,7 @@ const SEARCH_URL = "https://solr.sscdn.co/cc/h2/";
 const SIMILARIDADE_MIN = 0.6;
 const GENERO_PADRAO = "MPB";
 const DELAY_MS = 300; // Workers nao precisam ser tao gentis quanto o script local, mas evita rajada
+const LIMITE_FAIXAS = 20; // plano free da Cloudflare permite so 50 subrequisicoes por invocacao
 
 const CHORD_RE =
   /^[A-G][#b]?(m|M|maj|dim|aug|sus|add)?[0-9]*(\([^)]*\))?(M|-|\+)?(\/[A-G][#b]?)?[0-9]*$/;
@@ -292,7 +293,9 @@ async function handleImportar(request) {
     });
   }
 
-  const faixas = await faixasDaPlaylist(playlistUrl);
+  const todasFaixas = await faixasDaPlaylist(playlistUrl);
+  const faixas = todasFaixas.slice(0, LIMITE_FAIXAS);
+  const limitado = todasFaixas.length > LIMITE_FAIXAS;
   const musicas = [];
   const falhas = [];
 
@@ -311,6 +314,8 @@ async function handleImportar(request) {
     favoritos: [],
     exportadoEm: new Date().toISOString().replace(/\.\d+Z$/, ".000Z"),
     falhas,
+    limitado,
+    totalNaPlaylist: todasFaixas.length,
   };
   return new Response(JSON.stringify(out, null, 2), {
     headers: { "Content-Type": "application/json" },

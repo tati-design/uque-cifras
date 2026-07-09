@@ -2,8 +2,7 @@
 // chama o Worker (worker/index.js) e devolve um JSON pra baixar e importar
 // pelo backup do site.
 
-// TODO fase 4: trocar pela URL publicada do Worker na Cloudflare.
-const WORKER_URL = "http://localhost:8787";
+const WORKER_URL = "https://uque-import.tatidigitaldesigner.workers.dev";
 
 const form = document.getElementById("importar-form");
 const linkInput = document.getElementById("importar-link");
@@ -57,6 +56,9 @@ form.addEventListener("submit", async (e) => {
     progressoTexto.textContent = "Pronto!";
 
     resumoEl.textContent = `${dados.musicas.length} de ${dados.musicas.length + dados.falhas.length} músicas encontradas.`;
+    if (dados.limitado) {
+      resumoEl.textContent += ` Essa playlist tem ${dados.totalNaPlaylist} músicas — por enquanto só importamos as primeiras ${dados.musicas.length + dados.falhas.length}.`;
+    }
     falhasEl.innerHTML = "";
     if (dados.falhas.length) {
       const titulo = document.createElement("li");
