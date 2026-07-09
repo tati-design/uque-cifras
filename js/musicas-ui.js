@@ -1153,16 +1153,30 @@ function renderCifraHtml(cifraTexto, semitons = 0) {
       : '';
 
     const resto = linhaRaw.slice(prefixo.length);
-    // Destaca qualquer token que seja acorde válido, mesmo em linha mista com letra
-    // (ex: palavra promovida a acorde na correção, que fica na mesma linha da letra)
+    // Uma linha só é "de acordes" se TODOS os tokens (exceto marcados/seção) forem acordes válidos.
+    // Evita falsos positivos como "E" em "E eu sou uma árvore bonita" (linha 100% de letra).
+    const rawTokens = resto.trim().split(/\s+/).filter(Boolean);
+    const chordTokens = rawTokens.filter(t => !isSectionToken(t) && !_isMarkedChordToken(t));
+    const isChordLine = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
+
+    // Tokens marcados ({Em}) são sempre acordes, independente do tipo de linha
+    // (ex: palavra promovida a acorde na correção, embutida numa linha de letra)
     const partes = resto.split(/(\s+)/);
     const restoHtml = partes.map(p => {
       if (p === '' || /^\s+$/.test(p)) return p;
       if (isSectionToken(p)) return escapeHtml(p);
-      if (!isValidChordToken(p)) return escapeHtml(p);
-      const transposto = simplificarAcorde(transporAcorde(p, semitons));
-      _occCount[p] = (_occCount[p] || 0) + 1;
-      return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}" data-acorde-original="${escapeHtml(p).replace(/"/g, '&quot;')}" data-acorde-occ="${_occCount[p] - 1}">${escapeHtml(transposto)}</span>`;
+
+      let acordeTexto = null;
+      if (_isMarkedChordToken(p)) {
+        acordeTexto = _unwrapMarkedChord(p);
+      } else if (isChordLine && isValidChordToken(p)) {
+        acordeTexto = p;
+      }
+      if (!acordeTexto) return escapeHtml(p);
+
+      const transposto = simplificarAcorde(transporAcorde(acordeTexto, semitons));
+      _occCount[acordeTexto] = (_occCount[acordeTexto] || 0) + 1;
+      return `<span class="chord-token" data-acorde="${escapeHtml(transposto).replace(/"/g, '&quot;')}" data-acorde-original="${escapeHtml(acordeTexto).replace(/"/g, '&quot;')}" data-acorde-occ="${_occCount[acordeTexto] - 1}">${escapeHtml(transposto)}</span>`;
     }).join('');
     return prefixoHtml + restoHtml;
   }).join('\n');
@@ -1188,7 +1202,8 @@ function _tokenizarLinhaCorrecao(linhaRaw) {
   const resto = linhaRaw.slice(prefixo.length);
 
   const rawTokens = resto.trim().split(/\s+/).filter(Boolean);
-  const chordTokens = rawTokens.filter(t => !isSectionToken(t));
+  // Tokens marcados ({Em}) já são acordes garantidos; não entram no teste de forma da linha
+  const chordTokens = rawTokens.filter(t => !isSectionToken(t) && !_isMarkedChordToken(t));
   const isChordLine = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
   const isCandidate = chordTokens.length > 0 && chordTokens.every(t => _looksLikeChordAttempt(t));
   const lineKind = (isChordLine || isCandidate) ? 'chord' : 'lyric';
@@ -1197,6 +1212,11 @@ function _tokenizarLinhaCorrecao(linhaRaw) {
   if (prefixo) tokens.push({ text: prefixo, kind: 'prefix' });
   resto.split(/(\s+)/).forEach(s => {
     if (/^\s+$/.test(s) || s === '') { if (s) tokens.push({ text: s, kind: 'space' }); return; }
+    if (_isMarkedChordToken(s)) {
+      const inner = _unwrapMarkedChord(s);
+      tokens.push({ text: s, kind: isValidChordToken(inner) ? 'ok' : 'bad', marked: true, display: inner });
+      return;
+    }
     if (lineKind === 'chord' && isSectionToken(s)) { tokens.push({ text: s, kind: 'section' }); return; }
     if (lineKind === 'chord') {
       tokens.push({ text: s, kind: isValidChordToken(s) ? 'ok' : 'bad' });
@@ -1264,7 +1284,7 @@ function _renderCorrecaoLinha(linha, lIdx) {
     if (t.kind === 'prefix')  return `<span class="correcao-prefix">${escapeHtml(t.text)}</span>`;
     if (t.kind === 'section') return `<span class="correcao-token section">${escapeHtml(t.text)}</span>`;
     const sel = _correcaoSel?.lIdx === lIdx && _correcaoSel?.tIdx === tIdx;
-    return `<button class="correcao-token ${t.kind}${sel?' sel':''}" onclick="selecionarCorrecaoToken(${lIdx},${tIdx})">${escapeHtml(t.text)}</button>`;
+    return `<button class="correcao-token ${t.kind}${sel?' sel':''}${t.marked?' marked':''}" title="${t.marked?'Acorde promovido na letra':''}" onclick="selecionarCorrecaoToken(${lIdx},${tIdx})">${escapeHtml(t.display ?? t.text)}</button>`;
   }).join('');
 
   return `<div class="correcao-linha">${tokensHtml}</div>`;
@@ -1282,18 +1302,19 @@ function selecionarCorrecaoToken(lIdx, tIdx) {
 function _abrirCorrecaoSheet(lIdx, tIdx) {
   _correcaoSel = { lIdx, tIdx };
   const token = _correcaoLinhas[lIdx].tokens[tIdx];
-  _correcaoSelTexto = token.text;
+  _correcaoSelTexto = token.text; // forma bruta (com {} se marcado) — usado no "aplicar em todos"
+  const rotulo = token.display ?? token.text;
   const isChordToken = token.kind === 'ok' || token.kind === 'bad';
 
   const input = document.getElementById('correcao-sheet-input');
-  input.value = token.text;
+  input.value = rotulo;
 
   const confirmarBtn = document.getElementById('correcao-sheet-confirmar');
   confirmarBtn.textContent = token.kind === 'ok' ? 'Substituir acorde' : 'Adicionar acorde';
-  confirmarBtn.disabled = !isValidChordToken(token.text);
+  confirmarBtn.disabled = !isValidChordToken(rotulo);
 
   document.getElementById('correcao-sheet-todos-cb').checked = true;
-  document.getElementById('correcao-sheet-todos-label').textContent = `Buscar e aplicar em todos "${token.text}" da música`;
+  document.getElementById('correcao-sheet-todos-label').textContent = `Buscar e aplicar em todos "${rotulo}" da música`;
   document.getElementById('correcao-sheet-nao-acorde-btn').style.display = isChordToken ? '' : 'none';
 
   document.getElementById('correcao-sheet-overlay').classList.remove('hidden');
@@ -1304,6 +1325,31 @@ function _abrirCorrecaoSheet(lIdx, tIdx) {
 function _validarCorrecaoSheetInput(inp) {
   const btn = document.getElementById('correcao-sheet-confirmar');
   if (btn) btn.disabled = !isValidChordToken(inp.value.trim());
+}
+
+// Aplica um novo nome de acorde a um token. Se a linha não for 100% de acordes,
+// marca o token com {} para que fique inequivocamente identificado como acorde
+// mesmo estando embutido numa linha de letra (não depende mais de heurística de forma).
+function _aplicarNovoAcordeNoToken(token, linha, val) {
+  if (linha.type === 'chord') {
+    token.text = val;
+    delete token.marked;
+    delete token.display;
+  } else {
+    token.text = `{${val}}`;
+    token.marked = true;
+    token.display = val;
+  }
+  token.kind = 'ok';
+}
+
+function _reverterTokenParaPalavra(token) {
+  if (token.marked) {
+    token.text = token.display;
+    delete token.marked;
+    delete token.display;
+  }
+  token.kind = 'word';
 }
 
 function substituirCorrecaoToken() {
@@ -1318,12 +1364,13 @@ function substituirCorrecaoToken() {
       if (!l.tokens) return;
       l.tokens.forEach(t => {
         if (t.text === textoOriginal && (t.kind === 'ok' || t.kind === 'bad' || t.kind === 'word')) {
-          t.text = val; t.kind = 'ok';
+          _aplicarNovoAcordeNoToken(t, l, val);
         }
       });
     });
   } else {
-    _correcaoLinhas[lIdx].tokens[tIdx] = { text: val, kind: 'ok' };
+    const l = _correcaoLinhas[lIdx];
+    _aplicarNovoAcordeNoToken(l.tokens[tIdx], l, val);
   }
   fecharCorrecaoPainel();
 }
@@ -1344,11 +1391,11 @@ function naoEAcordeToken() {
     _correcaoLinhas.forEach(l => {
       if (!l.tokens) return;
       l.tokens.forEach(t => {
-        if ((t.kind === 'ok' || t.kind === 'bad') && t.text === textoOriginal) t.kind = 'word';
+        if ((t.kind === 'ok' || t.kind === 'bad') && t.text === textoOriginal) _reverterTokenParaPalavra(t);
       });
     });
   } else {
-    _correcaoLinhas[lIdx].tokens[tIdx].kind = 'word';
+    _reverterTokenParaPalavra(_correcaoLinhas[lIdx].tokens[tIdx]);
   }
   fecharCorrecaoPainel();
 }
@@ -1405,7 +1452,8 @@ function aplicarCorrecaoTodos() {
     const val = inp?.value.trim();
     if (!val || !isValidChordToken(val)) return;
     ocorrencias.forEach(({ lIdx, tIdx }) => {
-      _correcaoLinhas[lIdx].tokens[tIdx] = { text: val, kind: 'ok' };
+      const l = _correcaoLinhas[lIdx];
+      _aplicarNovoAcordeNoToken(l.tokens[tIdx], l, val);
     });
     aplicados++;
   });
@@ -2305,9 +2353,19 @@ function _substituirAcordeCifra(cifra, original, novo, occAlvo = -1) {
   let count = 0;
   return cifra.split('\n').map(linha => {
     const tokens = linha.trim().split(/\s+/).filter(Boolean);
-    if (!tokens.some(t => isValidChordToken(t))) return linha;
+    // Mesmo critério de renderCifraHtml/extrairAcordes: só mexe em tokens "soltos"
+    // se a linha inteira for de acordes; tokens marcados ({X}) sempre contam.
+    const chordTokens = tokens.filter(t => !isSectionToken(t) && !_isMarkedChordToken(t));
+    const isLinhaDeAcordes = chordTokens.length > 0 && chordTokens.every(t => isValidChordToken(t));
+    const temMarcado = tokens.some(t => _isMarkedChordToken(t) && _unwrapMarkedChord(t) === original);
+    if (!isLinhaDeAcordes && !temMarcado) return linha;
     return linha.split(/(\s+)/).map(part => {
-      if (part !== original) return part;
+      if (_isMarkedChordToken(part)) {
+        if (_unwrapMarkedChord(part) !== original) return part;
+        const idx = count++;
+        return (occAlvo === -1 || idx === occAlvo) ? `{${novo}}` : part;
+      }
+      if (!isLinhaDeAcordes || part !== original) return part;
       const idx = count++;
       return (occAlvo === -1 || idx === occAlvo) ? novo : part;
     }).join('');

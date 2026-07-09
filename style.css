@@ -1572,6 +1572,7 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 .correcao-token.word:hover { background: #f3f2ee; color: #555; border-color: #ddd; }
 .correcao-linha.tab { color: #bbb; }
 .correcao-token.sel { outline: 2px solid #5b7cf6; outline-offset: 1px; }
+.correcao-token.marked { border-style: dashed; }
 .correcao-prefix { color: #5b7cf6; font-weight: 700; }
 
 .correcao-del-btn { color: #c0392b; }

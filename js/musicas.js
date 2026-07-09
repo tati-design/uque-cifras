@@ -248,6 +248,16 @@ function isSectionToken(t) {
          /^\/+$/.test(t);             // / ou // marcador de compasso
 }
 
+// Marcador explícito de acorde promovido dentro de uma linha de letra (ex: "{Em}").
+// Usado quando uma palavra é promovida a acorde numa linha que não é 100% de acordes,
+// evitando depender de heurística de forma (que gera falsos positivos como "E" em "E eu sou...").
+function _isMarkedChordToken(t) {
+  return /^\{.+\}$/.test(t);
+}
+function _unwrapMarkedChord(t) {
+  return t.slice(1, -1);
+}
+
 // Normaliza caracteres parecidos antes de validar (ex: º U+00BA → ° U+00B0)
 function _normToken(t) {
   return t.replace(/º/g, '°');
@@ -282,18 +292,27 @@ function isValidChordToken(t) {
 function extrairAcordes(cifraTexto) {
   const vistos = new Set();
   const ordem = [];
+  const adicionar = t => { if (!vistos.has(t)) { vistos.add(t); ordem.push(t); } };
   cifraTexto.split('\n').forEach(linhaRaw => {
     const linha = linhaRaw.replace(/^\s*\[[^\]]*\]\s*/, '');
     const tokens = linha.trim().split(/\s+/).filter(Boolean);
     if (!tokens.length) return;
-    const chordTokens = tokens.filter(t => !isSectionToken(t));
-    if (!chordTokens.length) return;
-    // Linha pura de acordes OU linha mista (parte acordes, parte letra)
-    const validChords = chordTokens.filter(t => isValidChordToken(t));
-    if (!validChords.length) return;
-    validChords.forEach(t => {
-      if (!vistos.has(t)) { vistos.add(t); ordem.push(t); }
+
+    // Tokens marcados ({Em}) são sempre acordes, independente do tipo de linha
+    tokens.forEach(t => {
+      if (_isMarkedChordToken(t)) {
+        const inner = _unwrapMarkedChord(t);
+        if (isValidChordToken(inner)) adicionar(inner);
+      }
     });
+
+    const chordTokens = tokens.filter(t => !isSectionToken(t) && !_isMarkedChordToken(t));
+    if (!chordTokens.length) return;
+    // Só considera acordes "soltos" quando a linha inteira é de acordes,
+    // evitando falsos positivos como "E" em "E eu sou uma árvore bonita"
+    const isLinhaDeAcordes = chordTokens.every(t => isValidChordToken(t));
+    if (!isLinhaDeAcordes) return;
+    chordTokens.forEach(adicionar);
   });
   return ordem;
 }
