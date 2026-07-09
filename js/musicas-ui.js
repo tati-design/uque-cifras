@@ -576,6 +576,8 @@ function renderMusicasLista() {
     musicaFiltroGenero = 'todos';
     musicaFiltroArtista = 'todos';
     wrap.innerHTML = `<div class="fav-empty">Nenhuma música salva ainda.<br>Clique em "Adicionar" para colar a cifra de uma música.</div>`;
+    const addBtnVazio = document.querySelector('.musicas-add-bottom');
+    if (addBtnVazio) addBtnVazio.style.display = '';
     return;
   }
 
@@ -660,7 +662,8 @@ function renderMusicasLista() {
     </div>
     <div class="filtro-row-outer az-sort-wrap">
       <button class="az-sort-btn${musicaOrdem !== 'titulo' ? ' ativo' : ''}" onclick="toggleAzSort(event)" title="Ordenar">
-        <span class="material-symbols-outlined">sort_by_alpha</span>
+        <span class="material-symbols-outlined filtro-btn-icon">sort_by_alpha</span>
+        <span class="filtro-btn-label">Ordenar</span>
       </button>
       ${filtroDropdownAberto === 'ordem' ? `<div class="filtro-dropdown ordem-dropdown">
         ${ORDEM_OPTS.map(o => `<button class="ordem-opt${musicaOrdem === o.val ? ' active' : ''}" onclick="selecionarOrdemDesktop('${o.val}')">
@@ -668,6 +671,17 @@ function renderMusicasLista() {
           <span>${o.label}</span>
         </button>`).join('')}
       </div>` : ''}
+    </div>
+    <div class="filtro-row-outer musicas-add-wrap-desktop">
+      <button class="musicas-add-controls-btn" onclick="toggleAdicionarMenu(event, 'adicionar-menu-desktop')" title="Adicionar música">
+        <span class="material-symbols-outlined filtro-btn-icon">add</span>
+        <span class="filtro-btn-label">Adicionar música</span>
+      </button>
+      <div id="adicionar-menu-desktop" class="dropdown-menu musicas-add-menu hidden">
+        <button onclick="abrirAdicionarMusicaModal()"><span class="material-symbols-outlined">content_paste</span> Colar cifra</button>
+        <button onclick="abrirSeletorImportacao()"><span class="material-symbols-outlined">upload</span> Importar arquivo de músicas</button>
+        <button onclick="abrirImportarSpotify()"><span class="material-symbols-outlined">library_music</span> Importar do Spotify</button>
+      </div>
     </div>
   </div>`;
 
@@ -703,7 +717,9 @@ function renderMusicasLista() {
   if (musicasSelecionadas.size > 0) html += `<div class="selecao-bar-spacer"></div>`;
   wrap.innerHTML = html;
   const addBtn = document.querySelector('.musicas-add-bottom');
-  if (addBtn) addBtn.style.display = musicasSelecionadas.size > 0 ? 'none' : '';
+  if (addBtn) addBtn.style.display = (musicasSelecionadas.size > 0 || window.innerWidth > 700) ? 'none' : '';
+  const addBtnControles = document.querySelector('.musicas-add-controls-btn');
+  if (addBtnControles) addBtnControles.style.display = musicasSelecionadas.size > 0 ? 'none' : '';
   if (buscaTinhaFoco) {
     const input = document.getElementById('musica-busca-input');
     if (input) { input.focus(); input.setSelectionRange(musicaBusca.length, musicaBusca.length); }
@@ -785,8 +801,33 @@ function excluirMusicaDaLista(id) {
   renderMusicasLista();
 }
 
+// ─── Menu "Adicionar música" (colar cifra / importar arquivo / importar do Spotify) ──
+function toggleAdicionarMenu(e, menuId) {
+  if (e) e.stopPropagation();
+  document.querySelectorAll('.musicas-add-menu').forEach(m => {
+    if (m.id !== menuId) m.classList.add('hidden');
+  });
+  document.getElementById(menuId).classList.toggle('hidden');
+}
+
+function fecharAdicionarMenus() {
+  document.querySelectorAll('.musicas-add-menu').forEach(m => m.classList.add('hidden'));
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.musicas-add-wrap-mobile') && !e.target.closest('.musicas-add-wrap-desktop')) {
+    fecharAdicionarMenus();
+  }
+});
+
+function abrirImportarSpotify() {
+  fecharAdicionarMenus();
+  window.location.href = 'importar.html';
+}
+
 // ─── Modal: adicionar música ────────────────────────────────────────────────────
 function abrirAdicionarMusicaModal() {
+  fecharAdicionarMenus();
   document.getElementById('musica-add-texto').value = '';
   document.getElementById('musica-add-modal').classList.remove('hidden');
 }
@@ -1900,6 +1941,7 @@ function exportarBackup() {
 
 function abrirSeletorImportacao() {
   fecharMusicasMenu();
+  fecharAdicionarMenus();
   document.getElementById('backup-file-input').click();
 }
 

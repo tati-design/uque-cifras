@@ -616,6 +616,21 @@ body {
 .musicas-add-bottom:hover { background: #4a6be8; }
 .musicas-add-bottom .material-symbols-outlined { font-size: 20px; }
 
+.musicas-add-wrap-mobile {
+  position: sticky;
+  bottom: 16px;
+}
+.musicas-add-wrap-mobile .musicas-add-bottom {
+  position: static;
+}
+.dropdown-menu.musicas-add-menu-mobile {
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
 /* Tabs de gênero */
 .genero-tabs-row {
   display: flex;
@@ -792,7 +807,7 @@ body {
 .busca-clear-btn .material-symbols-outlined { font-size: 18px; }
 .artista-filtro-wrap { position: relative; flex-shrink: 0; }
 .avaliacao-filtro-wrap { position: relative; flex-shrink: 0; }
-.artista-filtro-btn, .avaliacao-filtro-btn {
+.artista-filtro-btn, .avaliacao-filtro-btn, .az-sort-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -807,15 +822,40 @@ body {
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
+  flex-shrink: 0;
 }
-.artista-filtro-btn:hover, .avaliacao-filtro-btn:hover { background: #e8e6e0; }
-.artista-filtro-btn.ativo, .avaliacao-filtro-btn.ativo { background: #5b7cf6; color: #fff; }
+.artista-filtro-btn:hover, .avaliacao-filtro-btn:hover, .az-sort-btn:hover { background: #e8e6e0; }
+.artista-filtro-btn.ativo, .avaliacao-filtro-btn.ativo, .az-sort-btn.ativo { background: #5b7cf6; color: #fff; }
 .filtro-btn-icon { font-size: 16px !important; vertical-align: middle; }
 .filtro-btn-caret { font-size: 16px !important; vertical-align: middle; }
 
+/* Botão "Adicionar música" compacto, ao lado do ordenar (desktop) */
+.musicas-add-controls-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: #5b7cf6;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0 12px;
+  height: 38px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.musicas-add-controls-btn:hover { background: #4a6be8; }
+
 @media (max-width: 700px) {
   .filtro-btn-label, .filtro-btn-caret { display: none !important; }
-  .artista-filtro-btn, .avaliacao-filtro-btn { width: 38px; padding: 0; justify-content: center; }
+  .artista-filtro-btn, .avaliacao-filtro-btn, .az-sort-btn { width: 38px; padding: 0; justify-content: center; }
+}
+
+@media (min-width: 701px) {
+  .musicas-add-controls-btn { display: inline-flex; }
 }
 
 .artista-filtro-dropdown {
@@ -2046,24 +2086,6 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 }
 .avaliar-nivel-desc strong { color: #333; }
 
-/* AZ button: ícone centralizado */
-.az-sort-btn {
-  background: #f3f2ee;
-  color: #555;
-  border: none;
-  border-radius: 10px;
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.az-sort-btn:hover { background: #e8e6e0; }
-.az-sort-btn.ativo { background: #5b7cf6; color: #fff; }
-.az-sort-btn .material-symbols-outlined { font-size: 20px !important; }
-
 /* ─── Modal Modo Aprendiz ────────────────────────────────────────────────── */
 .aprendiz-modal-desc {
   color: var(--text-secondary);
@@ -2354,3 +2376,36 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   color: #d8a800;
 }
 .nota-sheet-vazio { font-size: 0.82rem; color: #999; padding: 8px 0; }
+
+/* ═══ Importar do Spotify (importar.html) ══════════════════════════════════ */
+
+.importar-view { max-width: 480px; margin: 0 auto; padding: 24px 16px 40px; }
+.importar-view h2 { font-size: 1.3rem; margin-bottom: 8px; }
+.importar-subtitulo { font-size: 0.88rem; color: #666; line-height: 1.5; margin-bottom: 20px; }
+
+.importar-form { display: flex; gap: 8px; margin-bottom: 16px; }
+.importar-form input[type="text"] { flex: 1; min-width: 0; }
+
+.importar-status { font-size: 0.85rem; margin-bottom: 12px; }
+.importar-status:empty { display: none; }
+.importar-status-erro { color: #c0392b; }
+
+.importar-progresso-barra {
+  height: 8px;
+  border-radius: 4px;
+  background: #eee;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.importar-progresso-fill {
+  height: 100%;
+  background: #5b7cf6;
+  width: 0%;
+  transition: width 0.3s;
+}
+.importar-progresso-texto { font-size: 0.82rem; color: #666; }
+
+.importar-resumo, #importar-resumo { font-size: 0.92rem; margin-bottom: 8px; }
+.importar-falhas { list-style: none; font-size: 0.82rem; color: #888; margin-bottom: 16px; }
+.importar-falhas-titulo { font-weight: 600; color: #666; margin-bottom: 4px; }
+.importar-falhas li { padding: 2px 0; }

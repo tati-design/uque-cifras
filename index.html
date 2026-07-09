@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=99">
+<link rel="stylesheet" href="style.css?v=101">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0..1,0" />
 </head>
 <body>
@@ -51,9 +51,16 @@
   <div id="tab-musicas" class="tab-panel">
     <input type="file" id="backup-file-input" accept="application/json" style="display:none" onchange="importarBackupArquivo(this)">
     <div id="musicas-lista"></div>
-    <button class="musicas-add-bottom" onclick="abrirAdicionarMusicaModal()">
-      <span class="material-symbols-outlined">add</span> Adicionar música
-    </button>
+    <div class="musicas-add-wrap-mobile">
+      <button class="musicas-add-bottom" onclick="toggleAdicionarMenu(event, 'adicionar-menu-mobile')">
+        <span class="material-symbols-outlined">add</span> Adicionar música
+      </button>
+      <div id="adicionar-menu-mobile" class="dropdown-menu musicas-add-menu musicas-add-menu-mobile hidden">
+        <button onclick="abrirAdicionarMusicaModal()"><span class="material-symbols-outlined">content_paste</span> Colar cifra</button>
+        <button onclick="abrirSeletorImportacao()"><span class="material-symbols-outlined">upload</span> Importar arquivo de músicas</button>
+        <button onclick="abrirImportarSpotify()"><span class="material-symbols-outlined">library_music</span> Importar do Spotify</button>
+      </div>
+    </div>
   </div>
 
   <div id="tab-buscar" class="tab-panel hidden">
@@ -256,7 +263,7 @@
 <script src="js/favoritos.js?v=37"></script>
 <script src="js/musicas.js?v=66"></script>
 <script src="js/ui.js?v=37"></script>
-<script src="js/musicas-ui.js?v=107"></script>
+<script src="js/musicas-ui.js?v=108"></script>
 <script src="js/app.js?v=48"></script>
 </body>
 </html>
