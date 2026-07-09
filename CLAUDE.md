@@ -69,4 +69,9 @@ Single `style.css` file (~2350 lines), no preprocessor. Responsive behavior (mob
 
 `scripts/importa_playlist_spotify.py` is a standalone Python tool, run locally (not part of the deployed site), that turns a Spotify playlist into a JSON file in the app's backup format (importable via the site's backup-import feature). It reads the playlist via Spotify's public embed (no token needed), resolves each track to a Cifra Club page (direct URL slug, falling back to Cifra Club's search API for covers/mismatches), and extracts the cifra text + tom. Requires `pip3 install requests beautifulsoup4`; run with `--debug` to see search-fallback diagnostics.
 
-This is phase 1 of a larger plan (see conversation/PR history) to eventually offer "Import from Spotify" as a feature in the site itself, likely via a Cloudflare Worker (needed because the browser can't hit Cifra Club directly due to CORS). Known limitation: the search fallback can match the wrong song when title+artist search returns a low-relevance top hit instead of a better match from a title-only search — not yet fixed.
+This is part of a larger plan to eventually offer "Import from Spotify" as a feature in the site itself, likely via a Cloudflare Worker (needed because the browser can't hit Cifra Club directly due to CORS). Progress so far:
+
+1. ✅ Direct-URL + search-fallback pipeline working, tom parsing fixed (capotraste suffix was leaking into the tom field).
+2. ✅ Matching quality: the search fallback now pools results from the title+artist and title-only queries and picks the best-scoring one whose title is actually similar (via `difflib` ratio, `SIMILARIDADE_MIN` threshold) — fixes covers resolving to unrelated songs, and correctly returns no match instead of guessing when nothing fits. Spotify title suffixes ("- Ao Vivo" etc.) are stripped by `limpa_titulo` before matching.
+3. ⬜ Not started: port this logic to a Cloudflare Worker + a simple mobile-first HTML page (paste playlist link → download JSON), since the browser can't call Cifra Club directly (CORS).
+4. ⬜ Not started: publish the Worker and add an "Importar do Spotify" entry point in the site itself.
