@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=97">
+<link rel="stylesheet" href="style.css?v=98">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0..1,0" />
 </head>
 <body>
@@ -182,27 +182,6 @@
   </div>
 </div>
 
-<!-- Sheet: Avaliar -->
-<div id="avaliar-sheet-overlay" class="sheet-overlay hidden" onclick="fecharAvaliarSheet()">
-  <div class="sheet" onclick="event.stopPropagation()">
-    <div class="sheet-header">
-      <span class="sheet-title">Avaliar</span>
-      <div class="sheet-header-actions">
-        <button class="sheet-clear-all-btn" onclick="limparAvaliarTudo()">
-          <span class="material-symbols-outlined">clear_all</span>
-          <span class="sheet-action-label">Limpar tudo</span>
-        </button>
-        <button class="sheet-action-btn" onclick="salvarAvaliacao()">
-          <span class="material-symbols-outlined">check</span>
-          <span class="sheet-action-label">Salvar</span>
-        </button>
-        <button class="sheet-close-btn" onclick="fecharAvaliarSheet()"><span class="material-symbols-outlined">close</span></button>
-      </div>
-    </div>
-    <div class="sheet-body" id="avaliar-sheet-body"></div>
-  </div>
-</div>
-
 <!-- Sheet: Filtrar por Avaliação -->
 <div id="avaliacao-filtro-sheet-overlay" class="sheet-overlay hidden" onclick="fecharAvaliacaoFiltroSheet()">
   <div class="sheet" onclick="event.stopPropagation()">
@@ -277,7 +256,7 @@
 <script src="js/favoritos.js?v=37"></script>
 <script src="js/musicas.js?v=66"></script>
 <script src="js/ui.js?v=37"></script>
-<script src="js/musicas-ui.js?v=105"></script>
+<script src="js/musicas-ui.js?v=107"></script>
 <script src="js/app.js?v=48"></script>
 </body>
 </html>

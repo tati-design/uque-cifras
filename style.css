@@ -197,17 +197,38 @@ body {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.82rem;
-  line-height: 1.7;
-  color: #333;
   /* estilo de caixa no desktop */
   background: #fafaf8;
   border: 1px solid #eee;
   border-radius: 12px;
   padding: 18px;
+}
+.musica-cifra-texto {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: inherit;
+  line-height: 1.7;
+  color: #333;
+  margin: 0;
+}
+
+/* ── Avaliação inline (ao fim da cifra) ──────────────────────────────────── */
+.musica-avaliacao-inline {
+  margin-top: 28px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  font-size: 1rem;
+}
+.avaliacao-inline-titulo { font-size: 1.05rem; font-weight: 700; color: #111; }
+.avaliacao-inline-subtitulo { font-size: 0.82rem; color: #888; margin-top: 2px; margin-bottom: 18px; }
+.avaliacao-inline-categorias { display: flex; flex-direction: column; }
+@media (min-width: 861px) {
+  .avaliacao-inline-categorias { flex-direction: row; gap: 20px; align-items: flex-start; }
+  .avaliacao-inline-categorias .avaliar-categoria { flex: 1; margin-bottom: 0; }
 }
 
 /* ── Coluna de acordes (desktop) ─────────────────────────────────────────── */

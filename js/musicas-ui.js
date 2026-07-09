@@ -93,9 +93,7 @@ document.addEventListener('click', e => {
   if (fonteMenuAberto && !e.target.closest('.fonte-wrap')) fecharFonteMenu();
 });
 
-// ─── Avaliação (sheet: Instrumento / Vocal / Engajamento) ──────────────────────
-let avaliarSheetMusicaId = null;
-let avaliarSheetDraft = null;
+// ─── Avaliação (inline, ao fim da cifra: Instrumento / Vocal / Engajamento) ────
 
 function _renderAvaliacaoCategoriasBody(draft, onSelecionar, onLimpar, counts) {
   return AVALIACAO_CATEGORIAS.map(cat => {
@@ -124,64 +122,40 @@ function _renderAvaliacaoCategoriasBody(draft, onSelecionar, onLimpar, counts) {
   }).join('');
 }
 
-function _renderAvaliarSheet() {
-  const body = document.getElementById('avaliar-sheet-body');
-  if (body && avaliarSheetDraft) {
-    body.innerHTML = _renderAvaliacaoCategoriasBody(avaliarSheetDraft, 'selecionarAvaliarNivel', 'limparAvaliarCategoria');
-  }
+function _renderAvaliacaoInline(musica) {
+  return `
+    <div class="musica-avaliacao-inline" id="musica-avaliacao-inline">
+      <div class="avaliacao-inline-titulo">Avalie como é tocar essa música</div>
+      <div class="avaliacao-inline-subtitulo">Use isso como filtros para achar a música certa na hora certa</div>
+      <div class="avaliacao-inline-categorias" id="avaliacao-inline-categorias">
+        ${_renderAvaliacaoCategoriasBody(musica, 'selecionarAvaliacaoInline', 'limparAvaliacaoInlineCategoria')}
+      </div>
+    </div>
+  `;
 }
 
-function abrirAvaliarSheet(id) {
-  const musica = buscarMusica(id);
+function _atualizarAvaliacaoInline() {
+  const el = document.getElementById('avaliacao-inline-categorias');
+  const musica = buscarMusica(musicaAtualId);
+  if (el && musica) el.innerHTML = _renderAvaliacaoCategoriasBody(musica, 'selecionarAvaliacaoInline', 'limparAvaliacaoInlineCategoria');
+}
+
+function selecionarAvaliacaoInline(categoriaKey, valor) {
+  const musica = buscarMusica(musicaAtualId);
   if (!musica) return;
-  avaliarSheetMusicaId = id;
-  avaliarSheetDraft = {
-    ratingInstrumento: musica.ratingInstrumento ?? null,
-    ratingVocal: musica.ratingVocal ?? null,
-    ratingEngajamento: musica.ratingEngajamento ?? null,
-  };
-  _renderAvaliarSheet();
-  document.getElementById('avaliar-sheet-overlay').classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
+  const novoValor = musica[categoriaKey] === valor ? null : valor;
+  atualizarMusica(musicaAtualId, { [categoriaKey]: novoValor });
+  _atualizarAvaliacaoInline();
 }
 
-function fecharAvaliarSheet() {
-  document.getElementById('avaliar-sheet-overlay').classList.add('hidden');
-  document.body.style.overflow = '';
-  avaliarSheetMusicaId = null;
-  avaliarSheetDraft = null;
+function limparAvaliacaoInlineCategoria(categoriaKey) {
+  if (!musicaAtualId) return;
+  atualizarMusica(musicaAtualId, { [categoriaKey]: null });
+  _atualizarAvaliacaoInline();
 }
 
-function selecionarAvaliarNivel(categoriaKey, valor) {
-  if (!avaliarSheetDraft) return;
-  avaliarSheetDraft[categoriaKey] = avaliarSheetDraft[categoriaKey] === valor ? null : valor;
-  _persistirAvaliacao();
-  _renderAvaliarSheet();
-}
-
-function limparAvaliarCategoria(categoriaKey) {
-  if (!avaliarSheetDraft) return;
-  avaliarSheetDraft[categoriaKey] = null;
-  _persistirAvaliacao();
-  _renderAvaliarSheet();
-}
-
-function limparAvaliarTudo() {
-  if (!avaliarSheetDraft) return;
-  AVALIACAO_CATEGORIAS.forEach(cat => { avaliarSheetDraft[cat.key] = null; });
-  _persistirAvaliacao();
-  _renderAvaliarSheet();
-}
-
-function _persistirAvaliacao() {
-  if (!avaliarSheetMusicaId || !avaliarSheetDraft) return;
-  atualizarMusica(avaliarSheetMusicaId, { ...avaliarSheetDraft });
-}
-
-function salvarAvaliacao() {
-  _persistirAvaliacao();
-  fecharAvaliarSheet();
-  renderMusicaView();
+function scrollParaAvaliacaoInline() {
+  document.getElementById('musica-avaliacao-inline')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 const modoNovato = () => modoSimplificar && modoNomes; // legado: ambos ativos
@@ -1038,7 +1012,7 @@ function renderMusicaView() {
         <!-- Desktop: botões com popup próprio (mesmo padrão do Tom) -->
         <div class="toolbar-desktop-extras">
           ${renderFonteControl()}
-          <button class="musica-fonte-badge" onclick="abrirAvaliarSheet('${musica.id}')">
+          <button class="musica-fonte-badge musica-avaliar-badge" onclick="scrollParaAvaliacaoInline()">
             <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">reviews</span>
             <span class="toolbar-btn-label">Avaliar</span>
           </button>
@@ -1068,7 +1042,10 @@ function renderMusicaView() {
       <button class="musica-acordes-mobile-close" onclick="toggleAcordesMobile()"><span class="material-symbols-outlined">close</span></button>
     </div>` : ''}
     <div class="musica-conteudo">
-      <pre class="musica-cifra" id="musica-cifra-scroll">${renderCifraHtml(musica.cifraTexto, semitons)}</pre>
+      <div class="musica-cifra" id="musica-cifra-scroll">
+        <pre class="musica-cifra-texto">${renderCifraHtml(musica.cifraTexto, semitons)}</pre>
+        ${_renderAvaliacaoInline(musica)}
+      </div>
       <div class="musica-acordes">
         <div class="resize-handle" onmousedown="iniciarResizeAcordes(event)"></div>
         <div class="musica-acordes-titulo">Acordes</div>
@@ -1593,7 +1570,7 @@ function _renderOpcoesMenuConteudo() {
       <span class="opcoes-menu-row-label">Tamanho: ${cifraFontSize}</span>
       <span class="material-symbols-outlined opcoes-menu-row-chevron">chevron_right</span>
     </button>
-    <button class="opcoes-menu-row" onclick="fecharOpcoesMenu();abrirAvaliarSheet('${musicaAtualId}');event.stopPropagation()">
+    <button class="opcoes-menu-row" onclick="fecharOpcoesMenu();scrollParaAvaliacaoInline();event.stopPropagation()">
       <span class="material-symbols-outlined">reviews</span>
       <span class="opcoes-menu-row-label">Avaliar</span>
       <span class="material-symbols-outlined opcoes-menu-row-chevron">chevron_right</span>
