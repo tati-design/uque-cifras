@@ -217,6 +217,7 @@ body {
 /* ── Avaliação inline (ao fim da cifra) ──────────────────────────────────── */
 .musica-avaliacao-inline {
   margin-top: 28px;
+  max-width: 440px;
   padding: 20px;
   background: #fff;
   border: 1px solid #eee;
@@ -226,10 +227,6 @@ body {
 .avaliacao-inline-titulo { font-size: 1.05rem; font-weight: 700; color: #111; }
 .avaliacao-inline-subtitulo { font-size: 0.82rem; color: #888; margin-top: 2px; margin-bottom: 18px; }
 .avaliacao-inline-categorias { display: flex; flex-direction: column; }
-@media (min-width: 861px) {
-  .avaliacao-inline-categorias { flex-direction: row; gap: 20px; align-items: flex-start; }
-  .avaliacao-inline-categorias .avaliar-categoria { flex: 1; margin-bottom: 0; }
-}
 
 /* ── Coluna de acordes (desktop) ─────────────────────────────────────────── */
 .musica-acordes {
