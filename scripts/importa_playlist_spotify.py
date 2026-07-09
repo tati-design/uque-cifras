@@ -25,6 +25,7 @@ import sys
 import time
 import unicodedata
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 
 import requests
@@ -45,6 +46,7 @@ HEADERS = {
 }
 
 SEARCH_URL = "https://solr.sscdn.co/cc/h2/"
+SIMILARIDADE_MIN = 0.6  # abaixo disso, o resultado da busca e' descartado (titulo nao bate)
 
 CHORD_RE = re.compile(
     r"^[A-G][#b]?(m|M|maj|dim|aug|sus|add)?[0-9]*(\([^)]*\))?(M|-|\+)?(/[A-G][#b]?)?[0-9]*$"
@@ -116,32 +118,57 @@ def limpa_titulo(titulo):
     return SUFIXO_RE.sub("", titulo).strip()
 
 
+def _busca_solr(query):
+    """Consulta o solr do Cifra Club, retorna a lista de docs (t=='2' == musica)."""
+    r = requests.get(SEARCH_URL, params={"q": query}, headers=HEADERS, timeout=15)
+    raw = r.text.strip()
+    # resposta pode vir como JSONP: callback({...})
+    m = re.search(r"\((\{.*\})\)\s*;?\s*$", raw, re.DOTALL)
+    data = json.loads(m.group(1) if m else raw)
+    docs = data.get("response", {}).get("docs", [])
+    return [d for d in docs if str(d.get("t")) == "2"]
+
+
 def busca_fallback(titulo, artista):
-    """Busca no solr do Cifra Club. Retorna URL da cifra ou None.
-    NAO TESTADO no piloto - se nao funcionar, rode com --debug e ajuste."""
+    """Busca no solr do Cifra Club (por titulo+artista e so titulo), junta os
+    resultados e escolhe o de maior pontuacao entre os que tem titulo parecido
+    o suficiente com o que procuramos. Retorna URL da cifra ou None."""
+    titulo_slug = slugify(titulo)
+    candidatos = []
     for query in (f"{titulo} {artista}", titulo):
         try:
-            r = requests.get(SEARCH_URL, params={"q": query},
-                             headers=HEADERS, timeout=15)
-            raw = r.text.strip()
-            # resposta pode vir como JSONP: callback({...})
-            m = re.search(r"\((\{.*\})\)\s*;?\s*$", raw, re.DOTALL)
-            data = json.loads(m.group(1) if m else raw)
-            docs = data.get("response", {}).get("docs", [])
+            docs = _busca_solr(query)
             if DEBUG:
-                print(f"    [debug] busca '{query}': {len(docs)} docs")
+                print(f"    [debug] busca '{query}': {len(docs)} docs (musica)")
                 for d in docs[:3]:
                     print("    [debug]", d)
-            for d in docs:
-                # t=="2" indica musica; 'd' e o slug do artista, 'a' o nome, 'u' o slug da musica
-                if str(d.get("t")) == "2":
-                    art_slug = d.get("d") or slugify(d.get("a", ""))
-                    mus_slug = d.get("u") or slugify(d.get("m", ""))
-                    if art_slug and mus_slug:
-                        return f"https://www.cifraclub.com.br/{art_slug}/{mus_slug}/"
+            candidatos.extend(docs)
         except Exception as e:
             if DEBUG:
                 print("    [debug] erro na busca:", e)
+
+    melhor, melhor_score = None, -1
+    for d in candidatos:
+        sim = SequenceMatcher(None, titulo_slug, slugify(d.get("m", ""))).ratio()
+        if sim < SIMILARIDADE_MIN:
+            continue
+        score = d.get("s", 0)
+        if score > melhor_score:
+            melhor, melhor_score = d, score
+
+    if DEBUG:
+        if melhor:
+            print(f"    [debug] escolhido: '{melhor.get('m')}' - '{melhor.get('a')}' "
+                  f"(score {melhor_score}, similaridade titulo ok)")
+        else:
+            print("    [debug] nenhum resultado com titulo parecido o suficiente")
+
+    if not melhor:
+        return None
+    art_slug = melhor.get("d") or slugify(melhor.get("a", ""))
+    mus_slug = melhor.get("u") or slugify(melhor.get("m", ""))
+    if art_slug and mus_slug:
+        return f"https://www.cifraclub.com.br/{art_slug}/{mus_slug}/"
     return None
 
 
