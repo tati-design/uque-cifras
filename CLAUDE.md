@@ -64,3 +64,9 @@ Code/comments/UI copy are in Portuguese (pt-BR). Function names follow Portugues
 ## Styling
 
 Single `style.css` file (~2350 lines), no preprocessor. Responsive behavior (mobile vs. desktop layouts, bottom sheets vs. inline panels) is handled with media queries and toggled classes rather than separate templates — check existing patterns (e.g. how the avaliação/rating UI or filter sheets differ between mobile and desktop) before adding new responsive UI.
+
+## scripts/ (Spotify playlist import, experimental)
+
+`scripts/importa_playlist_spotify.py` is a standalone Python tool, run locally (not part of the deployed site), that turns a Spotify playlist into a JSON file in the app's backup format (importable via the site's backup-import feature). It reads the playlist via Spotify's public embed (no token needed), resolves each track to a Cifra Club page (direct URL slug, falling back to Cifra Club's search API for covers/mismatches), and extracts the cifra text + tom. Requires `pip3 install requests beautifulsoup4`; run with `--debug` to see search-fallback diagnostics.
+
+This is phase 1 of a larger plan (see conversation/PR history) to eventually offer "Import from Spotify" as a feature in the site itself, likely via a Cloudflare Worker (needed because the browser can't hit Cifra Club directly due to CORS). Known limitation: the search fallback can match the wrong song when title+artist search returns a low-relevance top hit instead of a better match from a title-only search — not yet fixed.
