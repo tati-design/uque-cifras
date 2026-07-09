@@ -1,0 +1,66 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+"Uque" — a client-side web app for ukulele: (1) a chord finder/identifier that maps a set of notes to fingering diagrams, and (2) a personal songbook ("Minhas Músicas") that stores chord sheets (cifras) with per-song self-assessment ratings. Everything is plain HTML/CSS/JS with **no build step, no bundler, no package manager, and no framework**. All persistence is `localStorage` — there is no backend.
+
+## Running the app
+
+There's no build/lint/test tooling in this repo. To develop:
+
+```bash
+python3 -m http.server 8744
+```
+
+(matches `.claude/launch.json`, which the Preview tooling uses — `preview_start` with config name `static`). Then open `index.html` via that server. Opening `index.html` directly with `file://` mostly works too since everything is plain `<script src>` tags, but prefer the http server since it's what's configured.
+
+There is no test suite, linter, or build command — verify changes by loading the page in a browser (or the preview tool) and exercising the UI directly.
+
+## Script load order matters
+
+`index.html` loads scripts as plain globals in a specific dependency order (no modules, no imports):
+
+```
+notas.js → candidatos.js → acordes.js → diagrama.js → favoritos.js → musicas.js → ui.js → musicas-ui.js → app.js
+```
+
+Every file shares one global scope. Functions/consts defined in an earlier script are used directly (unqualified) in later ones — e.g. `musicas-ui.js` calls functions from `musicas.js`, `ui.js` calls things from `candidatos.js`/`diagrama.js`. When adding a new file or function, respect this ordering and avoid name collisions across files since there's no module isolation.
+
+Each `<script>`/`<link>` tag has a `?v=NN` cache-busting query param hardcoded in `index.html`. **Bump the version number when editing a JS/CSS file** so browsers don't serve a stale cached copy.
+
+## Architecture
+
+Two top-level views toggled via CSS `hidden` class (see `app.js`/`musicas-ui.js`): `#view-lista` (song list + chord search tabs) and `#view-musica` (single song reader). Within `#view-lista` there are two tabs: "Música" (songbook) and "Acordes" (chord finder), switched by `setTab()` in `app.js`.
+
+### Chord engine (`notas.js`, `candidatos.js`, `acordes.js`, `diagrama.js`)
+
+This is the reusable "given some notes/chord name, find playable ukulele fingerings" pipeline, independent of the songbook:
+
+- `notas.js` — note theory primitives: the 4 ukulele strings (`CORDAS`), chromatic scale (`NOTAS`), open-string tuning (`CORDA_SOLTA`), transposition (`transporAcorde`), enharmonic handling.
+- `candidatos.js` — given a set of target notes, generates every fret-position candidate (`gerarCandidatos`) up to `MAX_CASA`/`MAX_SPAN`, then filters/dedupes/ranks them (`filtrarMelhorCobertura`, `ordenar`) and detects barre chords (`detectarPestana`). `gerarAcorde()` is the main entry point.
+- `acordes.js` — parses a chord name string (e.g. "Am7") into its note set (`calcularNotasAcorde`), and the reverse: identifies a chord name from a set of notes (`identificarAcorde`) using `TEMPLATES`. Caches results in `_cacheAcordes`.
+- `diagrama.js` — renders a fingering diagram (`renderDiagram`) as SVG/HTML for a given candidate.
+- `ui.js` — wires the chord-finder UI: input parsing (`detectarModo` — chord name vs. note list vs. "contains" query), the `run()` search entry point, chord/option cards, and a "favorite chords" panel (see below).
+
+### Favorites (`favoritos.js`)
+
+Standalone `localStorage`-backed list of favorited chord fingerings (key `ukulele_favoritos`), independent from song favorites/genres. Keyed by a chord identifier + exact fret positions (`ehFavorito`, `toggleFavorito`).
+
+### Songbook (`musicas.js`, `musicas-ui.js`)
+
+- `musicas.js` — data layer. Songs are stored under `localStorage` key `MUSICAS_KEY` as a flat array (CRUD via `listarMusicas`/`salvarMusica`/`atualizarMusica`/`removerMusica`). Also owns:
+  - `GENEROS`/`GENERO_ICONS` — fixed genre taxonomy with icons.
+  - `AVALIACAO_CATEGORIAS` — the 3-axis self-rating system (Instrumento/Vocal/Engajamento), each with 4 levels (0–3) stored as `ratingInstrumento`/`ratingVocal`/`ratingEngajamento` fields on a song.
+  - Cifra text parsing: `parseMusicaTexto`, `dividirMusicasTexto` (splits pasted multi-song text into individual songs), `extrairAcordes`/`isValidChordToken` (identifies chord tokens vs. lyrics/section-header tokens in raw pasted text).
+  - One-time migrations run at load in `app.js`: `migrarIdsUnicos()`, `migrarGeneros()`.
+- `musicas-ui.js` (by far the largest file, ~2400 lines) — all songbook rendering/interaction: list view with filters/sort/search (`renderMusicasLista`, `setMusicaFiltroGenero`, `setMusicaOrdem`, etc.), the single-song reader (`abrirMusicaView`, `navegarMusica` for prev/next), font-size controls persisted to `localStorage` (`cifraFontSize`), "Modo Aprendiz" (beginner mode: simplify chords, show chord names, hide tabs — flags persisted as `modoSimplificar`/`modoNomes`/`modoEsconderTab`), bottom sheets/modals (genre picker, sort picker, rating filter, artist filter), multi-select bulk actions (delete, bulk genre assign), and JSON backup export/import (`exportarBackup`/`importarBackupArquivo`, called from `app.js`).
+
+### Naming conventions
+
+Code/comments/UI copy are in Portuguese (pt-BR). Function names follow Portuguese verb-first convention (`abrir*`, `fechar*`, `renderizar*`/`render*`, `selecionar*`, `toggleX`). Match this style for new code rather than switching to English.
+
+## Styling
+
+Single `style.css` file (~2350 lines), no preprocessor. Responsive behavior (mobile vs. desktop layouts, bottom sheets vs. inline panels) is handled with media queries and toggled classes rather than separate templates — check existing patterns (e.g. how the avaliação/rating UI or filter sheets differ between mobile and desktop) before adding new responsive UI.
