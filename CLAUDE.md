@@ -65,13 +65,19 @@ Code/comments/UI copy are in Portuguese (pt-BR). Function names follow Portugues
 
 Single `style.css` file (~2350 lines), no preprocessor. Responsive behavior (mobile vs. desktop layouts, bottom sheets vs. inline panels) is handled with media queries and toggled classes rather than separate templates — check existing patterns (e.g. how the avaliação/rating UI or filter sheets differ between mobile and desktop) before adding new responsive UI.
 
-## scripts/ (Spotify playlist import, experimental)
+## scripts/ + worker/ (Spotify playlist import)
 
-`scripts/importa_playlist_spotify.py` is a standalone Python tool, run locally (not part of the deployed site), that turns a Spotify playlist into a JSON file in the app's backup format (importable via the site's backup-import feature). It reads the playlist via Spotify's public embed (no token needed), resolves each track to a Cifra Club page (direct URL slug, falling back to Cifra Club's search API for covers/mismatches), and extracts the cifra text + tom. Requires `pip3 install requests beautifulsoup4`; run with `--debug` to see search-fallback diagnostics.
+`scripts/importa_playlist_spotify.py` is the original standalone Python tool, run locally (not part of the deployed site), that turns a Spotify playlist into a JSON file in the app's backup format (importable via the site's backup-import feature). It reads the playlist via Spotify's public embed (no token needed), resolves each track to a Cifra Club page (direct URL slug, falling back to Cifra Club's search API for covers/mismatches), and extracts the cifra text + tom. Requires `pip3 install requests beautifulsoup4`; run with `--debug` to see search-fallback diagnostics.
 
-This is part of a larger plan to eventually offer "Import from Spotify" as a feature in the site itself, likely via a Cloudflare Worker (needed because the browser can't hit Cifra Club directly due to CORS). Progress so far:
+`worker/index.js` is a JS port of that same pipeline meant to run as a Cloudflare Worker (needed because the browser can't hit Cifra Club/Spotify directly due to CORS). Same logic — embed parsing, slugify, direct-URL + search-fallback with a JS reimplementation of `difflib`'s similarity ratio, cifra/tom extraction via regex (Workers have no DOM parser, so no BeautifulSoup-equivalent) — exposed as a single `fetch` handler that takes `{ playlist: <url> }` (POST) and returns the backup-format JSON (plus a `falhas` array of tracks not found). `worker/wrangler.toml` configures it (`name = "uque-importa-spotify"`). Run it locally with `cd worker && npx wrangler dev --port 8787` — no Cloudflare account needed for local dev.
 
-1. ✅ Direct-URL + search-fallback pipeline working, tom parsing fixed (capotraste suffix was leaking into the tom field).
-2. ✅ Matching quality: the search fallback now pools results from the title+artist and title-only queries and picks the best-scoring one whose title is actually similar (via `difflib` ratio, `SIMILARIDADE_MIN` threshold) — fixes covers resolving to unrelated songs, and correctly returns no match instead of guessing when nothing fits. Spotify title suffixes ("- Ao Vivo" etc.) are stripped by `limpa_titulo` before matching.
-3. ⬜ Not started: port this logic to a Cloudflare Worker + a simple mobile-first HTML page (paste playlist link → download JSON), since the browser can't call Cifra Club directly (CORS).
-4. ⬜ Not started: publish the Worker and add an "Importar do Spotify" entry point in the site itself.
+`importar.html` + `js/importar.js` is the site-facing page: paste a playlist link, it calls the Worker, shows progress, and offers the resulting JSON as a download (importable via the existing backup-import feature). Styled to match the rest of the site (same header/logo/`style.css`). **`WORKER_URL` in `js/importar.js` is currently hardcoded to `http://localhost:8787`** — must be swapped for the real deployed Worker URL once published.
+
+Entry point in the site: clicking "Adicionar música" (the mobile sticky button, or the compact button next to "Ordenar" on desktop) opens a small menu with 3 options — colar cifra, importar arquivo de backup (.json), or importar do Spotify (navigates to `importar.html`). See `toggleAdicionarMenu`/`abrirImportarSpotify` in `musicas-ui.js`.
+
+Progress:
+
+1. ✅ Python pipeline: direct-URL + search-fallback, tom parsing fixed (capotraste suffix no longer leaks into the tom field), matching quality via a similarity threshold (`SIMILARIDADE_MIN`) so covers/mismatches are rejected instead of guessed.
+2. ✅ Ported the pipeline to a Cloudflare Worker (`worker/index.js`). Verified its similarity-scoring output is numerically identical to Python's `difflib`, and tested end-to-end locally via `wrangler dev` (e.g. a 100-track playlist correctly found 95/100 cifras, honestly reporting the other 5 as not found).
+3. ✅ Built `importar.html`/`js/importar.js` and wired the "Adicionar música" entry point in the site to link to it.
+4. ⬜ Not started (fase 4): create a Cloudflare account, `wrangler deploy` the Worker, update `WORKER_URL` in `js/importar.js` to the published URL, and confirm `importar.html` ships correctly alongside the rest of the static site on GitHub Pages.
