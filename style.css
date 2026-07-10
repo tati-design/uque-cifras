@@ -2405,7 +2405,11 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 }
 .importar-progresso-texto { font-size: 0.82rem; color: #666; }
 
+.importar-nome-playlist { font-size: 1.05rem; margin-bottom: 8px; }
 .importar-resumo, #importar-resumo { font-size: 0.92rem; margin-bottom: 8px; }
 .importar-falhas { list-style: none; font-size: 0.82rem; color: #888; margin-bottom: 16px; }
 .importar-falhas-titulo { font-weight: 600; color: #666; margin-bottom: 4px; }
 .importar-falhas li { padding: 2px 0; }
+
+.importar-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.importar-acoes #importar-mais { background: #fff; color: #5b7cf6; border: 1px solid #5b7cf6; }

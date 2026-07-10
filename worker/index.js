@@ -15,7 +15,10 @@ const SEARCH_URL = "https://solr.sscdn.co/cc/h2/";
 const SIMILARIDADE_MIN = 0.6;
 const GENERO_PADRAO = "MPB";
 const DELAY_MS = 300; // Workers nao precisam ser tao gentis quanto o script local, mas evita rajada
-const LIMITE_FAIXAS = 20; // plano free da Cloudflare permite so 50 subrequisicoes por invocacao
+// Plano free da Cloudflare permite so 50 subrequisicoes por invocacao. Cada
+// musica pode custar ate 4 (fetch direto + 2 buscas de fallback + fetch da
+// pagina encontrada), entao 10 por lote fica seguro mesmo no pior caso.
+const LIMITE_FAIXAS = 10;
 
 const CHORD_RE =
   /^[A-G][#b]?(m|M|maj|dim|aug|sus|add)?[0-9]*(\([^)]*\))?(M|-|\+)?(\/[A-G][#b]?)?[0-9]*$/;
@@ -31,23 +34,23 @@ function playlistId(url) {
   return m[1];
 }
 
-function achaTracklist(obj) {
+function achaEntidade(obj) {
   if (obj && typeof obj === "object" && !Array.isArray(obj)) {
-    if ("trackList" in obj) return obj.trackList;
+    if ("trackList" in obj) return obj;
     for (const v of Object.values(obj)) {
-      const r = achaTracklist(v);
+      const r = achaEntidade(v);
       if (r) return r;
     }
   } else if (Array.isArray(obj)) {
     for (const v of obj) {
-      const r = achaTracklist(v);
+      const r = achaEntidade(v);
       if (r) return r;
     }
   }
   return null;
 }
 
-async function faixasDaPlaylist(url) {
+async function dadosDaPlaylist(url) {
   const pid = playlistId(url);
   const r = await fetch(`https://open.spotify.com/embed/playlist/${pid}`, {
     headers: HEADERS,
@@ -58,14 +61,17 @@ async function faixasDaPlaylist(url) {
   const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
   if (!m) throw new Error("Nao achei os dados da playlist (o Spotify pode ter mudado o HTML).");
   const data = JSON.parse(m[1]);
-  const tracks = achaTracklist(data) || [];
+  const entidade = achaEntidade(data);
+  const tracks = entidade?.trackList || [];
 
-  return tracks.map((t) => {
+  const faixas = tracks.map((t) => {
     const titulo = t.title || "";
     let artista = t.subtitle || t.artists || "";
     artista = artista.split(",")[0].trim();
     return { titulo, artista };
   });
+
+  return { nome: entidade?.name || "playlist", faixas };
 }
 
 // ─── CIFRA CLUB ─────────────────────────────────────────────────────────────
@@ -282,9 +288,11 @@ function corsHeaders(origin) {
 async function handleImportar(request) {
   const { searchParams } = new URL(request.url);
   let playlistUrl = searchParams.get("playlist");
+  let offset = Number(searchParams.get("offset")) || 0;
   if (request.method === "POST") {
     const body = await request.json().catch(() => ({}));
     playlistUrl = body.playlist || playlistUrl;
+    if (Number.isFinite(body.offset)) offset = body.offset;
   }
   if (!playlistUrl) {
     return new Response(JSON.stringify({ erro: "Informe o link da playlist (parametro 'playlist')." }), {
@@ -293,9 +301,9 @@ async function handleImportar(request) {
     });
   }
 
-  const todasFaixas = await faixasDaPlaylist(playlistUrl);
-  const faixas = todasFaixas.slice(0, LIMITE_FAIXAS);
-  const limitado = todasFaixas.length > LIMITE_FAIXAS;
+  const { nome: nomePlaylist, faixas: todasFaixas } = await dadosDaPlaylist(playlistUrl);
+  const faixas = todasFaixas.slice(offset, offset + LIMITE_FAIXAS);
+  const proximoOffset = offset + faixas.length < todasFaixas.length ? offset + faixas.length : null;
   const musicas = [];
   const falhas = [];
 
@@ -314,8 +322,10 @@ async function handleImportar(request) {
     favoritos: [],
     exportadoEm: new Date().toISOString().replace(/\.\d+Z$/, ".000Z"),
     falhas,
-    limitado,
+    nomePlaylist,
     totalNaPlaylist: todasFaixas.length,
+    offset,
+    proximoOffset,
   };
   return new Response(JSON.stringify(out, null, 2), {
     headers: { "Content-Type": "application/json" },
