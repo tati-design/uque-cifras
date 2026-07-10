@@ -62,7 +62,12 @@ async function dadosDaPlaylist(url) {
   if (!m) throw new Error("Nao achei os dados da playlist (o Spotify pode ter mudado o HTML).");
   const data = JSON.parse(m[1]);
   const entidade = achaEntidade(data);
-  const tracks = entidade?.trackList || [];
+  if (!entidade) {
+    throw new Error(
+      "Não encontrei essa playlist. Verifique se o link está certo e se ela está configurada como pública no Spotify."
+    );
+  }
+  const tracks = entidade.trackList || [];
 
   const faixas = tracks.map((t) => {
     const titulo = t.title || "";

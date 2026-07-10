@@ -4,6 +4,7 @@
 
 const WORKER_URL = "https://uque-import.tatidigitaldesigner.workers.dev";
 
+const formSecaoEl = document.getElementById("importar-form-secao");
 const form = document.getElementById("importar-form");
 const linkInput = document.getElementById("importar-link");
 const btn = document.getElementById("importar-btn");
@@ -13,6 +14,8 @@ const nomePlaylistEl = document.getElementById("importar-nome-playlist");
 const contagemFaixasEl = document.getElementById("importar-contagem-faixas");
 const segEncontradasEl = document.getElementById("importar-seg-encontradas");
 const segFalhasEl = document.getElementById("importar-seg-falhas");
+const secaoFalhasEl = document.getElementById("importar-secao-falhas");
+const secaoPendentesEl = document.getElementById("importar-secao-pendentes");
 const countEncontradasEl = document.getElementById("importar-count-encontradas");
 const countFalhasEl = document.getElementById("importar-count-falhas");
 const countPendentesEl = document.getElementById("importar-count-pendentes");
@@ -31,9 +34,18 @@ let estado = null;
 function esconder(el) { el.classList.add("hidden"); }
 function mostrar(el) { el.classList.remove("hidden"); }
 
+function dotsHTML() {
+  return '<span class="importar-dots"><span></span><span></span><span></span></span>';
+}
+
 function mostrarStatus(msg, tipo) {
   statusEl.textContent = msg;
   statusEl.className = "importar-status" + (tipo ? " importar-status-" + tipo : "");
+}
+
+function mostrarCarregando(msg) {
+  statusEl.innerHTML = msg + dotsHTML();
+  statusEl.className = "importar-status";
 }
 
 function slugifyNome(nome) {
@@ -65,6 +77,31 @@ function preencherTabela(tbody, linhas, formatarTitulo) {
   });
 }
 
+function preencherTabelaFalhas(tbody, falhas) {
+  tbody.innerHTML = "";
+  falhas.forEach((item, indice) => {
+    const tr = document.createElement("tr");
+    const tdTitulo = document.createElement("td");
+    tdTitulo.textContent = item.titulo;
+    const tdArtista = document.createElement("td");
+    tdArtista.textContent = item.artista;
+    const tdAcao = document.createElement("td");
+    tdAcao.className = "importar-tabela-acao";
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "icon-btn icon-btn-danger";
+    delBtn.title = "Remover da lista";
+    delBtn.innerHTML = '<span class="material-symbols-outlined">delete</span>';
+    delBtn.addEventListener("click", () => {
+      estado.falhas.splice(indice, 1);
+      renderizarResultado();
+    });
+    tdAcao.appendChild(delBtn);
+    tr.append(tdTitulo, tdArtista, tdAcao);
+    tbody.appendChild(tr);
+  });
+}
+
 function renderizarResultado() {
   const { musicas, falhas, pendentes, totalNaPlaylist, tamanhoLote, proximoOffset } = estado;
   const processadas = musicas.length + falhas.length;
@@ -79,11 +116,14 @@ function renderizarResultado() {
   countFalhasEl.textContent = `${falhas.length} Não encontradas`;
   countPendentesEl.textContent = `${pendentes.length} Pendentes`;
 
+  secaoFalhasEl.classList.toggle("hidden", falhas.length === 0);
+  secaoPendentesEl.classList.toggle("hidden", pendentes.length === 0);
+
   preencherTabela(tbodyEncontradasEl, musicas, (m) => m.titulo);
-  preencherTabela(tbodyFalhasEl, falhas, (f) => f.titulo);
+  preencherTabelaFalhas(tbodyFalhasEl, falhas);
   preencherTabela(tbodyPendentesEl, pendentes, (p) => p.titulo);
 
-  if (proximoOffset !== null) {
+  if (proximoOffset !== null && pendentes.length > 0) {
     const proximoLote = Math.min(tamanhoLote, totalNaPlaylist - processadas);
     maisTextoEl.textContent = `Carregar mais ${proximoLote}`;
     mostrar(maisBtn);
@@ -112,6 +152,7 @@ function resetar() {
   linkInput.value = "";
   esconder(resultadoEl);
   mostrarStatus("");
+  mostrar(formSecaoEl);
 }
 
 form.addEventListener("submit", async (e) => {
@@ -121,7 +162,7 @@ form.addEventListener("submit", async (e) => {
 
   btn.disabled = true;
   esconder(resultadoEl);
-  mostrarStatus("Lendo a playlist...");
+  mostrarCarregando("Lendo a playlist");
 
   try {
     const dados = await buscarLote(link, 0);
@@ -137,6 +178,7 @@ form.addEventListener("submit", async (e) => {
       pendentes: dados.pendentes,
     };
     mostrarStatus("");
+    esconder(formSecaoEl);
     renderizarResultado();
   } catch (err) {
     mostrarStatus(err.message || "Não consegui importar essa playlist.", "erro");
@@ -148,8 +190,7 @@ form.addEventListener("submit", async (e) => {
 maisBtn.addEventListener("click", async () => {
   if (!estado || estado.proximoOffset === null) return;
   maisBtn.disabled = true;
-  const textoOriginal = maisTextoEl.textContent;
-  maisTextoEl.textContent = "Buscando...";
+  maisTextoEl.innerHTML = "Buscando" + dotsHTML();
 
   try {
     const dados = await buscarLote(estado.link, estado.proximoOffset);
@@ -160,7 +201,7 @@ maisBtn.addEventListener("click", async () => {
     renderizarResultado();
   } catch (err) {
     mostrarStatus(err.message || "Não consegui buscar as próximas músicas.", "erro");
-    maisTextoEl.textContent = textoOriginal;
+    renderizarResultado();
   } finally {
     maisBtn.disabled = false;
   }

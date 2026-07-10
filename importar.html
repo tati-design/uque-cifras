@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Importar do Spotify — Uque</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="stylesheet" href="style.css?v=105">
+<link rel="stylesheet" href="style.css?v=106">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0..1,0" />
 </head>
 <body>
@@ -30,21 +30,18 @@
       <button type="button" class="importar-tab" disabled title="Em breve">Pesquise uma música</button>
     </div>
 
-    <p class="importar-subtitulo">
-      Cole o link de uma playlist pública do Spotify. A gente busca cada música no Cifra Club
-      e monta um arquivo pronto pra importar aqui no Uque (em "Restaurar backup").
-    </p>
-
-    <form id="importar-form" class="importar-form">
-      <label for="importar-link" class="importar-label">Link de playlist do Spotify</label>
-      <input
-        type="text"
-        id="importar-link"
-        placeholder="https://open.spotify.com/playlist/..."
-        autocomplete="off"
-      >
-      <button type="submit" id="importar-btn">Carregar playlist</button>
-    </form>
+    <div id="importar-form-secao">
+      <form id="importar-form" class="importar-form">
+        <label for="importar-link" class="importar-label">Link de playlist do Spotify</label>
+        <input
+          type="text"
+          id="importar-link"
+          placeholder="https://open.spotify.com/playlist/..."
+          autocomplete="off"
+        >
+        <button type="submit" id="importar-btn">Carregar playlist</button>
+      </form>
+    </div>
 
     <div id="importar-status" class="importar-status hidden"></div>
 
@@ -66,7 +63,7 @@
       </div>
 
       <div class="importar-secoes">
-        <details class="importar-secao" open>
+        <details id="importar-secao-encontradas" class="importar-secao" open>
           <summary>
             <span class="importar-dot importar-dot-ok"></span>
             <span id="importar-count-encontradas"></span>
@@ -78,19 +75,19 @@
             </table>
           </div>
         </details>
-        <details class="importar-secao">
+        <details id="importar-secao-falhas" class="importar-secao">
           <summary>
             <span class="importar-dot importar-dot-erro"></span>
             <span id="importar-count-falhas"></span>
           </summary>
           <div class="importar-tabela-wrap">
             <table class="importar-tabela">
-              <thead><tr><th>Título</th><th>Artista</th></tr></thead>
+              <thead><tr><th>Título</th><th>Artista</th><th></th></tr></thead>
               <tbody id="importar-tbody-falhas"></tbody>
             </table>
           </div>
         </details>
-        <details class="importar-secao">
+        <details id="importar-secao-pendentes" class="importar-secao">
           <summary>
             <span class="importar-dot importar-dot-pendente"></span>
             <span id="importar-count-pendentes"></span>
@@ -118,6 +115,6 @@
   </div>
 </div>
 
-<script src="js/importar.js?v=3"></script>
+<script src="js/importar.js?v=4"></script>
 </body>
 </html>
