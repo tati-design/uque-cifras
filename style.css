@@ -2410,10 +2410,46 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   .importar-tab { font-size: 0.82rem; white-space: nowrap; flex-shrink: 0; }
 }
 
+.importar-painel.hidden { display: none; }
+
 .importar-label { font-size: 0.86rem; font-weight: 600; color: #333; margin-bottom: 6px; display: block; }
 .importar-form { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .importar-form input[type="text"] { width: 100%; }
 .importar-form button[type="submit"] { width: 100%; margin-top: 8px; padding: 12px; }
+
+.importar-form-dupla { flex-direction: row; gap: 12px; margin-bottom: 8px; }
+.importar-form-dupla > div { flex: 1; min-width: 0; }
+#musica-btn { width: 100%; margin-bottom: 16px; }
+
+@media (max-width: 700px) {
+  .importar-form-dupla { flex-direction: column; gap: 6px; }
+}
+
+.importar-cifra-card { border: 1px solid #eeece8; border-radius: 10px; overflow: hidden; }
+.importar-cifra-card-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #eeece8;
+  background: #fafaf8;
+  flex-wrap: wrap;
+}
+.importar-cifra-card-titulo { font-size: 0.86rem; font-weight: 600; color: #333; }
+.importar-cifra-card-topo .importar-acoes { margin: 0; }
+.importar-cifra-card-topo #musica-copiar { width: 38px; padding: 0; justify-content: center; flex: none; }
+.importar-cifra-texto {
+  margin: 0;
+  padding: 16px;
+  max-height: 320px;
+  overflow: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #333;
+  white-space: pre-wrap;
+}
 
 .importar-status { font-size: 0.85rem; margin-bottom: 12px; }
 .importar-status:empty { display: none; }

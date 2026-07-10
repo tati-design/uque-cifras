@@ -290,6 +290,25 @@ function corsHeaders(origin) {
   };
 }
 
+async function handleBuscarMusica(titulo, artista) {
+  if (!titulo) {
+    return new Response(JSON.stringify({ erro: "Informe o nome da música." }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  const resultado = await resolveCifra(titulo, artista || "");
+  if (!resultado) {
+    return new Response(JSON.stringify({ encontrada: false }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  const musica = montaMusica(resultado.titulo, resultado.artista, resultado.tom, resultado.cifra);
+  return new Response(JSON.stringify({ encontrada: true, musica }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 async function handleImportar(request) {
   const { searchParams } = new URL(request.url);
   let playlistUrl = searchParams.get("playlist");
@@ -348,7 +367,13 @@ export default {
       return new Response(null, { headers: corsHeaders(origin) });
     }
     try {
-      const resp = await handleImportar(request);
+      let body = {};
+      if (request.method === "POST") {
+        body = await request.clone().json().catch(() => ({}));
+      }
+      const resp = body.titulo
+        ? await handleBuscarMusica(body.titulo, body.artista)
+        : await handleImportar(request);
       const headers = new Headers(resp.headers);
       for (const [k, v] of Object.entries(corsHeaders(origin))) headers.set(k, v);
       return new Response(resp.body, { status: resp.status, headers });

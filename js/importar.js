@@ -224,3 +224,128 @@ downloadBtn.addEventListener("click", () => {
 });
 
 resetBtn.addEventListener("click", resetar);
+
+// ─── Abas ───────────────────────────────────────────────────────────────────
+
+const tabPlaylistEl = document.getElementById("importar-tab-playlist");
+const tabMusicaEl = document.getElementById("importar-tab-musica");
+const painelPlaylistEl = document.getElementById("importar-painel-playlist");
+const painelMusicaEl = document.getElementById("importar-painel-musica");
+
+function selecionarAba(aba) {
+  const ehPlaylist = aba === "playlist";
+  tabPlaylistEl.classList.toggle("active", ehPlaylist);
+  tabMusicaEl.classList.toggle("active", !ehPlaylist);
+  painelPlaylistEl.classList.toggle("hidden", !ehPlaylist);
+  painelMusicaEl.classList.toggle("hidden", ehPlaylist);
+}
+
+tabPlaylistEl.addEventListener("click", () => selecionarAba("playlist"));
+tabMusicaEl.addEventListener("click", () => selecionarAba("musica"));
+
+// ─── Pesquisar uma música avulsa ────────────────────────────────────────────
+
+const musicaFormSecaoEl = document.getElementById("musica-form-secao");
+const musicaTituloInput = document.getElementById("musica-titulo");
+const musicaArtistaInput = document.getElementById("musica-artista");
+const musicaBtn = document.getElementById("musica-btn");
+const musicaStatusEl = document.getElementById("musica-status");
+const musicaResultadoEl = document.getElementById("musica-resultado");
+const musicaNomeEncontradaEl = document.getElementById("musica-nome-encontrada");
+const musicaArtistaEncontradaEl = document.getElementById("musica-artista-encontrada");
+const musicaCifraTextoEl = document.getElementById("musica-cifra-texto");
+const musicaCopiarBtn = document.getElementById("musica-copiar");
+const musicaAdicionarBtn = document.getElementById("musica-adicionar");
+const musicaResetBtn = document.getElementById("musica-reset");
+
+let musicaEncontrada = null;
+
+function mostrarStatusMusica(msg, tipo) {
+  musicaStatusEl.textContent = msg;
+  musicaStatusEl.className = "importar-status" + (tipo ? " importar-status-" + tipo : "");
+}
+
+async function buscarMusica(titulo, artista) {
+  const r = await fetch(WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ titulo, artista }),
+  });
+  const dados = await r.json();
+  if (!r.ok) throw new Error(dados.erro || "Erro ao pesquisar.");
+  return dados;
+}
+
+function resetarMusica() {
+  musicaEncontrada = null;
+  musicaTituloInput.value = "";
+  musicaArtistaInput.value = "";
+  esconder(musicaResultadoEl);
+  mostrarStatusMusica("");
+  mostrar(musicaFormSecaoEl);
+}
+
+document.getElementById("musica-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  musicaBtn.click();
+});
+
+musicaBtn.addEventListener("click", async () => {
+  const titulo = musicaTituloInput.value.trim();
+  const artista = musicaArtistaInput.value.trim();
+  if (!titulo) return;
+
+  musicaBtn.disabled = true;
+  esconder(musicaResultadoEl);
+  mostrarStatusMusica("");
+  musicaStatusEl.innerHTML = "Pesquisando" + dotsHTML();
+  musicaStatusEl.className = "importar-status";
+
+  try {
+    const dados = await buscarMusica(titulo, artista);
+    if (!dados.encontrada) {
+      mostrarStatusMusica("Não encontrei essa cifra no Cifra Club. Confira o nome da música/artista.", "erro");
+      return;
+    }
+    musicaEncontrada = dados.musica;
+    mostrarStatusMusica("");
+    esconder(musicaFormSecaoEl);
+    musicaNomeEncontradaEl.textContent = musicaEncontrada.titulo;
+    musicaArtistaEncontradaEl.textContent = musicaEncontrada.artista;
+    musicaCifraTextoEl.textContent = musicaEncontrada.cifraTexto;
+    musicaAdicionarBtn.disabled = false;
+    musicaAdicionarBtn.innerHTML = '<span class="material-symbols-outlined">add</span><span>Adicionar cifra</span>';
+    mostrar(musicaResultadoEl);
+  } catch (err) {
+    mostrarStatusMusica(err.message || "Não consegui pesquisar essa música.", "erro");
+  } finally {
+    musicaBtn.disabled = false;
+  }
+});
+
+musicaCopiarBtn.addEventListener("click", async () => {
+  if (!musicaEncontrada) return;
+  try {
+    await navigator.clipboard.writeText(musicaEncontrada.cifraTexto);
+    const original = musicaCopiarBtn.innerHTML;
+    musicaCopiarBtn.innerHTML = '<span class="material-symbols-outlined">check</span>';
+    setTimeout(() => { musicaCopiarBtn.innerHTML = original; }, 1500);
+  } catch {
+    mostrarStatusMusica("Não consegui copiar. Selecione o texto manualmente.", "erro");
+  }
+});
+
+musicaAdicionarBtn.addEventListener("click", () => {
+  if (!musicaEncontrada) return;
+  salvarMusica({
+    titulo: musicaEncontrada.titulo,
+    artista: musicaEncontrada.artista,
+    tom: musicaEncontrada.tom,
+    cifraTexto: musicaEncontrada.cifraTexto,
+    acordes: musicaEncontrada.acordes,
+  });
+  musicaAdicionarBtn.disabled = true;
+  musicaAdicionarBtn.innerHTML = '<span class="material-symbols-outlined">check</span><span>Adicionada à biblioteca</span>';
+});
+
+musicaResetBtn.addEventListener("click", resetarMusica);
