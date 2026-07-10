@@ -24,8 +24,9 @@ const tbodyFalhasEl = document.getElementById("importar-tbody-falhas");
 const tbodyPendentesEl = document.getElementById("importar-tbody-pendentes");
 const maisBtn = document.getElementById("importar-mais");
 const maisTextoEl = document.getElementById("importar-mais-texto");
+const adicionarLibBtn = document.getElementById("importar-adicionar-lib");
+const adicionarLibTextoEl = document.getElementById("importar-adicionar-lib-texto");
 const downloadBtn = document.getElementById("importar-download");
-const downloadTextoEl = document.getElementById("importar-download-texto");
 const resetBtn = document.getElementById("importar-reset");
 
 // Estado acumulado ao longo dos lotes de uma mesma playlist.
@@ -130,7 +131,9 @@ function renderizarResultado() {
     esconder(maisBtn);
   }
 
-  downloadTextoEl.textContent = `Baixar ${musicas.length} de ${totalNaPlaylist} Cifras`;
+  adicionarLibTextoEl.textContent = `Adicionar ${musicas.length} à biblioteca`;
+  adicionarLibBtn.disabled = musicas.length === 0;
+  mostrar(adicionarLibBtn);
   mostrar(downloadBtn);
   mostrar(resultadoEl);
 }
@@ -206,6 +209,22 @@ maisBtn.addEventListener("click", async () => {
   }
 });
 
+adicionarLibBtn.addEventListener("click", () => {
+  if (!estado || !estado.musicas.length) return;
+  estado.musicas.forEach((m) => {
+    salvarMusica({
+      titulo: m.titulo,
+      artista: m.artista,
+      tom: m.tom,
+      cifraTexto: m.cifraTexto,
+      acordes: m.acordes,
+    });
+  });
+  const qtd = estado.musicas.length;
+  sessionStorage.setItem("uque_toast", `${qtd} música${qtd === 1 ? "" : "s"} adicionada${qtd === 1 ? "" : "s"} à sua biblioteca.`);
+  window.location.href = "index.html";
+});
+
 downloadBtn.addEventListener("click", () => {
   if (!estado) return;
   const out = {
@@ -242,6 +261,10 @@ function selecionarAba(aba) {
 
 tabPlaylistEl.addEventListener("click", () => selecionarAba("playlist"));
 tabMusicaEl.addEventListener("click", () => selecionarAba("musica"));
+
+if (new URLSearchParams(window.location.search).get("aba") === "musica") {
+  selecionarAba("musica");
+}
 
 // ─── Pesquisar uma música avulsa ────────────────────────────────────────────
 
@@ -304,7 +327,7 @@ musicaBtn.addEventListener("click", async () => {
   try {
     const dados = await buscarMusica(titulo, artista);
     if (!dados.encontrada) {
-      mostrarStatusMusica("Não encontrei essa cifra no Cifra Club. Confira o nome da música/artista.", "erro");
+      mostrarStatusMusica("Não encontrei essa cifra. Confira o nome da música e do artista e tente de novo.", "erro");
       return;
     }
     musicaEncontrada = dados.musica;
@@ -323,10 +346,14 @@ musicaBtn.addEventListener("click", async () => {
   }
 });
 
+function textoParaColar(musica) {
+  return `${musica.titulo}\n${musica.artista}\nTom: ${musica.tom}\n\n${musica.cifraTexto}`;
+}
+
 musicaCopiarBtn.addEventListener("click", async () => {
   if (!musicaEncontrada) return;
   try {
-    await navigator.clipboard.writeText(musicaEncontrada.cifraTexto);
+    await navigator.clipboard.writeText(textoParaColar(musicaEncontrada));
     const original = musicaCopiarBtn.innerHTML;
     musicaCopiarBtn.innerHTML = '<span class="material-symbols-outlined">check</span>';
     setTimeout(() => { musicaCopiarBtn.innerHTML = original; }, 1500);
@@ -344,8 +371,8 @@ musicaAdicionarBtn.addEventListener("click", () => {
     cifraTexto: musicaEncontrada.cifraTexto,
     acordes: musicaEncontrada.acordes,
   });
-  musicaAdicionarBtn.disabled = true;
-  musicaAdicionarBtn.innerHTML = '<span class="material-symbols-outlined">check</span><span>Adicionada à biblioteca</span>';
+  sessionStorage.setItem("uque_toast", `"${musicaEncontrada.titulo}" foi adicionada à sua biblioteca.`);
+  window.location.href = "index.html";
 });
 
 musicaResetBtn.addEventListener("click", resetarMusica);

@@ -681,6 +681,7 @@ function renderMusicasLista() {
         <button onclick="abrirAdicionarMusicaModal()"><span class="material-symbols-outlined">content_paste</span> Colar cifra</button>
         <button onclick="abrirSeletorImportacao()"><span class="material-symbols-outlined">upload</span> Importar arquivo de músicas</button>
         <button onclick="abrirImportarSpotify()"><span class="material-symbols-outlined">library_music</span> Importar do Spotify</button>
+        <button onclick="abrirPesquisarMusica()"><span class="material-symbols-outlined">search</span> Pesquisar uma música</button>
       </div>
     </div>
   </div>`;
@@ -823,6 +824,11 @@ document.addEventListener('click', e => {
 function abrirImportarSpotify() {
   fecharAdicionarMenus();
   window.location.href = 'importar.html';
+}
+
+function abrirPesquisarMusica() {
+  fecharAdicionarMenus();
+  window.location.href = 'importar.html?aba=musica';
 }
 
 // ─── Modal: adicionar música ────────────────────────────────────────────────────

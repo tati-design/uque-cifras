@@ -24,6 +24,27 @@ function setTab(nome) {
   document.getElementById('tab-btn-buscar').classList.toggle('active', nome === 'buscar');
 }
 
+// ─── Toast (feedback rápido, ex: vindo de importar.html) ───────────────────────
+function mostrarToast(msg, duracaoMs = 3000) {
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('mostrar');
+  clearTimeout(el._timeoutId);
+  el._timeoutId = setTimeout(() => el.classList.remove('mostrar'), duracaoMs);
+}
+
+const toastPendente = sessionStorage.getItem('uque_toast');
+if (toastPendente) {
+  sessionStorage.removeItem('uque_toast');
+  mostrarToast(toastPendente);
+}
+
 // Aplica gêneros do CSV a músicas sem gênero definido, então carrega a lista
 migrarIdsUnicos();
 migrarGeneros();
