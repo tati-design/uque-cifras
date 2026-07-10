@@ -8,26 +8,33 @@ const form = document.getElementById("importar-form");
 const linkInput = document.getElementById("importar-link");
 const btn = document.getElementById("importar-btn");
 const statusEl = document.getElementById("importar-status");
-const progressoEl = document.getElementById("importar-progresso");
-const progressoFill = document.getElementById("importar-progresso-fill");
-const progressoTexto = document.getElementById("importar-progresso-texto");
 const resultadoEl = document.getElementById("importar-resultado");
 const nomePlaylistEl = document.getElementById("importar-nome-playlist");
-const resumoEl = document.getElementById("importar-resumo");
-const falhasEl = document.getElementById("importar-falhas");
+const contagemFaixasEl = document.getElementById("importar-contagem-faixas");
+const segEncontradasEl = document.getElementById("importar-seg-encontradas");
+const segFalhasEl = document.getElementById("importar-seg-falhas");
+const countEncontradasEl = document.getElementById("importar-count-encontradas");
+const countFalhasEl = document.getElementById("importar-count-falhas");
+const countPendentesEl = document.getElementById("importar-count-pendentes");
+const tbodyEncontradasEl = document.getElementById("importar-tbody-encontradas");
+const tbodyFalhasEl = document.getElementById("importar-tbody-falhas");
+const tbodyPendentesEl = document.getElementById("importar-tbody-pendentes");
 const maisBtn = document.getElementById("importar-mais");
+const maisTextoEl = document.getElementById("importar-mais-texto");
 const downloadBtn = document.getElementById("importar-download");
+const downloadTextoEl = document.getElementById("importar-download-texto");
+const resetBtn = document.getElementById("importar-reset");
 
 // Estado acumulado ao longo dos lotes de uma mesma playlist.
 let estado = null;
+
+function esconder(el) { el.classList.add("hidden"); }
+function mostrar(el) { el.classList.remove("hidden"); }
 
 function mostrarStatus(msg, tipo) {
   statusEl.textContent = msg;
   statusEl.className = "importar-status" + (tipo ? " importar-status-" + tipo : "");
 }
-
-function esconder(el) { el.classList.add("hidden"); }
-function mostrar(el) { el.classList.remove("hidden"); }
 
 function slugifyNome(nome) {
   return nome
@@ -44,37 +51,47 @@ function nomeArquivo() {
   return `uque-import-${slug}-${data}.json`;
 }
 
+function preencherTabela(tbody, linhas, formatarTitulo) {
+  tbody.innerHTML = "";
+  linhas.forEach((item) => {
+    const tr = document.createElement("tr");
+    const tdTitulo = document.createElement("td");
+    tdTitulo.textContent = formatarTitulo(item);
+    const tdArtista = document.createElement("td");
+    tdArtista.textContent = item.artista;
+    tr.appendChild(tdTitulo);
+    tr.appendChild(tdArtista);
+    tbody.appendChild(tr);
+  });
+}
+
 function renderizarResultado() {
+  const { musicas, falhas, pendentes, totalNaPlaylist, tamanhoLote, proximoOffset } = estado;
+  const processadas = musicas.length + falhas.length;
+
   nomePlaylistEl.textContent = estado.nomePlaylist;
-  mostrar(nomePlaylistEl);
+  contagemFaixasEl.textContent = `${totalNaPlaylist} faixas na playlist`;
 
-  const processadas = estado.offsetProcessado;
-  resumoEl.textContent = `${estado.musicas.length} de ${processadas} músicas encontradas (${processadas} de ${estado.totalNaPlaylist} da playlist processadas).`;
+  segEncontradasEl.style.width = `${(musicas.length / totalNaPlaylist) * 100}%`;
+  segFalhasEl.style.width = `${(falhas.length / totalNaPlaylist) * 100}%`;
 
-  falhasEl.innerHTML = "";
-  if (estado.falhas.length) {
-    const titulo = document.createElement("li");
-    titulo.className = "importar-falhas-titulo";
-    titulo.textContent = "Não encontradas (adicione manualmente):";
-    falhasEl.appendChild(titulo);
-    estado.falhas.forEach((f) => {
-      const li = document.createElement("li");
-      li.textContent = f;
-      falhasEl.appendChild(li);
-    });
-  }
+  countEncontradasEl.textContent = `${musicas.length} Cifras encontradas`;
+  countFalhasEl.textContent = `${falhas.length} Não encontradas`;
+  countPendentesEl.textContent = `${pendentes.length} Pendentes`;
 
-  progressoFill.style.width = `${Math.round((processadas / estado.totalNaPlaylist) * 100)}%`;
+  preencherTabela(tbodyEncontradasEl, musicas, (m) => m.titulo);
+  preencherTabela(tbodyFalhasEl, falhas, (f) => f.titulo);
+  preencherTabela(tbodyPendentesEl, pendentes, (p) => p.titulo);
 
-  if (estado.proximoOffset !== null) {
+  if (proximoOffset !== null) {
+    const proximoLote = Math.min(tamanhoLote, totalNaPlaylist - processadas);
+    maisTextoEl.textContent = `Carregar mais ${proximoLote}`;
     mostrar(maisBtn);
-    mostrar(progressoEl);
-    progressoTexto.textContent = `${processadas} de ${estado.totalNaPlaylist} músicas processadas.`;
   } else {
     esconder(maisBtn);
-    esconder(progressoEl);
   }
 
+  downloadTextoEl.textContent = `Baixar ${musicas.length} de ${totalNaPlaylist} Cifras`;
   mostrar(downloadBtn);
   mostrar(resultadoEl);
 }
@@ -90,6 +107,13 @@ async function buscarLote(link, offset) {
   return dados;
 }
 
+function resetar() {
+  estado = null;
+  linkInput.value = "";
+  esconder(resultadoEl);
+  mostrarStatus("");
+}
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const link = linkInput.value.trim();
@@ -97,11 +121,7 @@ form.addEventListener("submit", async (e) => {
 
   btn.disabled = true;
   esconder(resultadoEl);
-  esconder(progressoEl);
-  mostrar(progressoEl);
-  progressoFill.style.width = "10%";
-  progressoTexto.textContent = "Lendo a playlist...";
-  mostrarStatus("");
+  mostrarStatus("Lendo a playlist...");
 
   try {
     const dados = await buscarLote(link, 0);
@@ -109,16 +129,17 @@ form.addEventListener("submit", async (e) => {
       link,
       nomePlaylist: dados.nomePlaylist,
       totalNaPlaylist: dados.totalNaPlaylist,
-      offsetProcessado: dados.offset + dados.musicas.length + dados.falhas.length,
+      tamanhoLote: dados.tamanhoLote,
       proximoOffset: dados.proximoOffset,
       musicas: dados.musicas,
       favoritos: [],
       falhas: dados.falhas,
+      pendentes: dados.pendentes,
     };
+    mostrarStatus("");
     renderizarResultado();
   } catch (err) {
     mostrarStatus(err.message || "Não consegui importar essa playlist.", "erro");
-    esconder(progressoEl);
   } finally {
     btn.disabled = false;
   }
@@ -127,17 +148,19 @@ form.addEventListener("submit", async (e) => {
 maisBtn.addEventListener("click", async () => {
   if (!estado || estado.proximoOffset === null) return;
   maisBtn.disabled = true;
-  progressoTexto.textContent = `Buscando as próximas músicas (${estado.offsetProcessado} de ${estado.totalNaPlaylist})...`;
+  const textoOriginal = maisTextoEl.textContent;
+  maisTextoEl.textContent = "Buscando...";
 
   try {
     const dados = await buscarLote(estado.link, estado.proximoOffset);
     estado.musicas.push(...dados.musicas);
     estado.falhas.push(...dados.falhas);
-    estado.offsetProcessado = dados.offset + dados.musicas.length + dados.falhas.length;
+    estado.pendentes = dados.pendentes;
     estado.proximoOffset = dados.proximoOffset;
     renderizarResultado();
   } catch (err) {
     mostrarStatus(err.message || "Não consegui buscar as próximas músicas.", "erro");
+    maisTextoEl.textContent = textoOriginal;
   } finally {
     maisBtn.disabled = false;
   }
@@ -159,3 +182,5 @@ downloadBtn.addEventListener("click", () => {
   a.click();
   URL.revokeObjectURL(url);
 });
+
+resetBtn.addEventListener("click", resetar);

@@ -312,20 +312,24 @@ async function handleImportar(request) {
     if (resultado) {
       musicas.push(montaMusica(resultado.titulo, resultado.artista, resultado.tom, resultado.cifra));
     } else {
-      falhas.push(`${titulo} - ${artista}`);
+      falhas.push({ titulo, artista });
     }
     await delay(DELAY_MS);
   }
+
+  const pendentes = todasFaixas.slice(offset + faixas.length);
 
   const out = {
     musicas,
     favoritos: [],
     exportadoEm: new Date().toISOString().replace(/\.\d+Z$/, ".000Z"),
     falhas,
+    pendentes,
     nomePlaylist,
     totalNaPlaylist: todasFaixas.length,
     offset,
     proximoOffset,
+    tamanhoLote: LIMITE_FAIXAS,
   };
   return new Response(JSON.stringify(out, null, 2), {
     headers: { "Content-Type": "application/json" },
