@@ -2484,11 +2484,12 @@ span.chord-chip-fav-badge.material-symbols-outlined {
 .importar-tabela-acao .material-symbols-outlined { font-size: 18px; }
 
 .importar-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
-.importar-acoes button { display: inline-flex; align-items: center; gap: 6px; }
+.importar-acoes button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .importar-acoes button .material-symbols-outlined { font-size: 18px; }
 .importar-btn-secundario { background: #f3f2ee; color: #333; }
 .importar-btn-secundario:hover { background: #e8e6e0; }
 .importar-acoes button:disabled { opacity: 0.7; cursor: not-allowed; }
+.importar-acoes #importar-download { flex: 1; min-width: 0; }
 
 .importar-dots { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
 .importar-dots span {

@@ -103,8 +103,7 @@ function preencherTabelaFalhas(tbody, falhas) {
 }
 
 function renderizarResultado() {
-  const { musicas, falhas, pendentes, totalNaPlaylist, tamanhoLote, proximoOffset } = estado;
-  const processadas = musicas.length + falhas.length;
+  const { musicas, falhas, pendentes, totalNaPlaylist, tamanhoLote } = estado;
 
   nomePlaylistEl.textContent = estado.nomePlaylist;
   contagemFaixasEl.textContent = `${totalNaPlaylist} faixas na playlist`;
@@ -123,8 +122,8 @@ function renderizarResultado() {
   preencherTabelaFalhas(tbodyFalhasEl, falhas);
   preencherTabela(tbodyPendentesEl, pendentes, (p) => p.titulo);
 
-  if (proximoOffset !== null && pendentes.length > 0) {
-    const proximoLote = Math.min(tamanhoLote, totalNaPlaylist - processadas);
+  if (pendentes.length > 0) {
+    const proximoLote = Math.min(tamanhoLote, pendentes.length);
     maisTextoEl.textContent = `Carregar mais ${proximoLote}`;
     mostrar(maisBtn);
   } else {
