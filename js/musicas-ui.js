@@ -1256,7 +1256,7 @@ function renderMusicaView() {
           </button>
           <button class="musica-fonte-badge musica-avaliar-badge${AVALIACAO_CATEGORIAS.every(cat => musica[cat.key] != null) ? ' avaliar-completa' : ''}" onclick="scrollParaAvaliacaoInline()">
             <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">reviews</span>
-            <span class="toolbar-btn-label">Avaliar</span>
+            <span class="toolbar-btn-label">${AVALIACAO_CATEGORIAS.map(cat => obterLabelNivel(cat.key, musica[cat.key])).filter(Boolean).join(' • ') || 'Avaliar'}</span>
           </button>
         </div>
         <!-- Mobile: botão apps com menu de duas etapas (lista → edição) -->
