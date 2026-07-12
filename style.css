@@ -572,6 +572,10 @@ body {
 }
 .drive-sync-group { display: flex; gap: 6px; }
 .drive-sync-status { font-size: 0.78rem; color: #999; white-space: nowrap; }
+/* Exceção à regra de ícone-only no mobile: essa é a ação de descoberta do recurso, então mantém o texto e destaca em azul nos dois tamanhos */
+.nav-btn.drive-connect-btn { background: #5b7cf6; color: #fff; }
+.nav-btn.drive-connect-btn:hover { background: #4a6be8; }
+.drive-explicacao-lista { margin: 0 0 20px; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; color: #444; line-height: 1.4; }
 
 /* ── Botões ─────────────────────────────────────────────────────────────────── */
 .nav-btn-primary {

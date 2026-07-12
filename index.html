@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=123">
+<link rel="stylesheet" href="style.css?v=125">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0..1,0" />
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -107,6 +107,27 @@
         <span onclick="setAndRun('A, C, E?')">A, C, E?</span>
       </div>
       <div id="results"></div>
+    </div>
+  </div>
+</div>
+
+<div id="drive-explicacao-modal" class="modal-overlay modal-overlay-center hidden" onclick="if(event.target===this) fecharDriveExplicacaoModal()">
+  <div class="modal-content modal-content-small">
+    <div class="modal-header">
+      <h2><span class="material-symbols-outlined">cloud</span> Sincronize com o Google Drive</h2>
+      <button class="modal-close" onclick="fecharDriveExplicacaoModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="fav-modal-body">
+      <ul class="drive-explicacao-lista">
+        <li>Acesse sua biblioteca de músicas em mais de um aparelho.</li>
+        <li>Suas músicas continuam salvas normalmente neste aparelho também — o Drive é só uma cópia de sincronização, você nunca perde acesso local.</li>
+        <li>O Uque só enxerga os arquivos que ele mesmo cria — uma pasta "Uque backup" no seu Drive — nunca o resto dos seus arquivos.</li>
+        <li>Nada acontece sozinho: você decide quando enviar ("Sincronizar agora") e quando trazer mudanças de outro aparelho ("Atualizar do Drive").</li>
+      </ul>
+      <div class="excluir-tudo-acoes">
+        <button class="nav-btn nav-btn-primary" onclick="fecharDriveExplicacaoModal(); conectarDrive();">Conectar ao Google Drive</button>
+        <button class="nav-btn" onclick="fecharDriveExplicacaoModal()">Agora não</button>
+      </div>
     </div>
   </div>
 </div>
@@ -344,7 +365,7 @@
 <script src="js/musicas.js?v=68"></script>
 <script src="js/drive.js?v=4"></script>
 <script src="js/ui.js?v=37"></script>
-<script src="js/musicas-ui.js?v=128"></script>
+<script src="js/musicas-ui.js?v=129"></script>
 <script src="js/app.js?v=52"></script>
 </body>
 </html>

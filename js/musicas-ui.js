@@ -2195,8 +2195,8 @@ function renderDriveSyncUI() {
   if (!estado.conectado) {
     const conectando = _driveUiOcupado === 'conectando';
     wrap.innerHTML = `
-      <button class="nav-btn" onclick="conectarDrive()" ${conectando ? 'disabled' : ''}>
-        <span class="material-symbols-outlined">cloud</span><span class="toolbar-btn-label">${conectando ? `Conectando${DRIVE_DOTS_HTML}` : 'Conectar ao Drive'}</span>
+      <button class="nav-btn drive-connect-btn" onclick="abrirDriveExplicacaoModal()" ${conectando ? 'disabled' : ''}>
+        <span class="material-symbols-outlined">cloud</span><span>${conectando ? `Conectando${DRIVE_DOTS_HTML}` : 'Conectar ao Drive'}</span>
       </button>`;
     return;
   }
@@ -2291,6 +2291,14 @@ function atualizarDoDrive() {
       alert('Não consegui atualizar do Drive agora. Tente de novo em instantes.');
     }
   );
+}
+
+function abrirDriveExplicacaoModal() {
+  document.getElementById('drive-explicacao-modal').classList.remove('hidden');
+}
+
+function fecharDriveExplicacaoModal() {
+  document.getElementById('drive-explicacao-modal').classList.add('hidden');
 }
 
 function abrirDriveEncontradoModal() {
