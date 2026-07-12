@@ -65,6 +65,13 @@ Code/comments/UI copy are in Portuguese (pt-BR). Function names follow Portugues
 
 Single `style.css` file (~2350 lines), no preprocessor. Responsive behavior (mobile vs. desktop layouts, bottom sheets vs. inline panels) is handled with media queries and toggled classes rather than separate templates — check existing patterns (e.g. how the avaliação/rating UI or filter sheets differ between mobile and desktop) before adding new responsive UI.
 
+### Recurring interaction conventions
+
+These are patterns the user has asked for repeatedly across different features — apply them by default to new UI rather than waiting to be told again:
+
+- **Toolbar buttons show icon + label on desktop, icon-only on mobile.** Give the button's text a `<span class="toolbar-btn-label">`; the shared rule at `@media (max-width: 600px) { .toolbar-btn-label { display: none; } }` in `style.css` collapses it to icon-only automatically. Don't build a separate icon-only variant by hand.
+- **Completed/active state = brand blue fill.** When a toggle, badge, or filter represents something the user has already "done" or turned on (modo aprendiz options set, autorrolagem running, an avaliação fully filled in, a filter applied), give it `background: #5b7cf6; color: #fff;` (see `.aprendiz-split-btn.active`, `.autoscroll-start-btn.active`, `.avaliar-completa`) rather than leaving it in the neutral gray (`#f3f2ee`/`#444`) idle state.
+
 ## scripts/ + worker/ (Spotify playlist import)
 
 `scripts/importa_playlist_spotify.py` is the original standalone Python tool, run locally (not part of the deployed site), that turns a Spotify playlist into a JSON file in the app's backup format (importable via the site's backup-import feature). It reads the playlist via Spotify's public embed (no token needed), resolves each track to a Cifra Club page (direct URL slug, falling back to Cifra Club's search API for covers/mismatches), and extracts the cifra text + tom. Requires `pip3 install requests beautifulsoup4`; run with `--debug` to see search-fallback diagnostics.
@@ -87,4 +94,4 @@ Progress:
 4. ✅ Created a Cloudflare account, deployed the Worker (`uque-import.tatidigitaldesigner.workers.dev`), updated `WORKER_URL`, and verified end-to-end against a live 50-track Spotify playlist through the browser preview. Hit the free plan's 50-subrequest limit on large playlists, fixed by capping batches at 10 tracks with a user-facing "Carregar mais" flow rather than paying for the Workers Paid plan.
 5. ✅ Redesigned the import UX based on user-provided mockups (playlist header, segmented progress, collapsible sections, per-row delete, animated loading dots, public-playlist validation) and implemented the "Pesquise uma música" tab end-to-end (single-song search + copy + direct add-to-library).
 6. ✅ UX polish round: copy button includes título/artista/tom (matches the paste-parser format), not-found message no longer mentions Cifra Club, both "add to library" actions (single-song and now also playlist-wide via the new "Adicionar X à biblioteca" button) redirect to `index.html` with a success toast instead of just flipping the button label in place, and a "Pesquisar uma música" shortcut was added to the "Adicionar música" menu.
-7. ⬜ Not started (fase 7): confirm `importar.html`/`js/importar.js` ship correctly alongside the rest of the static site once pushed to GitHub Pages (no server-side routing needed since it's a plain static page, but worth a sanity check after the next deploy).
+7. ✅ Merged `scripts/import-spotify-playlist` directly into `main` and pushed. Verified live on GitHub Pages (`https://tati-design.github.io/uque-cifras`) that `importar.html`/`js/importar.js` ship correctly and the full flow works end-to-end in production (menu entry → tab routing → real Worker search returning a cifra).

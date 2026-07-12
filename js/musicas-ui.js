@@ -124,6 +124,14 @@ function _renderAvaliacaoCategoriasBody(draft, onSelecionar, onLimpar, counts) {
 
 function _renderAvaliacaoInline(musica) {
   return `
+    <div class="musica-genero-inline">
+      <span class="avaliacao-inline-titulo">Gênero</span>
+      <button class="genero-inline-btn" onclick="abrirGeneroMusicaModal()">
+        <span class="material-symbols-outlined">${GENERO_ICONS[musica.genero] || 'sell'}</span>
+        ${musica.genero || 'Outros'}
+        <span class="material-symbols-outlined genero-inline-chevron">chevron_right</span>
+      </button>
+    </div>
     <div class="musica-avaliacao-inline" id="musica-avaliacao-inline">
       <div class="avaliacao-inline-titulo">Avalie como é tocar essa música</div>
       <div class="avaliacao-inline-subtitulo">Use isso como filtros para achar a música certa na hora certa</div>
@@ -215,7 +223,7 @@ function atualizarMenuModoNovato() {
   const btn = document.getElementById('btn-modo-novato');
   if (!btn) return;
   const ativo = modoSimplificar || modoNomes;
-  btn.innerHTML = `<span class="material-symbols-outlined">${ativo ? 'toggle_on' : 'toggle_off'}</span> Modo Aprendiz`;
+  btn.innerHTML = `<span class="material-symbols-outlined">school</span> Modo Aprendiz`;
   btn.style.color = ativo ? '#5b7cf6' : '';
 }
 
@@ -331,6 +339,27 @@ function abrirModalGenero() {
 
 function fecharModalGenero() {
   document.getElementById('genero-modal').classList.add('hidden');
+}
+
+function abrirGeneroMusicaModal() {
+  const musica = buscarMusica(musicaAtualId);
+  if (!musica) return;
+  document.getElementById('genero-modal-body').innerHTML = `
+    <p class="genero-modal-subtitulo">Gênero de "${musica.titulo}"</p>
+    <div class="genero-modal-lista">
+      ${GENEROS.map(g => `<button class="genero-modal-opt${(musica.genero || 'Outros') === g ? ' active' : ''}" onclick="selecionarGeneroMusicaAtual('${g.replace(/'/g,"\\'")}')">
+        <span class="material-symbols-outlined">${GENERO_ICONS[g] || 'music_note'}</span>${g}
+      </button>`).join('')}
+    </div>
+  `;
+  document.getElementById('genero-modal').classList.remove('hidden');
+}
+
+function selecionarGeneroMusicaAtual(genero) {
+  if (!musicaAtualId) return;
+  atualizarMusica(musicaAtualId, { genero });
+  fecharModalGenero();
+  renderMusicaView();
 }
 
 function excluirSelecionadas() {
@@ -575,9 +604,21 @@ function renderMusicasLista() {
   if (!lista.length) {
     musicaFiltroGenero = 'todos';
     musicaFiltroArtista = 'todos';
-    wrap.innerHTML = `<div class="fav-empty">Nenhuma música salva ainda.<br>Clique em "Adicionar" para colar a cifra de uma música.</div>`;
+    wrap.innerHTML = `<div class="fav-empty">
+      ${EMPTY_ILUSTRACAO_SVG}
+      Nenhuma música salva ainda.<br>Clique em "Adicionar" para colar a cifra de uma música.
+      <div class="fav-empty-botoes" id="fav-empty-botoes">
+        <button class="nav-btn nav-btn-primary" onclick="abrirOnboarding()">Começar a usar</button>
+      </div>
+    </div>`;
+    const addWrap = document.querySelector('.musicas-add-wrap-mobile');
+    const botoesContainer = document.getElementById('fav-empty-botoes');
+    if (addWrap && botoesContainer) {
+      addWrap.classList.add('fav-empty-add-wrap');
+      botoesContainer.appendChild(addWrap);
+    }
     const addBtnVazio = document.querySelector('.musicas-add-bottom');
-    if (addBtnVazio) addBtnVazio.style.display = '';
+    if (addBtnVazio) { addBtnVazio.style.display = ''; addBtnVazio.classList.add('musicas-add-bottom-secondary'); }
     return;
   }
 
@@ -680,7 +721,7 @@ function renderMusicasLista() {
       <div id="adicionar-menu-desktop" class="dropdown-menu musicas-add-menu hidden">
         <button onclick="abrirAdicionarMusicaModal()"><span class="material-symbols-outlined">content_paste</span> Colar cifra</button>
         <button onclick="abrirSeletorImportacao()"><span class="material-symbols-outlined">upload</span> Importar arquivo de músicas</button>
-        <button onclick="abrirImportarSpotify()"><span class="material-symbols-outlined">library_music</span> Importar do Spotify</button>
+        <button onclick="abrirImportarSpotify()"><span class="material-symbols-outlined">library_music</span> Importar playlist</button>
         <button onclick="abrirPesquisarMusica()"><span class="material-symbols-outlined">search</span> Pesquisar uma música</button>
       </div>
     </div>
@@ -717,8 +758,13 @@ function renderMusicasLista() {
 
   if (musicasSelecionadas.size > 0) html += `<div class="selecao-bar-spacer"></div>`;
   wrap.innerHTML = html;
+  const addWrap = document.querySelector('.musicas-add-wrap-mobile');
+  if (addWrap && addWrap.classList.contains('fav-empty-add-wrap')) {
+    addWrap.classList.remove('fav-empty-add-wrap');
+    document.getElementById('tab-musicas').appendChild(addWrap);
+  }
   const addBtn = document.querySelector('.musicas-add-bottom');
-  if (addBtn) addBtn.style.display = (musicasSelecionadas.size > 0 || window.innerWidth > 700) ? 'none' : '';
+  if (addBtn) { addBtn.style.display = (musicasSelecionadas.size > 0 || window.innerWidth > 700) ? 'none' : ''; addBtn.classList.remove('musicas-add-bottom-secondary'); }
   const addBtnControles = document.querySelector('.musicas-add-controls-btn');
   if (addBtnControles) addBtnControles.style.display = musicasSelecionadas.size > 0 ? 'none' : '';
   if (buscaTinhaFoco) {
@@ -831,6 +877,130 @@ function abrirPesquisarMusica() {
   window.location.href = 'importar.html?aba=musica';
 }
 
+// ─── Ilustração de empty state (ukulele + notas flutuantes, reaproveitável) ──────
+const EMPTY_ILUSTRACAO_SVG = `
+<svg class="empty-illustration-svg" viewBox="0 0 240 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g transform="translate(120,140)">
+    <g class="empty-uke">
+      <rect x="-13" y="-58" width="26" height="20" rx="6" fill="#4a3626"/>
+      <circle cx="-17" cy="-52" r="3.2" fill="#5b7cf6"/>
+      <circle cx="-17" cy="-40" r="3.2" fill="#5b7cf6"/>
+      <circle cx="17" cy="-52" r="3.2" fill="#5b7cf6"/>
+      <circle cx="17" cy="-40" r="3.2" fill="#5b7cf6"/>
+      <rect x="-6" y="-40" width="12" height="56" fill="#d1a35c"/>
+      <rect x="-6" y="-26" width="12" height="2" fill="#fff8ec" opacity="0.5"/>
+      <rect x="-6" y="-12" width="12" height="2" fill="#fff8ec" opacity="0.5"/>
+      <rect x="-6" y="2" width="12" height="2" fill="#fff8ec" opacity="0.5"/>
+      <ellipse cx="0" cy="62" rx="44" ry="50" fill="#f0c987" stroke="#b8860b" stroke-width="3"/>
+      <circle cx="0" cy="52" r="12" fill="#4a3626"/>
+      <rect x="-15" y="96" width="30" height="7" rx="3" fill="#4a3626"/>
+      <line x1="-3.6" y1="-38" x2="-3.6" y2="96" stroke="#fff8ec" stroke-width="1.2" opacity="0.85"/>
+      <line x1="-1.2" y1="-38" x2="-1.2" y2="96" stroke="#fff8ec" stroke-width="1.2" opacity="0.85"/>
+      <line x1="1.2" y1="-38" x2="1.2" y2="96" stroke="#fff8ec" stroke-width="1.2" opacity="0.85"/>
+      <line x1="3.6" y1="-38" x2="3.6" y2="96" stroke="#fff8ec" stroke-width="1.2" opacity="0.85"/>
+    </g>
+  </g>
+  <g transform="translate(186,44)"><g class="empty-note empty-note-1">
+    <ellipse cx="0" cy="0" rx="5.5" ry="4" transform="rotate(-20)" fill="#5b7cf6"/>
+    <rect x="4.5" y="-26" width="2.2" height="27" fill="#5b7cf6"/>
+    <path d="M6.7,-26 C13,-24 13,-16 6.7,-14 Z" fill="#5b7cf6"/>
+  </g></g>
+  <g transform="translate(200,92) scale(0.8)"><g class="empty-note empty-note-2">
+    <ellipse cx="0" cy="0" rx="5.5" ry="4" transform="rotate(-20)" fill="#b8860b"/>
+    <rect x="4.5" y="-26" width="2.2" height="27" fill="#b8860b"/>
+    <path d="M6.7,-26 C13,-24 13,-16 6.7,-14 Z" fill="#b8860b"/>
+  </g></g>
+  <g transform="translate(38,50) scale(0.7)"><g class="empty-note empty-note-3">
+    <ellipse cx="0" cy="0" rx="5.5" ry="4" transform="rotate(-20)" fill="#5b7cf6"/>
+    <rect x="4.5" y="-26" width="2.2" height="27" fill="#5b7cf6"/>
+    <path d="M6.7,-26 C13,-24 13,-16 6.7,-14 Z" fill="#5b7cf6"/>
+  </g></g>
+</svg>`;
+
+// ─── Onboarding (empty state → "Começar a usar") ─────────────────────────────────
+const ONBOARDING_PASSOS = [
+  {
+    img: 'assets/onboarding/tela1-biblioteca.png',
+    titulo: 'Sua biblioteca de cifras, mesmo sem internet',
+    corpo: 'Chega de pesquisar a mesma música toda vez. Monte sua biblioteca, edite cada cifra do seu jeito e leve para qualquer dispositivo.',
+    acoes: [{ label: 'Continuar', tipo: 'primary', acao: 'continuar' }],
+  },
+  {
+    img: 'assets/onboarding/tela2-acordes.png',
+    titulo: 'Toque cada acorde do seu jeito',
+    corpo: 'Salve sua forma preferida de tocar cada acorde. E destaque os mais difíceis para mantê-los sempre visíveis enquanto toca.',
+    acoes: [{ label: 'Continuar', tipo: 'primary', acao: 'continuar' }],
+  },
+  {
+    img: 'assets/onboarding/tela3-aprendiz.png',
+    titulo: 'Tá difícil de tocar? Ative o modo aprendiz',
+    corpo: 'Simplifique acordes, veja o nome dos que você ainda não conhece e esconda as tabulaturas.',
+    acoes: [{ label: 'Continuar', tipo: 'primary', acao: 'continuar' }],
+  },
+  {
+    img: 'assets/onboarding/tela4-playlist.png',
+    titulo: 'Transforme suas playlists em cifras',
+    corpo: 'Cole o link de uma playlist e receba as cifras prontas na sua biblioteca.',
+    acoes: [
+      { label: 'Fechar', tipo: 'secondary', acao: 'fechar' },
+      { label: 'Importar playlist', tipo: 'primary', acao: 'importar' },
+    ],
+  },
+];
+
+let onboardingPasso = 0;
+
+function abrirOnboarding() {
+  onboardingPasso = 0;
+  renderOnboardingPasso();
+  document.getElementById('onboarding-modal').classList.remove('hidden');
+}
+
+function fecharOnboarding() {
+  document.getElementById('onboarding-modal').classList.add('hidden');
+}
+
+function onboardingVoltar() {
+  if (onboardingPasso <= 0) return;
+  onboardingPasso--;
+  renderOnboardingPasso();
+}
+
+function onboardingExecutarAcao(acao) {
+  if (acao === 'continuar') {
+    if (onboardingPasso < ONBOARDING_PASSOS.length - 1) {
+      onboardingPasso++;
+      renderOnboardingPasso();
+    }
+  } else if (acao === 'fechar') {
+    fecharOnboarding();
+  } else if (acao === 'importar') {
+    fecharOnboarding();
+    abrirImportarSpotify();
+  }
+}
+
+function renderOnboardingPasso() {
+  const dots = document.getElementById('onboarding-dots');
+  dots.innerHTML = ONBOARDING_PASSOS.map((_, i) =>
+    `<span class="onboarding-dot${i === onboardingPasso ? ' active' : ''}"></span>`
+  ).join('');
+
+  document.getElementById('onboarding-btn-voltar').style.visibility = onboardingPasso === 0 ? 'hidden' : 'visible';
+
+  const container = document.getElementById('onboarding-passos');
+  container.innerHTML = ONBOARDING_PASSOS.map((p, i) => `
+    <div class="onboarding-passo${i === onboardingPasso ? ' active' : ''}">
+      <div class="onboarding-img" style="background-image:url('${p.img}')"></div>
+      <h2 class="onboarding-titulo">${p.titulo}</h2>
+      <p class="onboarding-corpo">${p.corpo}</p>
+      <div class="onboarding-acoes">
+        ${p.acoes.map(a => `<button class="nav-btn${a.tipo === 'primary' ? ' nav-btn-primary' : ''}" onclick="onboardingExecutarAcao('${a.acao}')">${a.label}</button>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
 // ─── Modal: adicionar música ────────────────────────────────────────────────────
 function abrirAdicionarMusicaModal() {
   fecharAdicionarMenus();
@@ -892,6 +1062,7 @@ function abrirMusicaView(id, semHistorico) {
 }
 
 function fecharMusicaView() {
+  cancelarRetomadaAutoScroll();
   pararLoopAutoScroll();
   autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
   acordesMobileAbertos = false;
@@ -926,6 +1097,7 @@ window.addEventListener('popstate', (e) => {
   // Sem hash = fechando a música
   if (musicaAtualId) {
     _musicaViewEmpurrouHistorico = false;
+    cancelarRetomadaAutoScroll();
     pararLoopAutoScroll();
     autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
     acordesMobileAbertos = false;
@@ -952,10 +1124,29 @@ function navegarMusica(direcao) {
   musicaAtualId = ids[novoIdx];
   tomMenuAberto = false;
   // acordesMobileAbertos preservado intencionalmente: persiste ao navegar entre músicas
+  cancelarRetomadaAutoScroll();
+  const retomarAutoScroll = autoScrollState.ativo;
   pararLoopAutoScroll();
   autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
   history.replaceState({ musicaId: musicaAtualId }, '', '#m/' + musicaAtualId);
   renderMusicaView();
+
+  if (retomarAutoScroll) {
+    const idAlvo = musicaAtualId;
+    autoScrollContagemRestante = 30;
+    renderToolbarAutoScroll();
+    autoScrollRetomarIntervalId = setInterval(() => {
+      const aindaValido = musicaAtualId === idAlvo && !document.getElementById('view-musica').classList.contains('hidden');
+      if (!aindaValido) { cancelarRetomadaAutoScroll(); return; }
+      autoScrollContagemRestante--;
+      if (autoScrollContagemRestante <= 0) {
+        cancelarRetomadaAutoScroll();
+        iniciarAutoScroll();
+      } else {
+        renderToolbarAutoScroll();
+      }
+    }, 1000);
+  }
 }
 
 // ─── Renderização da view de música (única função, CSS lida com mobile/desktop) ─
@@ -1025,7 +1216,7 @@ function renderMusicaView() {
         </button>
         <div class="aprendiz-split-btn${(modoSimplificar || modoNomes || modoEsconderTab) ? ' active' : ''}">
           <button class="aprendiz-main" onclick="toggleModoNovato()" title="Modo Aprendiz">
-            <span class="material-symbols-outlined">school</span>
+            <span class="material-symbols-outlined">school</span><span class="toolbar-btn-label"> Modo Aprendiz</span>
           </button>
           <button class="aprendiz-arrow" onclick="toggleAprendizMenu(event)" title="Opções do modo aprendiz">
             <span class="material-symbols-outlined">expand_more</span>
@@ -1046,8 +1237,8 @@ function renderMusicaView() {
           </div>
         </div>
         <div class="autoscroll-wrap">
-          <button class="nav-btn autoscroll-start-btn${s.ativo ? ' active' : ''}" onclick="${s.ativo ? 'alternarAutoScrollPlay()' : 'iniciarAutoScroll()'}" title="Autorrolagem">
-            <span class="material-symbols-outlined">${s.ativo ? (s.rodando ? 'pause' : 'play_arrow') : 'arrow_cool_down'}</span><span class="autoscroll-start-label"> Autorrolagem</span>
+          <button class="nav-btn autoscroll-start-btn${s.ativo ? ' active' : ''}${autoScrollContagemRestante != null ? ' contagem' : ''} tooltip-imediato" data-tooltip="Autorrolagem (atalho: barra de espaço)" aria-label="Autorrolagem" onclick="${s.ativo ? 'alternarAutoScrollPlay()' : 'iniciarAutoScroll()'}">
+            <span class="material-symbols-outlined">${autoScrollContagemRestante != null ? 'timer' : (s.ativo ? (s.rodando ? 'pause' : 'play_arrow') : 'arrow_cool_down')}</span><span class="autoscroll-start-label"> ${autoScrollContagemRestante != null ? `Scroll em ${autoScrollContagemRestante}...` : 'Autorrolagem'}</span>
           </button>
           ${s.ativo ? `<div class="autoscroll-controls">
             <button class="icon-btn" onclick="reiniciarAutoScroll()" title="Reiniciar"><span class="material-symbols-outlined">replay</span></button>
@@ -1059,7 +1250,11 @@ function renderMusicaView() {
         <!-- Desktop: botões com popup próprio (mesmo padrão do Tom) -->
         <div class="toolbar-desktop-extras">
           ${renderFonteControl()}
-          <button class="musica-fonte-badge musica-avaliar-badge" onclick="scrollParaAvaliacaoInline()">
+          <button class="musica-fonte-badge musica-avaliar-badge" onclick="abrirGeneroMusicaModal()">
+            <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">${GENERO_ICONS[musica.genero] || 'sell'}</span>
+            <span class="toolbar-btn-label">Gênero: ${musica.genero || 'Outros'}</span>
+          </button>
+          <button class="musica-fonte-badge musica-avaliar-badge${AVALIACAO_CATEGORIAS.every(cat => musica[cat.key] != null) ? ' avaliar-completa' : ''}" onclick="scrollParaAvaliacaoInline()">
             <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">reviews</span>
             <span class="toolbar-btn-label">Avaliar</span>
           </button>
@@ -1594,6 +1789,7 @@ function _renderOpcoesMenu() {
 }
 
 function _renderOpcoesMenuConteudo() {
+  const musicaAtual = buscarMusica(musicaAtualId);
   if (opcoesMenuView === 'fonte') {
     const idx = CIFRA_FONT_SIZES.indexOf(cifraFontSize);
     return `
@@ -1620,6 +1816,11 @@ function _renderOpcoesMenuConteudo() {
     <button class="opcoes-menu-row" onclick="fecharOpcoesMenu();scrollParaAvaliacaoInline();event.stopPropagation()">
       <span class="material-symbols-outlined">reviews</span>
       <span class="opcoes-menu-row-label">Avaliar</span>
+      <span class="material-symbols-outlined opcoes-menu-row-chevron">chevron_right</span>
+    </button>
+    <button class="opcoes-menu-row" onclick="fecharOpcoesMenu();abrirGeneroMusicaModal();event.stopPropagation()">
+      <span class="material-symbols-outlined">${GENERO_ICONS[musicaAtual?.genero] || 'sell'}</span>
+      <span class="opcoes-menu-row-label">Gênero: ${musicaAtual?.genero || 'Outros'}</span>
       <span class="material-symbols-outlined opcoes-menu-row-chevron">chevron_right</span>
     </button>
   `;
@@ -1700,13 +1901,21 @@ function selecionarTom(notaAlvo) {
 function resetarTom() { salvarTransposicao(0); }
 
 // ─── Autorrolagem ──────────────────────────────────────────────────────────────
-let autoScrollState = { ativo: false, rodando: false, velocidade: 3, rafId: null, ultimoTs: null, acumulado: 0 };
+let autoScrollState = { ativo: false, rodando: false, velocidade: 6, rafId: null, ultimoTs: null, acumulado: 0 };
+let autoScrollRetomarIntervalId = null;
+let autoScrollContagemRestante = null;
+
+function cancelarRetomadaAutoScroll() {
+  if (autoScrollRetomarIntervalId) { clearInterval(autoScrollRetomarIntervalId); autoScrollRetomarIntervalId = null; }
+  autoScrollContagemRestante = null;
+}
 
 function obterCifraScrollEl() {
   return document.getElementById('musica-cifra-scroll');
 }
 
 function iniciarAutoScroll() {
+  cancelarRetomadaAutoScroll();
   autoScrollState.ativo = true;
   autoScrollState.rodando = true;
   renderToolbarAutoScroll();
@@ -1714,12 +1923,14 @@ function iniciarAutoScroll() {
 }
 
 function fecharAutoScroll() {
+  cancelarRetomadaAutoScroll();
   pararLoopAutoScroll();
   autoScrollState = { ativo: false, rodando: false, velocidade: autoScrollState.velocidade, rafId: null, ultimoTs: null, acumulado: 0 };
   renderToolbarAutoScroll();
 }
 
 function alternarAutoScrollPlay() {
+  cancelarRetomadaAutoScroll();
   autoScrollState.rodando = !autoScrollState.rodando;
   if (autoScrollState.rodando) iniciarLoopAutoScroll();
   else pararLoopAutoScroll();
@@ -1727,12 +1938,13 @@ function alternarAutoScrollPlay() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && autoScrollState.ativo) {
-    const tag = document.activeElement?.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    e.preventDefault();
-    alternarAutoScrollPlay();
-  }
+  if (e.code !== 'Space') return;
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if (document.getElementById('view-musica')?.classList.contains('hidden')) return;
+  e.preventDefault();
+  if (autoScrollState.ativo) alternarAutoScrollPlay();
+  else iniciarAutoScroll();
 });
 
 function reiniciarAutoScroll() {
@@ -2000,16 +2212,35 @@ function importarBackupArquivo(input) {
   reader.readAsText(arquivo);
 }
 
-function limparTudo() {
+function abrirExcluirTudoModal() {
   fecharMusicasMenu();
   const total = listarMusicas().length + listarFavoritos().length;
-  if (!total) { alert('Não há nada salvo para limpar.'); return; }
-  if (!confirm(`Isso vai apagar TODAS as ${listarMusicas().length} música(s) e ${listarFavoritos().length} formato(s) de acorde favoritado(s) salvos neste navegador. Essa ação não pode ser desfeita.\n\nRecomendamos exportar um backup antes. Quer continuar mesmo assim?`)) return;
+  if (!total) { alert('Não há nada salvo para excluir.'); return; }
+  document.getElementById('excluir-tudo-modal-texto').textContent =
+    `Isso vai apagar todas as ${listarMusicas().length} música(s) e ${listarFavoritos().length} formato(s) de acorde favoritado(s) salvos neste navegador. Essa ação não pode ser desfeita.`;
+  document.getElementById('excluir-tudo-modal').classList.remove('hidden');
+}
+
+function fecharExcluirTudoModal() {
+  document.getElementById('excluir-tudo-modal').classList.add('hidden');
+}
+
+function _excluirTudoConfirmado() {
   salvarListaMusicas([]);
   salvarListaFavoritos([]);
   fecharMusicaView();
   renderFavoritos();
-  alert('Tudo foi apagado.');
+  fecharExcluirTudoModal();
+  mostrarToast('Tudo foi excluído.');
+}
+
+function excluirTudoSemBackup() {
+  _excluirTudoConfirmado();
+}
+
+function excluirTudoComBackup() {
+  exportarBackup();
+  _excluirTudoConfirmado();
 }
 
 // ─── Redimensionar coluna de acordes (desktop) ─────────────────────────────────

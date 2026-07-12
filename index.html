@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=110">
+<link rel="stylesheet" href="style.css?v=120">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0..1,0" />
 </head>
 <body>
@@ -43,7 +43,7 @@
         <hr style="border:none;border-top:1px solid #eee;margin:4px 0">
         <button onclick="exportarBackup()"><span class="material-symbols-outlined">download</span> Exportar backup (.json)</button>
         <button onclick="abrirSeletorImportacao()"><span class="material-symbols-outlined">upload</span> Importar backup (.json)</button>
-        <button class="dropdown-menu-btn-danger" onclick="limparTudo()"><span class="material-symbols-outlined">delete_forever</span> Limpar tudo</button>
+        <button class="dropdown-menu-btn-danger" onclick="abrirExcluirTudoModal()"><span class="material-symbols-outlined">delete_forever</span> Excluir tudo</button>
       </div>
     </div>
   </header>
@@ -58,7 +58,7 @@
       <div id="adicionar-menu-mobile" class="dropdown-menu musicas-add-menu musicas-add-menu-mobile hidden">
         <button onclick="abrirAdicionarMusicaModal()"><span class="material-symbols-outlined">content_paste</span> Colar cifra</button>
         <button onclick="abrirSeletorImportacao()"><span class="material-symbols-outlined">upload</span> Importar arquivo de músicas</button>
-        <button onclick="abrirImportarSpotify()"><span class="material-symbols-outlined">library_music</span> Importar do Spotify</button>
+        <button onclick="abrirImportarSpotify()"><span class="material-symbols-outlined">library_music</span> Importar playlist</button>
         <button onclick="abrirPesquisarMusica()"><span class="material-symbols-outlined">search</span> Pesquisar uma música</button>
       </div>
     </div>
@@ -147,6 +147,38 @@
       <button class="modal-close" onclick="fecharModalGenero()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div id="genero-modal-body" class="genero-modal-body"></div>
+  </div>
+</div>
+
+<div id="excluir-tudo-modal" class="modal-overlay modal-overlay-center hidden" onclick="if(event.target===this) fecharExcluirTudoModal()">
+  <div class="modal-content modal-content-small">
+    <div class="modal-header">
+      <h2><span class="material-symbols-outlined">delete_forever</span> Excluir tudo</h2>
+      <button class="modal-close" onclick="fecharExcluirTudoModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="fav-modal-body">
+      <p id="excluir-tudo-modal-texto" class="excluir-tudo-texto"></p>
+      <div class="excluir-tudo-acoes">
+        <button class="nav-btn nav-btn-primary" onclick="excluirTudoComBackup()">Excluir e baixar backup</button>
+        <button class="nav-btn nav-btn-danger" onclick="excluirTudoSemBackup()">Excluir tudo</button>
+        <button class="nav-btn" onclick="fecharExcluirTudoModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="onboarding-modal" class="modal-overlay modal-overlay-center onboarding-overlay hidden">
+  <div class="modal-content modal-content-small onboarding-content">
+    <div class="onboarding-topo">
+      <button class="icon-btn onboarding-voltar" id="onboarding-btn-voltar" onclick="onboardingVoltar()" title="Voltar">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <div class="onboarding-dots" id="onboarding-dots"></div>
+      <button class="icon-btn onboarding-fechar" onclick="fecharOnboarding()" title="Fechar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="onboarding-passos" id="onboarding-passos"></div>
   </div>
 </div>
 
@@ -264,7 +296,7 @@
 <script src="js/favoritos.js?v=37"></script>
 <script src="js/musicas.js?v=66"></script>
 <script src="js/ui.js?v=37"></script>
-<script src="js/musicas-ui.js?v=109"></script>
-<script src="js/app.js?v=49"></script>
+<script src="js/musicas-ui.js?v=120"></script>
+<script src="js/app.js?v=50"></script>
 </body>
 </html>
