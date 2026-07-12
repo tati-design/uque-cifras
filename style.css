@@ -564,10 +564,14 @@ body {
 .brand-logo-desktop { display: block; }
 .brand-logo-mobile { display: none; }
 
-.header-tabs {
-  flex: none;
-  margin-right: auto; /* empurra ações para a direita */
+.drive-sync-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto; /* empurra a área de sync + perfil para a direita */
 }
+.drive-sync-group { display: flex; gap: 6px; }
+.drive-sync-status { font-size: 0.78rem; color: #999; white-space: nowrap; }
 
 /* ── Botões ─────────────────────────────────────────────────────────────────── */
 .nav-btn-primary {
@@ -595,34 +599,6 @@ body {
 .nav-btn .material-symbols-outlined { font-size: 18px; }
 .nav-btn:hover { background: #e8e6e0; }
 .nav-btn.active { background: #5b7cf6; color: #fff; }
-
-/* ── Nav links (dentro do header) ───────────────────────────────────────────── */
-.tabs {
-  display: flex;
-  gap: 2px;
-  background: none;
-  border-radius: 0;
-  padding: 0;
-}
-.tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  color: #999;
-  font-size: 0.88rem;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-  transition: color 0.15s, background 0.15s;
-}
-.tab-btn:hover { color: #333; background: #f3f2ee; }
-.tab-btn.active { color: #1a1a1a; font-weight: 600; background: none; box-shadow: none; }
-.tab-panel.hidden { display: none; }
 
 /* ── Cabeçalho da aba de músicas (desktop) ─────────────────────────────────── */
 /* Botão adicionar música - fixo no rodapé */
@@ -2026,8 +2002,7 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   /* Header mais compacto */
   .site-header { padding: 8px 12px; gap: 8px; margin: 0 -16px 16px; }
 
-  .header-tabs { flex: none; margin-right: auto; }
-  .tab-btn { flex: none; padding: 6px 10px; font-size: 0.82rem; }
+  .drive-sync-status { display: none; }
 
   /* Esconde header da aba (h2 + botão desktop) */
   .musicas-tab-header { display: none; }

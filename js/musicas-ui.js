@@ -2122,6 +2122,7 @@ function toggleMusicasMenu(e) {
   if (e) e.stopPropagation();
   document.getElementById('musicas-menu').classList.toggle('hidden');
   atualizarMenuModoNovato();
+  document.getElementById('btn-desconectar-drive').classList.toggle('hidden', !obterEstadoDrive().conectado);
 }
 
 function fecharMusicasMenu() {
@@ -2157,6 +2158,155 @@ function abrirSeletorImportacao() {
   document.getElementById('backup-file-input').click();
 }
 
+// ─── Modal Buscar acorde ───────────────────────────────────────────────────────
+function abrirBuscarAcordeModal() {
+  fecharMusicasMenu();
+  document.getElementById('buscar-acorde-modal').classList.remove('hidden');
+}
+
+function fecharBuscarAcordeModal() {
+  document.getElementById('buscar-acorde-modal').classList.add('hidden');
+}
+
+// ─── Sincronização com Google Drive (UI) ───────────────────────────────────────
+function formatarDataRelativaDrive(isoString) {
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const diffMin = Math.round(diffMs / 60000);
+  if (diffMin < 1) return 'agora mesmo';
+  if (diffMin < 60) return `há ${diffMin} min`;
+  const diffHoras = Math.round(diffMin / 60);
+  if (diffHoras < 24) return `há ${diffHoras}h`;
+  const diffDias = Math.round(diffHoras / 24);
+  return `há ${diffDias} dia${diffDias > 1 ? 's' : ''}`;
+}
+
+// "Pendente" = tem mudança local não enviada OU este aparelho nunca sincronizou ainda
+// (mesmo sem edições, o primeiro envio ainda precisa acontecer pra criar o backup no Drive).
+function driveTemMudancasPendentes(estado) {
+  return estado.sujo || !estado.ultimaSincronizacao;
+}
+
+const DRIVE_DOTS_HTML = '<span class="importar-dots"><span></span><span></span><span></span></span>';
+
+function renderDriveSyncUI() {
+  const wrap = document.getElementById('drive-sync-area');
+  const estado = obterEstadoDrive();
+
+  if (!estado.conectado) {
+    const conectando = _driveUiOcupado === 'conectando';
+    wrap.innerHTML = `
+      <button class="nav-btn" onclick="conectarDrive()" ${conectando ? 'disabled' : ''}>
+        <span class="material-symbols-outlined">cloud</span><span class="toolbar-btn-label">${conectando ? `Conectando${DRIVE_DOTS_HTML}` : 'Conectar ao Drive'}</span>
+      </button>`;
+    return;
+  }
+
+  const pendente = driveTemMudancasPendentes(estado);
+  const sincronizando = _driveUiOcupado === 'sincronizando';
+  const atualizando = _driveUiOcupado === 'atualizando';
+  const ocupado = sincronizando || atualizando;
+  wrap.innerHTML = `
+    <div class="drive-sync-group">
+      <button class="nav-btn${pendente ? ' active' : ''}" onclick="sincronizarAgoraDrive()" title="Enviar mudanças para o Drive" ${ocupado ? 'disabled' : ''}>
+        <span class="material-symbols-outlined">cloud_upload</span><span class="toolbar-btn-label">${sincronizando ? `Sincronizando${DRIVE_DOTS_HTML}` : (pendente ? 'Sincronizar agora' : 'Sincronizado')}</span>
+      </button>
+      <button class="nav-btn" onclick="atualizarDoDrive()" title="Puxar a versão mais recente do Drive" ${ocupado ? 'disabled' : ''}>
+        <span class="material-symbols-outlined">cloud_download</span><span class="toolbar-btn-label">${atualizando ? `Atualizando${DRIVE_DOTS_HTML}` : 'Atualizar do Drive'}</span>
+      </button>
+    </div>
+    <div class="drive-sync-status">${estado.ultimaSincronizacao ? `Última vez: ${formatarDataRelativaDrive(estado.ultimaSincronizacao)}` : 'Nunca sincronizado'}</div>`;
+}
+
+let _driveUiOcupado = null; // null | 'conectando' | 'sincronizando' | 'atualizando'
+
+function conectarDrive() {
+  _driveUiOcupado = 'conectando';
+  renderDriveSyncUI();
+  driveConectar(
+    () => {
+      salvarEstadoDrive({ conectado: true, ultimaSincronizacao: null, sujo: false });
+      _driveUiOcupado = null;
+      renderDriveSyncUI();
+      driveVerificarBackupExistente(
+        (existe) => { if (existe) abrirDriveEncontradoModal(); },
+        () => {} // se a checagem falhar, o usuário ainda pode clicar em "Atualizar do Drive" manualmente
+      );
+    },
+    () => { _driveUiOcupado = null; renderDriveSyncUI(); }
+  );
+}
+
+function sincronizarAgoraDrive() {
+  const estado = obterEstadoDrive();
+  if (!driveTemMudancasPendentes(estado) || _driveUiOcupado) return;
+  _driveUiOcupado = 'sincronizando';
+  renderDriveSyncUI();
+  driveSubirBackup(
+    () => {
+      salvarEstadoDrive({ ...obterEstadoDrive(), sujo: false, ultimaSincronizacao: new Date().toISOString() });
+      _driveUiOcupado = null;
+      renderDriveSyncUI();
+    },
+    () => {
+      _driveUiOcupado = null;
+      renderDriveSyncUI();
+      alert('Não consegui sincronizar com o Drive agora. Tente de novo em instantes.');
+    }
+  );
+}
+
+function atualizarDoDrive() {
+  if (_driveUiOcupado) return;
+  _driveUiOcupado = 'atualizando';
+  renderDriveSyncUI();
+  driveBaixarBackup(
+    (dados) => {
+      _driveUiOcupado = null;
+      salvarEstadoDrive({ ...obterEstadoDrive(), ultimaSincronizacao: new Date().toISOString() });
+      renderDriveSyncUI();
+      if (!dados) { alert('Ainda não há nenhum backup salvo no Drive.'); return; }
+      const { musicasAdicionadas, musicasAtualizadas, favoritosAdicionados } = mesclarBackup(dados);
+      renderMusicasLista();
+      if (musicaAtualId) renderMusicaView();
+      renderFavoritos();
+      const partes = [];
+      if (musicasAdicionadas) partes.push(`${musicasAdicionadas} música(s) adicionada(s)`);
+      if (musicasAtualizadas) partes.push(`${musicasAtualizadas} música(s) atualizada(s)`);
+      if (favoritosAdicionados) partes.push(`${favoritosAdicionados} formato(s) de acorde adicionado(s)`);
+      alert(`Atualizado do Drive: ${partes.join(', ') || 'nenhuma novidade'}.`);
+    },
+    () => {
+      _driveUiOcupado = null;
+      renderDriveSyncUI();
+      alert('Não consegui atualizar do Drive agora. Tente de novo em instantes.');
+    }
+  );
+}
+
+function abrirDriveEncontradoModal() {
+  document.getElementById('drive-encontrado-modal').classList.remove('hidden');
+}
+
+function fecharDriveEncontradoModal() {
+  document.getElementById('drive-encontrado-modal').classList.add('hidden');
+}
+
+function abrirDesconectarDriveModal() {
+  fecharMusicasMenu();
+  document.getElementById('drive-desconectar-modal').classList.remove('hidden');
+}
+
+function fecharDesconectarDriveModal() {
+  document.getElementById('drive-desconectar-modal').classList.add('hidden');
+}
+
+function confirmarDesconectarDrive() {
+  driveDesconectar();
+  salvarEstadoDrive({ conectado: false, ultimaSincronizacao: null, sujo: false });
+  renderDriveSyncUI();
+  fecharDesconectarDriveModal();
+}
+
 function importarBackupArquivo(input) {
   const arquivo = input.files[0];
   if (!arquivo) return;
@@ -2164,31 +2314,7 @@ function importarBackupArquivo(input) {
   reader.onload = e => {
     try {
       const dados = JSON.parse(e.target.result);
-      let musicasAdicionadas = 0;
-      let musicasAtualizadas = 0;
-      let favoritosAdicionados = 0;
-
-      if (Array.isArray(dados.musicas)) {
-        const lista = listarMusicas();
-        const idxPorId = Object.fromEntries(lista.map((m, i) => [m.id, i]));
-        dados.musicas.forEach(m => {
-          if (!(m.id in idxPorId)) {
-            lista.push(m);
-            musicasAdicionadas++;
-          } else {
-            // Mescla dados do backup na música existente (restaura avaliações, pins, etc.)
-            lista[idxPorId[m.id]] = { ...lista[idxPorId[m.id]], ...m };
-            musicasAtualizadas++;
-          }
-        });
-        salvarListaMusicas(lista);
-      }
-      if (Array.isArray(dados.favoritos)) {
-        const lista = listarFavoritos();
-        const existentes = new Set(lista.map(f => f.id));
-        dados.favoritos.forEach(f => { if (!existentes.has(f.id)) { lista.push(f); favoritosAdicionados++; } });
-        salvarListaFavoritos(lista);
-      }
+      const { musicasAdicionadas, musicasAtualizadas, favoritosAdicionados } = mesclarBackup(dados);
 
       renderMusicasLista();
       if (musicaAtualId) renderMusicaView();

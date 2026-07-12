@@ -19,14 +19,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ─── Abas: Minhas Músicas / Pesquisar Acorde ───────────────────────────────────
-function setTab(nome) {
-  document.getElementById('tab-musicas').classList.toggle('hidden', nome !== 'musicas');
-  document.getElementById('tab-buscar').classList.toggle('hidden', nome !== 'buscar');
-  document.getElementById('tab-btn-musicas').classList.toggle('active', nome === 'musicas');
-  document.getElementById('tab-btn-buscar').classList.toggle('active', nome === 'buscar');
-}
-
 // ─── Toast (feedback rápido, ex: vindo de importar.html) ───────────────────────
 function mostrarToast(msg, duracaoMs = 3000) {
   let el = document.getElementById('toast');
@@ -52,4 +44,5 @@ if (toastPendente) {
 migrarIdsUnicos();
 migrarGeneros();
 renderMusicasLista();
+renderDriveSyncUI();
 setAndRun('Am7');

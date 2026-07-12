@@ -8,8 +8,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=121">
+<link rel="stylesheet" href="style.css?v=122">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0..1,0" />
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -29,20 +30,20 @@
       <path d="M54.6387 10.1797C56.0194 10.1797 57.1387 11.3 57.1387 12.6807V19.8164C68.5125 23.6333 76.707 34.3787 76.707 47.0381C76.7069 53.2064 74.7601 58.9193 71.4492 63.5986L74.4307 66.5244C77.3864 69.4257 77.4313 74.1747 74.5303 77.1309C71.6291 80.0865 66.881 80.1309 63.9248 77.2305L59.8232 73.2041C58.9509 73.5989 58.0549 73.9503 57.1387 74.2578V76.6816C57.1384 81.7286 53.047 85.8203 48 85.8203C42.953 85.8203 38.8616 81.7286 38.8613 76.6816V74.2578C27.4878 70.4409 19.2932 59.6971 19.293 47.0381C19.293 34.3787 27.4875 23.6333 38.8613 19.8164V12.6807C38.8613 11.3 39.9806 10.1797 41.3613 10.1797C42.742 10.1797 43.8613 11.3 43.8613 12.6807V18.6279C45.2128 18.4328 46.5945 18.3311 48 18.3311C48.5533 18.3311 49.1029 18.347 49.6484 18.3779V29.3447C49.1056 29.2948 48.5558 29.2686 48 29.2686C47.8118 29.2686 47.6243 29.2715 47.4375 29.2773L47.4404 29.252C46.0331 28.9539 42.2682 29.8227 38.8613 31.8457V31.7959C33.6906 34.9029 30.2305 40.5664 30.2305 47.0381C30.2306 53.5094 33.6909 59.1714 38.8613 62.2783V34.5723C40.8045 33.359 42.4145 32.8146 43.8613 32.5713V64.3213C45.1894 64.6381 46.5749 64.8076 48 64.8076C48.5559 64.8076 49.1056 64.7794 49.6484 64.7295V75.6963C49.1029 75.7272 48.5533 75.7451 48 75.7451C46.5945 75.7451 45.2128 75.6415 43.8613 75.4463V76.6816C43.8616 78.9671 45.7144 80.8203 48 80.8203C50.2856 80.8203 52.1384 78.9671 52.1387 76.6816V75.7451H52.1582V17.2539H52.1387V12.6807C52.1387 11.3 53.258 10.1797 54.6387 10.1797ZM57.1387 62.2783C62.3091 59.1714 65.7694 53.5094 65.7695 47.0381C65.7695 40.5664 62.3094 34.9029 57.1387 31.7959V62.2783Z" fill="#517DFE"/>
     </svg>
 
-    <div class="tabs header-tabs">
-      <button id="tab-btn-musicas" class="tab-btn active" onclick="setTab('musicas')">Música</button>
-      <button id="tab-btn-buscar" class="tab-btn" onclick="setTab('buscar')">Acordes</button>
-    </div>
+    <div id="drive-sync-area" class="drive-sync-area"></div>
 
     <div class="menu-wrap">
       <button class="icon-btn" onclick="toggleMusicasMenu(event)" title="Mais opções">
         <span class="material-symbols-outlined">person</span>
       </button>
       <div id="musicas-menu" class="dropdown-menu hidden">
+        <button onclick="abrirBuscarAcordeModal()"><span class="material-symbols-outlined">library_music</span> Buscar acorde</button>
         <button id="btn-modo-novato" onclick="abrirAprendizModal()"><span class="material-symbols-outlined">school</span> Modo Aprendiz</button>
         <hr style="border:none;border-top:1px solid #eee;margin:4px 0">
         <button onclick="exportarBackup()"><span class="material-symbols-outlined">download</span> Exportar backup (.json)</button>
         <button onclick="abrirSeletorImportacao()"><span class="material-symbols-outlined">upload</span> Importar backup (.json)</button>
+        <button id="btn-desconectar-drive" class="hidden" onclick="abrirDesconectarDriveModal()"><span class="material-symbols-outlined">link_off</span> Desconectar do Google Drive</button>
+        <hr style="border:none;border-top:1px solid #eee;margin:4px 0">
         <button class="dropdown-menu-btn-danger" onclick="abrirExcluirTudoModal()"><span class="material-symbols-outlined">delete_forever</span> Excluir tudo</button>
       </div>
     </div>
@@ -64,28 +65,6 @@
     </div>
   </div>
 
-  <div id="tab-buscar" class="tab-panel hidden">
-    <div class="input-row">
-      <input type="text" id="query" placeholder="Ex: Am7  ou  G, C, D  ou  A,C,E?" />
-      <button class="icon-btn input-row-btn" onclick="run()" title="Buscar">
-        <span class="material-symbols-outlined">search</span>
-      </button>
-      <button class="icon-btn input-row-btn" onclick="toggleFavoritosPanel()" title="Meus Acordes">
-        <span class="material-symbols-outlined">kid_star</span>
-      </button>
-    </div>
-    <div class="examples">
-      Exemplos:
-      <span onclick="setAndRun('Am7')">Am7</span>
-      <span onclick="setAndRun('Cmaj7')">Cmaj7</span>
-      <span onclick="setAndRun('G7')">G7</span>
-      <span onclick="setAndRun('F')">F</span>
-      <span onclick="setAndRun('Bm')">Bm</span>
-      <span onclick="setAndRun('G, C, D')">G, C, D</span>
-      <span onclick="setAndRun('A, C, E?')">A, C, E?</span>
-    </div>
-    <div id="results"></div>
-  </div>
 </div><!-- /#view-lista -->
 
 <!-- ═══ VIEW: Música ══════════════════════════════════════════════════════════ -->
@@ -95,6 +74,69 @@
 </div>
 
 <!-- ═══ MODAIS ════════════════════════════════════════════════════════════════ -->
+
+<div id="buscar-acorde-modal" class="modal-overlay hidden" onclick="if(event.target===this) fecharBuscarAcordeModal()">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2><span class="material-symbols-outlined">library_music</span> Buscar acorde</h2>
+      <button class="modal-close" onclick="fecharBuscarAcordeModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="fav-modal-body">
+      <div class="input-row">
+        <input type="text" id="query" placeholder="Ex: Am7  ou  G, C, D  ou  A,C,E?" />
+        <button class="icon-btn input-row-btn" onclick="run()" title="Buscar">
+          <span class="material-symbols-outlined">search</span>
+        </button>
+        <button class="icon-btn input-row-btn" onclick="toggleFavoritosPanel()" title="Meus Acordes">
+          <span class="material-symbols-outlined">kid_star</span>
+        </button>
+      </div>
+      <div class="examples">
+        Exemplos:
+        <span onclick="setAndRun('Am7')">Am7</span>
+        <span onclick="setAndRun('Cmaj7')">Cmaj7</span>
+        <span onclick="setAndRun('G7')">G7</span>
+        <span onclick="setAndRun('F')">F</span>
+        <span onclick="setAndRun('Bm')">Bm</span>
+        <span onclick="setAndRun('G, C, D')">G, C, D</span>
+        <span onclick="setAndRun('A, C, E?')">A, C, E?</span>
+      </div>
+      <div id="results"></div>
+    </div>
+  </div>
+</div>
+
+<div id="drive-encontrado-modal" class="modal-overlay modal-overlay-center hidden" onclick="if(event.target===this) fecharDriveEncontradoModal()">
+  <div class="modal-content modal-content-small">
+    <div class="modal-header">
+      <h2><span class="material-symbols-outlined">cloud_download</span> Backup encontrado no Drive</h2>
+      <button class="modal-close" onclick="fecharDriveEncontradoModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="fav-modal-body">
+      <p class="excluir-tudo-texto">Encontramos um backup salvo no seu Google Drive. Quer trazer essas músicas para este aparelho agora?</p>
+      <div class="excluir-tudo-acoes">
+        <button class="nav-btn nav-btn-primary" onclick="fecharDriveEncontradoModal(); atualizarDoDrive();">Atualizar agora</button>
+        <button class="nav-btn" onclick="fecharDriveEncontradoModal()">Agora não</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="drive-desconectar-modal" class="modal-overlay modal-overlay-center hidden" onclick="if(event.target===this) fecharDesconectarDriveModal()">
+  <div class="modal-content modal-content-small">
+    <div class="modal-header">
+      <h2><span class="material-symbols-outlined">link_off</span> Desconectar do Google Drive</h2>
+      <button class="modal-close" onclick="fecharDesconectarDriveModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="fav-modal-body">
+      <p class="excluir-tudo-texto">Sua biblioteca continua salva neste aparelho normalmente. Você só deixa de sincronizar automaticamente com o Drive — para reconectar depois, é só entrar com sua conta de novo.</p>
+      <div class="excluir-tudo-acoes">
+        <button class="nav-btn nav-btn-danger" onclick="confirmarDesconectarDrive()">Desconectar</button>
+        <button class="nav-btn" onclick="fecharDesconectarDriveModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="favoritos-modal" class="modal-overlay hidden" onclick="if(event.target===this) fecharFavoritosModal()">
   <div class="modal-content">
@@ -294,9 +336,10 @@
 <script src="js/acordes.js?v=37"></script>
 <script src="js/diagrama.js?v=53"></script>
 <script src="js/favoritos.js?v=37"></script>
-<script src="js/musicas.js?v=66"></script>
+<script src="js/musicas.js?v=68"></script>
+<script src="js/drive.js?v=4"></script>
 <script src="js/ui.js?v=37"></script>
-<script src="js/musicas-ui.js?v=122"></script>
-<script src="js/app.js?v=50"></script>
+<script src="js/musicas-ui.js?v=127"></script>
+<script src="js/app.js?v=51"></script>
 </body>
 </html>

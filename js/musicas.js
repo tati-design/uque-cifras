@@ -202,6 +202,58 @@ function listarMusicas() {
 
 function salvarListaMusicas(lista) {
   localStorage.setItem(MUSICAS_KEY, JSON.stringify(lista));
+  marcarDriveSujo();
+}
+
+// ─── Sincronização com Google Drive (estado local) ─────────────────────────────
+const DRIVE_KEY = "ukulele_drive_estado";
+
+function obterEstadoDrive() {
+  try {
+    return { conectado: false, ultimaSincronizacao: null, sujo: false, ...JSON.parse(localStorage.getItem(DRIVE_KEY)) };
+  } catch {
+    return { conectado: false, ultimaSincronizacao: null, sujo: false };
+  }
+}
+
+function salvarEstadoDrive(estado) {
+  localStorage.setItem(DRIVE_KEY, JSON.stringify(estado));
+}
+
+function marcarDriveSujo() {
+  const estado = obterEstadoDrive();
+  if (estado.conectado && !estado.sujo) {
+    salvarEstadoDrive({ ...estado, sujo: true });
+  }
+}
+
+// Mescla um backup (do arquivo .json ou baixado do Drive) na biblioteca local por id.
+// Retorna as contagens do que foi adicionado/atualizado, sem mexer na UI.
+function mesclarBackup(dados) {
+  const resultado = { musicasAdicionadas: 0, musicasAtualizadas: 0, favoritosAdicionados: 0 };
+
+  if (Array.isArray(dados.musicas)) {
+    const lista = listarMusicas();
+    const idxPorId = Object.fromEntries(lista.map((m, i) => [m.id, i]));
+    dados.musicas.forEach(m => {
+      if (!(m.id in idxPorId)) {
+        lista.push(m);
+        resultado.musicasAdicionadas++;
+      } else {
+        lista[idxPorId[m.id]] = { ...lista[idxPorId[m.id]], ...m };
+        resultado.musicasAtualizadas++;
+      }
+    });
+    salvarListaMusicas(lista);
+  }
+  if (Array.isArray(dados.favoritos)) {
+    const lista = listarFavoritos();
+    const existentes = new Set(lista.map(f => f.id));
+    dados.favoritos.forEach(f => { if (!existentes.has(f.id)) { lista.push(f); resultado.favoritosAdicionados++; } });
+    salvarListaFavoritos(lista);
+  }
+
+  return resultado;
 }
 
 function buscarMusica(id) {
