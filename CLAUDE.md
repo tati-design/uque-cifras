@@ -71,6 +71,7 @@ These are patterns the user has asked for repeatedly across different features �
 
 - **Toolbar buttons show icon + label on desktop, icon-only on mobile.** Give the button's text a `<span class="toolbar-btn-label">`; the shared rule at `@media (max-width: 600px) { .toolbar-btn-label { display: none; } }` in `style.css` collapses it to icon-only automatically. Don't build a separate icon-only variant by hand.
 - **Completed/active state = brand blue fill.** When a toggle, badge, or filter represents something the user has already "done" or turned on (modo aprendiz options set, autorrolagem running, an avaliação fully filled in, a filter applied), give it `background: #5b7cf6; color: #fff;` (see `.aprendiz-split-btn.active`, `.autoscroll-start-btn.active`, `.avaliar-completa`) rather than leaving it in the neutral gray (`#f3f2ee`/`#444`) idle state.
+- **Modal titles (`.modal-header h2`) don't need an icon by default**, and use the standard body text color (`#1a1a1a`), not a special accent. The old gold `#b8860b` is retired from the palette — don't reintroduce it.
 
 ## scripts/ + worker/ (Spotify playlist import)
 
