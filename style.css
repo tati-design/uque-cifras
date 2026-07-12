@@ -1883,7 +1883,7 @@ span.chord-chip-fav-badge.material-symbols-outlined {
   border-bottom: 1px solid #eee;
   flex: 0 0 auto;
 }
-.modal-header h2 { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; color: #b8860b; }
+.modal-header h2 { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; color: #1a1a1a; }
 .modal-header-actions { display: flex; align-items: center; gap: 8px; }
 .modal-close { background: none; color: #888; border: none; padding: 4px; cursor: pointer; }
 .modal-close:hover { background: #f3f2ee; border-radius: 8px; }
