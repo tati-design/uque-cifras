@@ -34,6 +34,16 @@ function mostrarToast(msg, duracaoMs = 3000) {
   el._timeoutId = setTimeout(() => el.classList.remove('mostrar'), duracaoMs);
 }
 
+// ─── Loading overlay (tela cheia, ex: sincronização com o Drive) ───────────────
+function mostrarLoadingOverlay(texto) {
+  document.getElementById('loading-overlay-texto').textContent = texto;
+  document.getElementById('loading-overlay').classList.remove('hidden');
+}
+
+function esconderLoadingOverlay() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+}
+
 const toastPendente = sessionStorage.getItem('uque_toast');
 if (toastPendente) {
   sessionStorage.removeItem('uque_toast');

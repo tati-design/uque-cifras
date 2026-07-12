@@ -2222,17 +2222,21 @@ let _driveUiOcupado = null; // null | 'conectando' | 'sincronizando' | 'atualiza
 function conectarDrive() {
   _driveUiOcupado = 'conectando';
   renderDriveSyncUI();
+  mostrarLoadingOverlay('Conectando ao Google Drive...');
   driveConectar(
     () => {
       salvarEstadoDrive({ conectado: true, ultimaSincronizacao: null, sujo: false });
       _driveUiOcupado = null;
       renderDriveSyncUI();
       driveVerificarBackupExistente(
-        (existe) => { if (existe) abrirDriveEncontradoModal(); },
-        () => {} // se a checagem falhar, o usuário ainda pode clicar em "Atualizar do Drive" manualmente
+        (existe) => {
+          esconderLoadingOverlay();
+          if (existe) abrirDriveEncontradoModal();
+        },
+        () => esconderLoadingOverlay() // se a checagem falhar, o usuário ainda pode clicar em "Atualizar do Drive" manualmente
       );
     },
-    () => { _driveUiOcupado = null; renderDriveSyncUI(); }
+    () => { _driveUiOcupado = null; renderDriveSyncUI(); esconderLoadingOverlay(); }
   );
 }
 
@@ -2241,15 +2245,18 @@ function sincronizarAgoraDrive() {
   if (!driveTemMudancasPendentes(estado) || _driveUiOcupado) return;
   _driveUiOcupado = 'sincronizando';
   renderDriveSyncUI();
+  mostrarLoadingOverlay('Enviando sua biblioteca para o Drive...');
   driveSubirBackup(
     () => {
       salvarEstadoDrive({ ...obterEstadoDrive(), sujo: false, ultimaSincronizacao: new Date().toISOString() });
       _driveUiOcupado = null;
       renderDriveSyncUI();
+      esconderLoadingOverlay();
     },
     () => {
       _driveUiOcupado = null;
       renderDriveSyncUI();
+      esconderLoadingOverlay();
       alert('Não consegui sincronizar com o Drive agora. Tente de novo em instantes.');
     }
   );
@@ -2259,11 +2266,13 @@ function atualizarDoDrive() {
   if (_driveUiOcupado) return;
   _driveUiOcupado = 'atualizando';
   renderDriveSyncUI();
+  mostrarLoadingOverlay('Buscando atualizações no Drive...');
   driveBaixarBackup(
     (dados) => {
       _driveUiOcupado = null;
       salvarEstadoDrive({ ...obterEstadoDrive(), ultimaSincronizacao: new Date().toISOString() });
       renderDriveSyncUI();
+      esconderLoadingOverlay();
       if (!dados) { alert('Ainda não há nenhum backup salvo no Drive.'); return; }
       const { musicasAdicionadas, musicasAtualizadas, favoritosAdicionados } = mesclarBackup(dados);
       renderMusicasLista();
@@ -2278,6 +2287,7 @@ function atualizarDoDrive() {
     () => {
       _driveUiOcupado = null;
       renderDriveSyncUI();
+      esconderLoadingOverlay();
       alert('Não consegui atualizar do Drive agora. Tente de novo em instantes.');
     }
   );
