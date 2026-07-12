@@ -2208,7 +2208,7 @@ function renderDriveSyncUI() {
   wrap.innerHTML = `
     <div class="drive-sync-group">
       <button class="nav-btn${pendente ? ' active' : ''}" onclick="sincronizarAgoraDrive()" title="Enviar mudanças para o Drive" ${ocupado ? 'disabled' : ''}>
-        <span class="material-symbols-outlined">cloud_upload</span><span class="toolbar-btn-label">${sincronizando ? `Sincronizando${DRIVE_DOTS_HTML}` : (pendente ? 'Sincronizar agora' : 'Sincronizado')}</span>
+        <span class="material-symbols-outlined">cloud_upload</span><span>${sincronizando ? `Sincronizando${DRIVE_DOTS_HTML}` : (pendente ? 'Sincronizar agora' : 'Sincronizado')}</span>
       </button>
       <button class="nav-btn" onclick="atualizarDoDrive()" title="Puxar a versão mais recente do Drive" ${ocupado ? 'disabled' : ''}>
         <span class="material-symbols-outlined">cloud_download</span><span class="toolbar-btn-label">${atualizando ? `Atualizando${DRIVE_DOTS_HTML}` : 'Atualizar do Drive'}</span>
