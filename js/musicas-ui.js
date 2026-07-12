@@ -1240,12 +1240,6 @@ function renderMusicaView() {
           <button class="nav-btn autoscroll-start-btn${s.ativo ? ' active' : ''}${autoScrollContagemRestante != null ? ' contagem' : ''} tooltip-imediato" data-tooltip="Autorrolagem (atalho: barra de espaço)" aria-label="Autorrolagem" onclick="${s.ativo ? 'alternarAutoScrollPlay()' : 'iniciarAutoScroll()'}">
             <span class="material-symbols-outlined">${autoScrollContagemRestante != null ? 'timer' : (s.ativo ? (s.rodando ? 'pause' : 'play_arrow') : 'arrow_cool_down')}</span><span class="autoscroll-start-label"> ${autoScrollContagemRestante != null ? `Scroll em ${autoScrollContagemRestante}...` : 'Autorrolagem'}</span>
           </button>
-          ${s.ativo ? `<div class="autoscroll-controls">
-            <button class="icon-btn" onclick="reiniciarAutoScroll()" title="Reiniciar"><span class="material-symbols-outlined">replay</span></button>
-            <span class="material-symbols-outlined autoscroll-speed-icon">speed</span>
-            <input type="range" class="autoscroll-speed" min="1" max="20" value="${s.velocidade}" oninput="ajustarVelocidadeAutoScroll(this.value)">
-            <button class="icon-btn" onclick="fecharAutoScroll()" title="Fechar"><span class="material-symbols-outlined">close</span></button>
-          </div>` : ''}
         </div>
         <!-- Desktop: botões com popup próprio (mesmo padrão do Tom) -->
         <div class="toolbar-desktop-extras">
@@ -1288,7 +1282,7 @@ function renderMusicaView() {
         <pre class="musica-cifra-texto">${renderCifraHtml(musica.cifraTexto, semitons)}</pre>
         ${_renderAvaliacaoInline(musica)}
       </div>
-      <div class="musica-acordes">
+      <div class="musica-acordes"${acordesColLargura ? ` style="flex: 0 0 ${acordesColLargura}px;"` : ''}>
         <div class="resize-handle" onmousedown="iniciarResizeAcordes(event)"></div>
         <div class="musica-acordes-titulo">Acordes</div>
         <div class="musica-acordes-grid">
@@ -2244,6 +2238,8 @@ function excluirTudoComBackup() {
 }
 
 // ─── Redimensionar coluna de acordes (desktop) ─────────────────────────────────
+let acordesColLargura = null;
+
 function iniciarResizeAcordes(e) {
   e.preventDefault();
   const coluna = document.querySelector('.musica-acordes');
@@ -2253,6 +2249,7 @@ function iniciarResizeAcordes(e) {
   function onMove(ev) {
     const delta = xInicial - ev.clientX;
     const novaLargura = Math.max(180, Math.min(larguraInicial + delta, window.innerWidth * 0.7));
+    acordesColLargura = novaLargura;
     coluna.style.flex = `0 0 ${novaLargura}px`;
   }
   function onUp() {
@@ -2527,7 +2524,7 @@ function toggleNotaSheetPin() {
   _pinnedAcordesAtual = pinned;
   _atualizarNotaSheetPinBtn();
   if (fixou && window.innerWidth <= 860) acordesMobileAbertos = true;
-  renderMusicaView();
+  renderToolbarAutoScroll();
 }
 
 function fecharNotaSheet() {
