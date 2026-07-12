@@ -1,4 +1,4 @@
-// Pagina "Importar do Spotify" (importar.html): cola o link da playlist,
+// Pagina "Importar playlist" (importar.html): cola o link da playlist,
 // chama o Worker (worker/index.js) em lotes (tamanho definido no Worker) e
 // devolve um JSON pra baixar e importar pelo backup do site.
 
@@ -364,7 +364,7 @@ musicaCopiarBtn.addEventListener("click", async () => {
 
 musicaAdicionarBtn.addEventListener("click", () => {
   if (!musicaEncontrada) return;
-  salvarMusica({
+  const nova = salvarMusica({
     titulo: musicaEncontrada.titulo,
     artista: musicaEncontrada.artista,
     tom: musicaEncontrada.tom,
@@ -372,7 +372,7 @@ musicaAdicionarBtn.addEventListener("click", () => {
     acordes: musicaEncontrada.acordes,
   });
   sessionStorage.setItem("uque_toast", `"${musicaEncontrada.titulo}" foi adicionada à sua biblioteca.`);
-  window.location.href = "index.html";
+  window.location.href = `index.html#m/${nova.id}`;
 });
 
 musicaResetBtn.addEventListener("click", resetarMusica);

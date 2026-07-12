@@ -3,9 +3,12 @@ document.getElementById('query').addEventListener('keydown', e => {
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && !document.getElementById('acorde-modal').classList.contains('hidden')) {
-    fecharAcordeModal();
-    return;
+  if (e.key === 'Escape') {
+    const modalAberto = document.querySelector('.modal-overlay:not(.hidden), .sheet-overlay:not(.hidden)');
+    if (modalAberto) {
+      modalAberto.click();
+      return;
+    }
   }
 
   const digitandoEmCampo = ['INPUT', 'TEXTAREA'].includes(e.target.tagName);
