@@ -1,5 +1,6 @@
 // ─── Acordes fixados (pin) ────────────────────────────────────────────────────
 let _pinnedAcordesAtual = [];
+let _acordeOriginalPorNomeAtual = {};
 
 // ─── Modo Aprendiz ───────────────────────────────────────────────────────────────
 let modoSimplificar = localStorage.getItem('modoSimplificar') === 'true';
@@ -1159,7 +1160,15 @@ function renderMusicaView() {
   const tomAtual = musica.tom ? transporAcorde(musica.tom, semitons) : '';
   const pinned = musica.pinnedAcordes || [];
   _pinnedAcordesAtual = pinned;
-  const acordesAtuaisRaw = [...new Set(extrairAcordes(musica.cifraTexto).map(a => simplificarAcorde(transporAcorde(a, semitons))))];
+  // Mapeia nome exibido (transposto/simplificado) → texto original na cifra,
+  // para que "substituir acorde" a partir da barra/grade encontre o token certo
+  // mesmo com a música transposta.
+  _acordeOriginalPorNomeAtual = {};
+  const acordesAtuaisRaw = [...new Set(extrairAcordes(musica.cifraTexto).map(a => {
+    const exibido = simplificarAcorde(transporAcorde(a, semitons));
+    if (!(exibido in _acordeOriginalPorNomeAtual)) _acordeOriginalPorNomeAtual[exibido] = a;
+    return exibido;
+  }))];
   acordesAtuaisRaw.sort((a, b) => {
     const ai = pinned.indexOf(a), bi = pinned.indexOf(b);
     if (ai !== -1 && bi !== -1) return ai - bi;
@@ -2637,7 +2646,8 @@ function abrirNotaSheet(token) {
 }
 
 function abrirNotaSheetPorNome(nomeAcorde) {
-  const fakeToken = { dataset: { acorde: nomeAcorde, acordeOriginal: nomeAcorde, acordeOcc: '0' } };
+  const original = _acordeOriginalPorNomeAtual[nomeAcorde] || nomeAcorde;
+  const fakeToken = { dataset: { acorde: nomeAcorde, acordeOriginal: original, acordeOcc: '0' } };
   abrirNotaSheet(fakeToken);
 }
 
