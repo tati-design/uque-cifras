@@ -38,7 +38,11 @@ function calcularNotasAcorde(nome) {
   const isMinor = intervalos.has(3) && !intervalos.has(4);
   const isDim = intervalos.has(3) && intervalos.has(6) && !intervalos.has(7);
 
-  if (extension === 6) intervalos.add(9);
+  // "4"/"5" soltos (sem "sus"/"add") são notação informal comum em cifras:
+  // D4 = Dsus4 (retira a terça, usa a quarta); D5 = poder (só fundamental + quinta)
+  if (extension === 4) { intervalos.delete(3); intervalos.delete(4); intervalos.add(5); }
+  else if (extension === 5) { intervalos.delete(3); intervalos.delete(4); }
+  else if (extension === 6) intervalos.add(9);
   else if (extension === 7) intervalos.add(isMajExt ? 11 : (isDim ? 9 : 10));
   else if (extension === 9) { intervalos.add(isMajExt ? 11 : 10); intervalos.add(2); }
   else if (extension === 11) { intervalos.add(isMajExt ? 11 : 10); intervalos.add(2); intervalos.add(5); }
