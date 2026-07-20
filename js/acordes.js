@@ -1,5 +1,8 @@
 // ─── Chord name -> notes ──────────────────────────────────────────────────────
 function calcularNotasAcorde(nome) {
+  // º (ordinal masculino, U+00BA) é usado por engano no lugar de ° (grau, U+00B0)
+  // em cifras coladas de outras fontes — normaliza pra sempre reconhecer diminuto
+  nome = nome.replace(/º/g, '°');
   const m = nome.match(/^([A-G][b#]?)/);
   if (!m) throw new Error(`Não identifiquei a raiz em: '${nome}'`);
   const rootStr = ENARMONICOS[m[1]] || m[1];
